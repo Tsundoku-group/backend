@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Services;
+namespace App\Service;
 
-use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
