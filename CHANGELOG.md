@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
  
 - [t-1] ajouter le CHANGELOG.md [#1](https://trello.com/c/banqOttn/1-t-1-ajouter-le-changelogmd)
+- [t-2] Correction: RefreshToken [#2](https://trello.com/c/4pUecWR0/2-t-2-correction-refreshtoken)
