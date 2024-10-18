@@ -21,13 +21,16 @@ class ConversationRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Conversation::class);
     }
-    public function findConversationsByUserOrderedByLastMessage(User $user): array
+
+    public function findConversationsByUserOrderedByLastMessage(User $user, int $page, int $limit)
     {
         return $this->createQueryBuilder('c')
-            ->join('c.participants', 'p')
+            ->innerJoin('c.participants', 'p')
             ->where('p = :user')
-            ->orderBy('c.lastMessageAt', 'DESC')
             ->setParameter('user', $user)
+            ->orderBy('c.lastMessageAt', 'ASC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
@@ -49,8 +52,8 @@ class ConversationRepository extends ServiceEntityRepository
     public function findArchivedConversationsByUserId(int $userId): array
     {
         return $this->createQueryBuilder('c')
-            ->innerJoin('c.participants', 'p') // jointure avec les participants
-            ->andWhere('p.id = :userId') // condition sur l'ID de l'utilisateur
+            ->innerJoin('c.participants', 'p')
+            ->andWhere('p.id = :userId')
             ->andWhere('c.isArchived = :isArchived')
             ->setParameter('userId', $userId)
             ->setParameter('isArchived', true)

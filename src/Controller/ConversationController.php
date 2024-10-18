@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Conversation;
 use App\Entity\User;
+use App\Service\ConfRedisService;
 use App\Repository\ConversationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,12 +20,14 @@ class ConversationController extends AbstractController
     private EntityManagerInterface $entityManager;
     private ConversationRepository $conversationRepository;
     private UserRepository $userRepository;
+    private ConfRedisService $confRedisService;
 
-    public function __construct(EntityManagerInterface $entityManager, ConversationRepository $conversationRepository, UserRepository $userRepository)
+    public function __construct(EntityManagerInterface $entityManager, ConversationRepository $conversationRepository, UserRepository $userRepository, ConfRedisService $redisChatService)
     {
         $this->entityManager = $entityManager;
         $this->conversationRepository = $conversationRepository;
         $this->userRepository = $userRepository;
+        $this->confRedisService = $redisChatService;
     }
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
@@ -61,7 +64,7 @@ class ConversationController extends AbstractController
         $existingConversation = $this->entityManager->getRepository(Conversation::class)->findOneByParticipants($participants);
 
         if ($existingConversation) {
-            return new Response('Conversation already exists', Response::HTTP_CONFLICT);
+            return new Response('La conversation existe déjà', Response::HTTP_CONFLICT);
         }
 
         $conversation = new Conversation();
@@ -79,8 +82,8 @@ class ConversationController extends AbstractController
         return new JsonResponse(['message' => 'Conversation created', 'conversationId' => $conversation->getId()], Response::HTTP_CREATED);
     }
 
-    #[Route('/get-all/{id}', name: 'get_all_conversations', methods: ['GET'])]
-    public function getConversationAll(int $id): JsonResponse
+    #[Route('/get-all/{id}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
+    public function getAllConversationsWithLastMessages(int $id, Request $request): JsonResponse
     {
         $user = $this->entityManager->getRepository(User::class)->find($id);
 
@@ -88,19 +91,46 @@ class ConversationController extends AbstractController
             return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 20);
+
         $conversations = $this->entityManager->getRepository(Conversation::class)
-            ->findConversationsByUserOrderedByLastMessage($user);
+            ->findConversationsByUserOrderedByLastMessage($user, $page, $limit);
 
         if (!$conversations) {
-            return new JsonResponse(['conversations' => []], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['conversations' => []], Response::HTTP_OK);
         }
 
-        $conversationData = array_map(function ($conversation) {
+        $lastMessages = [];
+        foreach ($conversations as $conversation) {
+            $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
+            if ($messages) {
+                $lastMessages[$conversation->getId()] = end($messages);
+            } else {
+                $lastMessages[$conversation->getId()] = null;
+            }
+        }
+
+        usort($conversations, function ($a, $b) use ($lastMessages) {
+            $lastMessageA = $lastMessages[$a->getId()];
+            $lastMessageB = $lastMessages[$b->getId()];
+
+            $dateA = $lastMessageA ? $lastMessageA['sent_at'] : '1970-01-01';
+            $dateB = $lastMessageB ? $lastMessageB['sent_at'] : '1970-01-01';
+
+            return strtotime($dateB) - strtotime($dateA);
+        });
+
+        $offset = ($page - 1) * $limit;
+        $limitedConversations = array_slice($conversations, $offset, $limit);
+
+        $conversationData = array_map(function ($conversation) use ($lastMessages) {
             return [
                 'id' => $conversation->getId(),
                 'title' => $conversation->getTitle(),
                 'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
-                'lastMessageAt' => $conversation->getLastMessageAt(),
+                'lastMessageAt' => $lastMessages[$conversation->getId()]['sent_at'] ?? null,
+                'lastMessage' => $lastMessages[$conversation->getId()],
                 'createdBy' => [
                     'id' => $conversation->getCreatedBy()->getId(),
                     'email' => $conversation->getCreatedBy()->getEmail(),
@@ -116,9 +146,9 @@ class ConversationController extends AbstractController
                 'isArchived' => $conversation->getIsArchived(),
                 'isMutedUntil' => $conversation->getMutedUntil(),
             ];
-        }, $conversations);
+        }, $limitedConversations);
 
-        return new JsonResponse(['conversations' => [$conversationData]], Response::HTTP_OK);
+        return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
     }
 
     #[Route('/get-one/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
