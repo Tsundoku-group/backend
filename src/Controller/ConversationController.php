@@ -124,8 +124,8 @@ class ConversationController extends AbstractController
         $offset = ($page - 1) * $limit;
         $limitedConversations = array_slice($conversations, $offset, $limit);
 
-        $conversationData = array_map(function ($conversation) use ($lastMessages) {
-            return [
+        $conversationData = array_filter(array_map(function ($conversation) use ($lastMessages) {
+            return !$conversation->getIsArchived() ? [
                 'id' => $conversation->getId(),
                 'title' => $conversation->getTitle(),
                 'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
@@ -145,9 +145,8 @@ class ConversationController extends AbstractController
                 }, $conversation->getParticipants()->toArray()),
                 'isArchived' => $conversation->getIsArchived(),
                 'isMutedUntil' => $conversation->getMutedUntil(),
-            ];
-        }, $limitedConversations);
-
+            ] : null;
+        }, $limitedConversations));
         return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
     }
 
@@ -349,11 +348,34 @@ class ConversationController extends AbstractController
             return new Response('No archived conversations found for this user', Response::HTTP_NOT_FOUND);
         }
 
-        $conversationData = array_map(function ($conversation) {
+        $lastMessages = [];
+
+        foreach ($conversations as $conversation) {
+            $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
+            if ($messages) {
+                $lastMessages[$conversation->getId()] = end($messages);
+            } else {
+                $lastMessages[$conversation->getId()] = null;
+            }
+        }
+
+        usort($conversations, function ($a, $b) use ($lastMessages) {
+            $lastMessageA = $lastMessages[$a->getId()];
+            $lastMessageB = $lastMessages[$b->getId()];
+
+            $dateA = $lastMessageA ? $lastMessageA['sent_at'] : '1970-01-01';
+            $dateB = $lastMessageB ? $lastMessageB['sent_at'] : '1970-01-01';
+
+            return strtotime($dateB) - strtotime($dateA);
+        });
+
+        $conversationData = array_map(function ($conversation) use ($lastMessages) {
             return [
                 'id' => $conversation->getId(),
                 'title' => $conversation->getTitle(),
                 'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
+                'lastMessageAt' => $lastMessages[$conversation->getId()]['sent_at'] ?? null,
+                'lastMessage' => $lastMessages[$conversation->getId()],
                 'createdBy' => [
                     'id' => $conversation->getCreatedBy()->getId(),
                     'email' => $conversation->getCreatedBy()->getEmail(),
@@ -371,7 +393,7 @@ class ConversationController extends AbstractController
             ];
         }, $conversations);
 
-        return new JsonResponse(['conversations' => [$conversationData]], Response::HTTP_OK);
+        return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
     }
 
     #[Route('/archive/{conversationId}', name: 'archive_conversation', methods: ['POST'])]
