@@ -26,6 +26,21 @@ class GoogleBooksService
             ],
         ]);
 
-        return $response->toArray();
+        $data = $response->toArray();
+
+        $books = [];
+        foreach ($data['items'] as $item) {
+            $volumeInfo = $item['volumeInfo'];
+            $books[] = [
+                'title' => $volumeInfo['title'] ?? 'Titre indisponible',
+                'authors' => $volumeInfo['authors'] ?? 'Auteur(s) indisponible(s)',
+                'publishedDate' => $volumeInfo['publishedDate'] ?? 'Date de publication indisponible',
+                'description' => $volumeInfo['description'] ?? 'Description indisponible',
+                'categories' => $volumeInfo['categories'] ?? 'Catégorie(s) indisponible(s)',
+                'thumbnail' => $volumeInfo['imageLinks']['thumbnail'] ?? 'https://via.placeholder.com/100x130.png?text=Image+indisponible',
+            ];
+        }
+
+        return $books;
     }
 }
