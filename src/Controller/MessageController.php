@@ -108,11 +108,16 @@ class MessageController extends AbstractController
             $limit = (int) $request->query->get('limit', 20);
 
             $allMessages = $this->confRedisService->getMessagesFromConversation($conversationId);
+
             if (empty($allMessages)) {
                 return new JsonResponse([], Response::HTTP_OK);
             }
 
-            $formattedMessages = array_map(function($message) use ($user) {
+            $totalMessages = count($allMessages);
+            $startIndex = max($totalMessages - $page * $limit, 0);
+            $pagedMessages = array_slice($allMessages, $startIndex, $limit);
+
+            $formattedMessages = array_map(function ($message) use ($user) {
                 return [
                     'id' => $message['id'],
                     'content' => $message['content'],
@@ -123,12 +128,9 @@ class MessageController extends AbstractController
                     'sender_email' => $message['sender_email'],
                     'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
                 ];
-            }, $allMessages);
+            }, $pagedMessages);
 
-            $offset = ($page - 1) * $limit;
-            $pagedMessages = array_slice($formattedMessages, $offset, $limit);
-
-            return new JsonResponse($pagedMessages, Response::HTTP_OK);
+            return new JsonResponse($formattedMessages, Response::HTTP_OK);
         } catch (\Exception $e) {
             return new JsonResponse('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }

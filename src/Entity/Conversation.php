@@ -16,14 +16,8 @@ class Conversation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $title = null;
-
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $updatedAt;
 
     #[ORM\ManyToOne(inversedBy: 'conversations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -34,9 +28,6 @@ class Conversation
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private ?bool $isArchived;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $archivedAt = null;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isMuted = false;
@@ -59,18 +50,6 @@ class Conversation
         return $this->id;
     }
 
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -79,18 +58,6 @@ class Conversation
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
 
         return $this;
     }
@@ -124,13 +91,6 @@ class Conversation
         return $this;
     }
 
-    public function removeParticipant(User $participant): static
-    {
-        $this->participants->removeElement($participant);
-
-        return $this;
-    }
-
     public function getIsArchived(): bool
     {
         return $this->isArchived;
@@ -140,23 +100,6 @@ class Conversation
     {
         $this->isArchived = $IsArchived;
 
-        if ($IsArchived === true) {
-            $this->archivedAt = new \DateTime();
-        } else {
-            $this->archivedAt = null;
-        }
-
-        return $this;
-    }
-
-    public function getArchivedAt(): ?\DateTimeInterface
-    {
-        return $this->archivedAt;
-    }
-
-    public function setArchivedAt(?\DateTimeInterface $archivedAt): self
-    {
-        $this->archivedAt = $archivedAt;
         return $this;
     }
 
