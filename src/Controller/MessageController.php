@@ -15,8 +15,8 @@ use Doctrine\ORM\EntityManagerInterface;
 #[Route('/api/message')]
 class MessageController extends AbstractController
 {
-    private $confRedisService;
-    private $entityManager;
+    private ConfRedisService $confRedisService;
+    private EntityManagerInterface $entityManager;
 
     public function __construct(ConfRedisService $redisChatService, EntityManagerInterface $entityManager)
     {
@@ -31,6 +31,7 @@ class MessageController extends AbstractController
             $data = json_decode($request->getContent(), true);
             $userEmail = $data['userEmail'] ?? null;
             $messageContent = $data['message'] ?? null;
+            $messageId = $data['id'] ?? null;
 
             if (empty($userEmail)) {
                 return new JsonResponse(['error' => 'User email is required'], Response::HTTP_BAD_REQUEST);
@@ -62,7 +63,9 @@ class MessageController extends AbstractController
             $formattedDate = $dateTime->format('Y-m-d H:i:s');
 
             $messageData = [
+                'id' => $messageId,
                 'content' => $messageContent,
+                'sender_id' => $createdBy->getId(),
                 'sender_email' => $userEmail,
                 'sent_by' => $createdBy->getProfiles()->first()->getUsername(),
                 'sent_at' => $formattedDate,
@@ -105,48 +108,34 @@ class MessageController extends AbstractController
             $limit = (int) $request->query->get('limit', 20);
 
             $allMessages = $this->confRedisService->getMessagesFromConversation($conversationId);
+
             if (empty($allMessages)) {
-                return new JsonResponse('No messages found for this conversation.', Response::HTTP_OK);
+                return new JsonResponse([], Response::HTTP_OK);
             }
 
-            $allMessages = array_reverse($allMessages);
+            $totalMessages = count($allMessages);
+            $startIndex = max($totalMessages - $page * $limit, 0);
+            $pagedMessages = array_slice($allMessages, $startIndex, $limit);
 
-            $offset = ($page - 1) * $limit;
-            $pagedMessages = array_slice($allMessages, $offset, $limit);
+            $formattedMessages = array_map(function ($message) use ($user) {
+                return [
+                    'id' => $message['id'],
+                    'content' => $message['content'],
+                    'sender_id' => $message['sender_id'],
+                    'sent_by' => $message['sent_by'],
+                    'sent_at' => $message['sent_at'],
+                    'isRead' => $message['isRead'],
+                    'sender_email' => $message['sender_email'],
+                    'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
+                ];
+            }, $pagedMessages);
 
-
-            return new JsonResponse($pagedMessages, Response::HTTP_OK);
+            return new JsonResponse($formattedMessages, Response::HTTP_OK);
         } catch (\Exception $e) {
             return new JsonResponse('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    #[Route('/get-last-messages/{conversationId}', name: 'get_last_messages', methods: ['GET'])]
-    public function getLastMessages(int $conversationId): JsonResponse
-    {
-        try {
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
 
-            if (!$conversation) {
-                return new JsonResponse('Conversation not found', Response::HTTP_NOT_FOUND);
-            }
-
-            $messages = $this->confRedisService->getMessagesFromConversation($conversationId);
-            if (!$messages) {
-                return new JsonResponse('No messages found for this conversation.', Response::HTTP_OK);
-            }
-
-            $lastMessage = end($messages);
-
-            $response = [
-                'conversationId' => $conversationId,
-                'lastMessage' => $lastMessage,
-            ];
-
-            return new JsonResponse($response);
-        } catch (\Exception $e) {
-            return new JsonResponse('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
     #[Route('/mark-messages-read/{conversationId}', name: 'mark_messages_read', methods: ['POST'])]
     public function markMessagesRead(int $conversationId, Request $request): Response
     {
