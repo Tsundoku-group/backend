@@ -116,7 +116,7 @@ class ChatFriendshipController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->find($userId);
 
         if (!$user) {
-            return new JsonResponse('User not found.', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
         }
 
         $friendships = $this->entityManager->getRepository(ChatFriendship::class)->findBy(['requester' => $user, 'status' => 'accepted']);
