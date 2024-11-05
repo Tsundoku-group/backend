@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
-use App\Repository\ChatFriendshipRepository;
+use App\Repository\FriendshipRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ChatFriendshipRepository::class)]
-class ChatFriendship
+#[ORM\Entity(repositoryClass: FriendshipRepository::class)]
+class Friendship
 {
     public const STATUS_PENDING = 'pending';
     public const STATUS_ACCEPTED = 'accepted';

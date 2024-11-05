@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Entity\ChatFriendship;
+use App\Entity\Friendship;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,8 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/chat-friendship')]
-class ChatFriendshipController extends AbstractController
+#[Route('/api/friendship')]
+class FriendshipController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
 
@@ -38,24 +38,24 @@ class ChatFriendshipController extends AbstractController
             return new Response('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
         }
 
-        $existingFriendship = $this->entityManager->getRepository(ChatFriendship::class)->findOneBy([
+        $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
             'requester' => $requester,
             'receiver' => $receiver
         ]);
 
-        $existingInverseFriendship = $this->entityManager->getRepository(ChatFriendship::class)->findOneBy([
+        $existingInverseFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
             'requester' => $receiver,
             'receiver' => $requester
         ]);
 
         if ($existingFriendship || $existingInverseFriendship) {
-            return new Response('ChatFriendship already exists or request already sent.', Response::HTTP_CONFLICT);
+            return new Response('Friendship already exists or request already sent.', Response::HTTP_CONFLICT);
         }
 
-        $friendship = new ChatFriendship();
+        $friendship = new Friendship();
         $friendship->setRequester($requester);
         $friendship->setReceiver($receiver);
-        $friendship->setStatus(ChatFriendship::STATUS_PENDING);
+        $friendship->setStatus(Friendship::STATUS_PENDING);
 
         $this->entityManager->persist($friendship);
         $this->entityManager->flush();
@@ -66,7 +66,7 @@ class ChatFriendshipController extends AbstractController
     #[Route('/accept/{id}', name: 'accept_friend_request', methods: ['POST'])]
     public function acceptFriendRequest(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(ChatFriendship::class)->find($id);
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
         if (!$friendship || $friendship->getStatus() !== 'pending') {
             return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
@@ -82,7 +82,7 @@ class ChatFriendshipController extends AbstractController
     #[Route('/reject/{id}', name: 'reject_friend_request', methods: ['POST'])]
     public function rejectFriendRequest(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(ChatFriendship::class)->find($id);
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
         if (!$friendship || $friendship->getStatus() !== 'pending') {
             return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
@@ -98,10 +98,10 @@ class ChatFriendshipController extends AbstractController
     #[Route('/remove/{id}', name: 'remove_friend', methods: ['DELETE'])]
     public function removeFriend(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(ChatFriendship::class)->find($id);
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
         if (!$friendship || $friendship->getStatus() !== 'accepted') {
-            return new Response('ChatFriendship not found or not accepted.', Response::HTTP_NOT_FOUND);
+            return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
         }
 
         $this->entityManager->remove($friendship);
@@ -119,7 +119,7 @@ class ChatFriendshipController extends AbstractController
             return new JsonResponse(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
         }
 
-        $friendships = $this->entityManager->getRepository(ChatFriendship::class)->findBy(['requester' => $user, 'status' => 'accepted']);
+        $friendships = $this->entityManager->getRepository(Friendship::class)->findBy(['requester' => $user, 'status' => 'accepted']);
         $friends = array_map(function ($friendship) {
             return [
                 'id' => $friendship->getReceiver()->getId(),
@@ -140,7 +140,7 @@ class ChatFriendshipController extends AbstractController
             return new JsonResponse('User not found.', Response::HTTP_NOT_FOUND);
         }
 
-        $friendRequests = $this->entityManager->getRepository(ChatFriendship::class)->findBy([
+        $friendRequests = $this->entityManager->getRepository(Friendship::class)->findBy([
             'receiver' => $user,
         ]);
 
