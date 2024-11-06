@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-4] Chat: optimisation de récupération des conversations [#4](https://trello.com/c/rng2yd0I/4-t-4-chat-optimisation-de-r%C3%A9cup%C3%A9ration-des-conversations)
 - [t-5] Chat: modification de récupération des messages archivés [#5](https://trello.com/c/JTrkgUtv/5-t-5-chat-modification-de-r%C3%A9cup%C3%A9ration-des-messages-archiv%C3%A9s)
 - [t-3] correction: conversation model + controllers [#3](https://trello.com/c/PKTx4ZA4/3-t-3-correction-conversation-model-controllers)
+- [t-9] gestion du profil utilisateur [#9](https://trello.com/c/Hey6701W/9-t-9-gestion-du-profil-utilisateur)
