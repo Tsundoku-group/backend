@@ -10,7 +10,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
 class RegisterController extends AbstractController
@@ -22,8 +21,7 @@ class RegisterController extends AbstractController
         EntityManagerInterface      $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         MailService                 $mailService,
-        TokenGeneratorInterface     $tokenGenerator,
-        UrlGeneratorInterface       $urlGenerator
+        TokenGeneratorInterface     $tokenGenerator
     ): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -54,7 +52,6 @@ class RegisterController extends AbstractController
         $htmlContent = str_replace('{{ confirmation_url }}', $confirmationUrl, $htmlContent);
 
         try {
-            // Send mail
             $mailService->sendMail(
                 $user->getEmail(),
                 'Confirmation du compte utilisateur',
