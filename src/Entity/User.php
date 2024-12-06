@@ -49,6 +49,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastPasswordResetRequest = null;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $accountDeletionDate = null;
+
     public function __construct()
     {
         $this->profiles = new ArrayCollection();
@@ -214,6 +217,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->lastPasswordResetRequest = $lastPasswordResetRequest;
 
+        return $this;
+    }
+
+    public function getAccountDeletionDate(): ?\DateTimeInterface
+    {
+        return $this->accountDeletionDate;
+    }
+
+    public function setAccountDeletionDate(?\DateTimeInterface $accountDeletionDate): static
+    {
+        $this->accountDeletionDate = $accountDeletionDate;
         return $this;
     }
 }

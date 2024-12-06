@@ -4,10 +4,13 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/users')]
@@ -18,11 +21,13 @@ class UserController extends AbstractController
 
     private $entityManager;
     private $userRepository;
+    private $mailService;
 
-    public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository)
+    public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository, MailService $mailService)
     {
         $this->entityManager = $entityManager;
         $this->userRepository = $userRepository;
+        $this->mailService = $mailService;
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]
@@ -110,21 +115,116 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'user_delete', methods: ['DELETE'])]
-    public function delete(int $id): Response
+    #[Route('/verify-password', methods: ['POST'])]
+    public function verifyPassword(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         try {
-            $user = $this->userRepository->findOneBy(['id' => $id]);
+            $data = json_decode($request->getContent(), true);
+            $user = $this->getUser();
+
             if (!$user) {
-                return $this->json(['error' => self::USER_NOT_FOUND], 404);
+                return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
             }
 
-            $this->entityManager->remove($user);
-            $this->entityManager->flush();
+            if (!$passwordHasher->isPasswordValid($user, $data['currentPassword'])) {
+                return new JsonResponse(['error' => 'Ancien mot de passe incorrect'], 400);
+            }
 
-            return new Response(null, 204);
+            return $this->json($user, 200);
         } catch (\Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
+    }
+
+    #[Route('/update-password', methods: ['POST'])]
+    public function updatePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $user = $this->getUser();
+            $captchaToken = $data['captchaToken'];
+
+            if (!$user) {
+                return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
+            }
+
+            if (empty($data['newPassword'])) {
+                return new JsonResponse(['error' => 'Le nouveau mot de passe est requis'], 400);
+            }
+
+            if (empty($data['captchaToken'])) {
+                return new JsonResponse(['error' => 'Le captcha est manquant'], 400);
+            }
+
+            if (!$this->verifyCaptcha($captchaToken)) {
+                return $this->json(['message' => 'Captcha invalide.'], 400);
+            }
+
+            $hashedPassword = $passwordHasher->hashPassword($user, $data['newPassword']);
+            $user->setPassword($hashedPassword);
+
+            $entityManager->flush();
+
+            return $this->json($user, 200);
+        } catch (\Exception $e) {
+            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/delete-account-request/{id}', name: 'user_delete', methods: ['DELETE'])]
+    public function requestAccountDeletion(int $id): JsonResponse
+    {
+        $user = $this->entityManager->getRepository(User::class)->find($id);
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+
+        if (null !== $user->getAccountDeletionDate()) {
+            return new JsonResponse(['error' => 'Deletion already requested'], 400);
+        }
+
+        try {
+            $deletionDate = new \DateTime('+30 days');
+            $user->setAccountDeletionDate($deletionDate);
+
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+            $this->sendAccountDeletionEmail($user->getEmail());
+
+            return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
+        } catch (\Exception $e) {
+            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    private function sendAccountDeletionEmail(string $email): void
+    {
+        $subject = 'Demande de suppression de votre compte';
+        $htmlContent = file_get_contents(__DIR__ . '/../Emails/request_deletion_account_mail.html');
+        $deletionDate = (new \DateTime('+30 days'))->format('Y-m-d');
+        $htmlContent = str_replace('{deletionDate}', $deletionDate, $htmlContent);
+
+        try {
+            $this->mailService->sendMail(
+                $email,
+                $subject,
+                $htmlContent
+            );
+        } catch (\Exception $e) {
+            error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
+        }
+    }
+
+    private function verifyCaptcha(string $captchaToken): bool
+    {
+        $secretKey = $_ENV['GOOGLE_RECAPTCHA_SECRET'];
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+
+        $response = file_get_contents($url . '?secret=' . $secretKey . '&response=' . $captchaToken);
+        $responseKeys = json_decode($response, true);
+
+        return $responseKeys['success'] ?? false;
     }
 }

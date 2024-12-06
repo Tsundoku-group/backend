@@ -4,7 +4,9 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Entity\RefreshToken;
+use App\Service\MailService;
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -23,16 +25,22 @@ class CustomAuthenticator extends AbstractAuthenticator
     private JWTTokenManagerInterface $JWTManager;
     private RefreshTokenGeneratorInterface $refreshTokenGenerator;
     private RefreshTokenManagerInterface $refreshTokenManager;
+    private EntityManagerInterface $entityManager;
+    private MailService $mailService;
 
     public function __construct(
         JWTTokenManagerInterface       $JWTManager,
         RefreshTokenGeneratorInterface $refreshTokenGenerator,
-        RefreshTokenManagerInterface   $refreshTokenManager
+        RefreshTokenManagerInterface   $refreshTokenManager,
+        EntityManagerInterface         $entityManager,
+        MailService                    $mailService
     )
     {
         $this->JWTManager = $JWTManager;
         $this->refreshTokenGenerator = $refreshTokenGenerator;
         $this->refreshTokenManager = $refreshTokenManager;
+        $this->entityManager = $entityManager;
+        $this->mailService = $mailService;
     }
 
     public function supports(Request $request): ?bool
@@ -68,6 +76,45 @@ class CustomAuthenticator extends AbstractAuthenticator
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $now = new DateTime();
+        $accountUpdated = false;
+
+        if (null !== $user->getAccountDeletionDate()) {
+            if ($user->getAccountDeletionDate() > $now) {
+                $user->setAccountDeletionDate(null);
+
+                $this->entityManager->persist($user);
+                $this->entityManager->flush();
+                $accountUpdated = true;
+
+                $htmlContent = file_get_contents(__DIR__ . '/../Emails/reActivated_account_mail.html');
+                $profiles = $user->getProfiles();
+
+                foreach ($profiles as $profile) {
+                    $firstName = $profile->getFirstName();
+                    $lastName = $profile->getLastName();
+
+                    $email = $user->getEmail();
+                    $subject = 'Ré-activation de votre compte';
+                    $htmlContent = str_replace(
+                        ['{firstName}', '{lastName}'],
+                        [$firstName, $lastName],
+                        $htmlContent
+                    );
+
+                    try {
+                        $this->mailService->sendMail(
+                            $email,
+                            $subject,
+                            $htmlContent
+                        );
+                    } catch (\Exception $e) {
+                        error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+
         $jwt = $this->JWTManager->create($user);
 
         $refreshTokenEntity = $this->refreshTokenGenerator->createForUserWithTtl(
@@ -82,13 +129,19 @@ class CustomAuthenticator extends AbstractAuthenticator
         $this->refreshTokenManager->save($refreshTokenEntity);
         $refreshTokenString = $refreshTokenEntity->getRefreshToken();
 
-        return new JsonResponse([
+        $response = [
             'userId' => $user->getId(),
             'email' => $user->getEmail(),
             'isVerified' => $user->isVerified(),
             'token' => $jwt,
-            'refresh_token' => $refreshTokenString,
-        ]);
+            'refresh_token' => $refreshTokenString
+            ];
+
+        if ($accountUpdated) {
+            $response['message'] = 'Votre compte a été mis à jour et ne sera pas supprimé.';
+        }
+
+        return new JsonResponse($response, Response::HTTP_OK);
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
