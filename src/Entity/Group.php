@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\GroupRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -49,9 +50,9 @@ class Group
     }
 
     /**
-     * @return ArrayCollection<Profile>
+     * @return Collection|Profile[]
      */
-    public function getProfiles(): ArrayCollection
+    public function getProfiles(): Collection
     {
         return $this->profiles;
     }

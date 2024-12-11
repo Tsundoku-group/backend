@@ -2,9 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\ProfileRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\ProfileRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 class Profile
@@ -13,6 +15,9 @@ class Profile
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
+    private $groups;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
     #[ORM\JoinColumn(nullable: false)]
@@ -56,6 +61,7 @@ class Profile
 
     public function  __construct()
     {
+        $this->groups = new ArrayCollection();
         $this->role = 'ROLE_USER';
         $this->createdAt = new \DateTimeImmutable();
     }
@@ -63,6 +69,30 @@ class Profile
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    /**
+     * @return Collection|Group[]
+     */
+    public function getGroups(): Collection
+    {
+        return $this->groups;
+    }
+
+    public function addGroup(Group $group): self
+    {
+        if (!$this->groups->contains($group)) {
+            $this->groups[] = $group;
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(Group $group): self
+    {
+        $this->groups->removeElement($group);
+
+        return $this;
     }
 
     public function getUser(): ?User
