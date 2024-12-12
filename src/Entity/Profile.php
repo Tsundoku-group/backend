@@ -51,8 +51,14 @@ class Profile
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $x = null;
 
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $type = 'lecteur';
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(nullable: true, options: ['default' => false])]
+    private bool $activeProfile = false;
 
     public function  __construct()
     {
@@ -209,6 +215,17 @@ class Profile
         return $this;
     }
 
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -218,6 +235,17 @@ class Profile
     {
         $this->createdAt = $createdAt;
 
+        return $this;
+    }
+
+    public function getActiveProfile(): ?int
+    {
+        return $this->activeProfile ? $this->id : null;
+    }
+
+    public function setActiveProfile(bool $isActive): self
+    {
+        $this->activeProfile = $isActive;
         return $this;
     }
 }
