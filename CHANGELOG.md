@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-3] correction: conversation model + controllers [#3](https://trello.com/c/PKTx4ZA4/3-t-3-correction-conversation-model-controllers)
 - [t-9] gestion du profil utilisateur [#9](https://trello.com/c/Hey6701W/9-t-9-gestion-du-profil-utilisateur)
 - [t-10] Gestion des paramètres utilisateurs [#10](https://trello.com/c/VY62oHJX/10-t-10-gestion-des-param%C3%A8tres-utilisateurs)
+- [t-11] ajout des profils actifs [#11](https://trello.com/c/gqoTF8yC/11-t-11-gestion-de-lapparence-du-compte)
