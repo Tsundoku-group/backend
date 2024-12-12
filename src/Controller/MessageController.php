@@ -91,7 +91,7 @@ class MessageController extends AbstractController
     {
         try {
             $user = $this->getUser();
-            if (!$user) {
+            if (!$user instanceof User) {
                 return new JsonResponse('User not authenticated.', Response::HTTP_UNAUTHORIZED);
             }
 
