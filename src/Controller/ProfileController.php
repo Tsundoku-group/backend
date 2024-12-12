@@ -64,7 +64,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/all/{id}', name: 'get_profiles', methods: ['GET'])]
-    public function getAllProfiles(int $id, Request $request): JsonResponse
+    public function getAllProfiles(int $id): JsonResponse
     {
         try {
             $profiles = $this->profileRepository->findUserProfiles($id);
@@ -100,6 +100,11 @@ class ProfileController extends AbstractController
                 return new JsonResponse(['error' => 'Username is required'], Response::HTTP_BAD_REQUEST);
             }
 
+            $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
+            if ($existingUsernameProfile) {
+                return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
+            }
+
             $user = $this->getUser();
 
             $profileCount = $this->profileRepository->count(['user' => $user]);
@@ -110,8 +115,13 @@ class ProfileController extends AbstractController
 
             $profile = new Profile();
             $profile->setUsername($data['username']);
-            $profile->setType('lecteur');
+            $profile->setType($data['type'] ?? 'lecteur');
+            $profile->setBio($data['bio'] ?? null);
 
+            $birthday = empty($data['birthday']) ? null : \DateTime::createFromFormat('Y-m-d', $data['birthday']);
+
+            $profile->setBirthday($birthday);
+            $profile->setPhoneNumber($data['phoneNumber'] ?? null);
             $profile->setUser($user);
 
             $entityManager->persist($profile);
@@ -119,7 +129,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse(['message' => 'Profile created successfully'], Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -131,6 +141,11 @@ class ProfileController extends AbstractController
 
             if (!$data) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            }
+
+            $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
+            if ($existingUsernameProfile) {
+                return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
             }
 
             $profile->setFirstName($data['firstName'] ?? $profile->getFirstName());

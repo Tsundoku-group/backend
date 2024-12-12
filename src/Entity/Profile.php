@@ -26,22 +26,22 @@ class Profile
     #[ORM\Column(length: 255)]
     private ?string $role = 'ROLE_USER';
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $firstName = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $lastName = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $username = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $birthday = null;
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTime $birthday = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $gender = null;
 
-    #[ORM\Column(length: 20)]
+    #[ORM\Column(length: 20, nullable: true)]
     private ?string $phoneNumber = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -60,7 +60,7 @@ class Profile
     private string $type = 'lecteur';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?\DateTime $createdAt = null;
 
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
@@ -69,7 +69,7 @@ class Profile
     {
         $this->groups = new ArrayCollection();
         $this->role = 'ROLE_USER';
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -78,7 +78,7 @@ class Profile
     }
 
     /**
-     * @return Collection|Group[]
+     * @return Collection
      */
     public function getGroups(): Collection
     {
@@ -161,13 +161,16 @@ class Profile
         return $this;
     }
 
-    public function getBirthday(): ?\DateTimeInterface
+    public function getBirthday(): \DateTime
     {
         return $this->birthday;
     }
 
-    public function setBirthday(\DateTimeInterface $birthday): self
+    public function setBirthday(?\DateTime $birthday): self
     {
+        if ($birthday instanceof \DateTime) {
+            $birthday = \DateTime::createFromInterface($birthday);
+        }
         $this->birthday = $birthday;
 
         return $this;
@@ -256,12 +259,12 @@ class Profile
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
 
