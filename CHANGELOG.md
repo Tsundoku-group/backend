@@ -19,3 +19,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-11] ajout des profils actifs [#11](https://trello.com/c/gqoTF8yC/11-t-11-gestion-de-lapparence-du-compte)
 - [t-14] Ajout d'un nouveau profil [#14](https://trello.com/c/ctu8GWL5/14-t-14-ajout-dun-nouveau-profil)
 - [t-15] Ajout de phpstan et phpecs [#15](https://trello.com/c/hk1xysq4/15-t-15-ajout-de-phpstan-et-phpecs)
+- [t-16] Indentation + correction code avec PhpStan et PhpEcs [#16](https://trello.com/c/OmvtEpXc/16-t-16-indentation-correction-code-avec-phpstan-et-phpecs)
