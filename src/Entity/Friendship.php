@@ -19,7 +19,7 @@ class Friendship
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $status;
@@ -50,6 +50,11 @@ class Friendship
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getStatus(): ?string

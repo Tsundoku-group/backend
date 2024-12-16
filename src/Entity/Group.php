@@ -16,7 +16,7 @@ class Group
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\ManyToMany(targetEntity: Profile::class, inversedBy: 'groups')]
     private $profiles;
@@ -28,7 +28,7 @@ class Group
     private ?string $description = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $visibility = 'public';
+    private string $visibility = 'public';
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
@@ -49,6 +49,11 @@ class Group
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     /**

@@ -15,7 +15,7 @@ class Profile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
     private $groups;
@@ -25,7 +25,7 @@ class Profile
     private ?User $user = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $role = 'ROLE_USER';
+    private string $role = 'ROLE_USER';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $firstName = null;
@@ -76,6 +76,11 @@ class Profile
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getGroups(): Collection

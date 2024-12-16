@@ -10,17 +10,16 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
@@ -41,7 +40,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?DateTimeInterface $tokenRegistrationLifetime = null;
 
     #[ORM\Column]
-    private ?bool $isVerified = false;
+    private bool $isVerified = false;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resetPwdToken = null;
@@ -70,6 +69,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
     public function getEmail(): ?string
     {
         return $this->email;
@@ -82,15 +86,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
-
         return $this;
     }
 

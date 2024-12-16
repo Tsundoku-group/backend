@@ -21,9 +21,9 @@ class UserController extends AbstractController
     private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
     private const USER_NOT_FOUND = 'User not found';
 
-    private $entityManager;
-    private $userRepository;
-    private $mailService;
+    private EntityManagerInterface $entityManager;
+    private UserRepository $userRepository;
+    private MailService $mailService;
 
     public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository, MailService $mailService)
     {
@@ -40,7 +40,9 @@ class UserController extends AbstractController
             $usernames = [];
 
             foreach ($users as $user) {
-                $usernames[] = $user->getUserName();
+                foreach ($user->getProfiles() as $profile) {
+                    $usernames[] = $profile->getUsername();
+                }
             }
 
             return $this->json($usernames);
@@ -82,15 +84,21 @@ class UserController extends AbstractController
                 return $this->json(['error' => self::USER_NOT_FOUND], 404);
             }
 
-            return $this->json([
-                'id' => $user->getId(),
-                'username' => $user->getUserName(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'birthDay' => $user->getBirthday()->format('Y-m-d'),
-                'email' => $user->getEmail(),
-                'biographie' => $user->getBiographie(),
-            ]);
+            $profilesData = [];
+
+            foreach ($user->getProfiles() as $profile) {
+                $profilesData[] = [
+                    'id' => $user->getId(),
+                    'username' => $profile->getUserName(),
+                    'firstName' => $profile->getFirstName(),
+                    'lastName' => $profile->getLastName(),
+                    'birthDay' => $profile->getBirthday()?->format('Y-m-d'),
+                    'email' => $user->getEmail(),
+                    'biographie' => $profile->getBio(),
+                ];
+            }
+
+            return $this->json($profilesData);
         } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
@@ -146,7 +154,7 @@ class UserController extends AbstractController
             $user = $this->getUser();
             $captchaToken = $data['captchaToken'];
 
-            if (!$user) {
+            if (!$user instanceof User) {
                 return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
             }
 

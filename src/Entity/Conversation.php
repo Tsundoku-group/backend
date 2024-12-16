@@ -16,10 +16,10 @@ class Conversation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $createdAt;
+    private DateTimeInterface $createdAt;
 
     #[ORM\ManyToOne(inversedBy: 'conversations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -29,7 +29,7 @@ class Conversation
     private Collection $participants;
 
     #[ORM\Column(type: Types::BOOLEAN)]
-    private ?bool $isArchived;
+    private bool $isArchived;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isMuted = false;
@@ -50,6 +50,11 @@ class Conversation
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getCreatedAt(): ?DateTimeInterface

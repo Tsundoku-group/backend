@@ -107,9 +107,10 @@ class MessageController extends AbstractController
                 return new JsonResponse('User is not a participant in this conversation.', Response::HTTP_FORBIDDEN);
             }
 
-            $page = (int) $request->query->get('page', 1);
-            $limit = (int) $request->query->get('limit', 20);
+            $page = (int) $request->query->get('page', '1');
+            $limit = (int) $request->query->get('limit', '20');
 
+            $conversationId = (string) $conversationId;
             $allMessages = $this->confRedisService->getMessagesFromConversation($conversationId);
 
             if (empty($allMessages)) {

@@ -11,6 +11,7 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
@@ -26,20 +27,24 @@ class ResetPasswordController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
-            return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
         if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
         $cooldownPeriod = new DateInterval('PT15M');
         $now = new DateTime('now');
 
-        $nextAllowedRequestTime = $user->getLastPasswordResetRequest()
-            ? (clone $user->getLastPasswordResetRequest())->add($cooldownPeriod)
-            : null;
+        $lastRequest = $user->getLastPasswordResetRequest();
+
+        if ($lastRequest instanceof DateTime) {
+            $nextAllowedRequestTime = (clone $lastRequest)->add($cooldownPeriod);
+        } else {
+            $nextAllowedRequestTime = null;
+        }
 
         if ($nextAllowedRequestTime && $now < $nextAllowedRequestTime) {
             return new JsonResponse(['error' => 'You can only request a password reset once every 15 minutes.'], JsonResponse::HTTP_TOO_MANY_REQUESTS);
@@ -69,7 +74,7 @@ class ResetPasswordController extends AbstractController
 
             return $response;
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -84,20 +89,20 @@ class ResetPasswordController extends AbstractController
         $resetToken = $data['token'] ?? null;
 
         if (!$resetToken) {
-            return new JsonResponse(['error' => 'Token not found'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Token not found'], Response::HTTP_BAD_REQUEST);
         }
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $resetToken]);
         if (!$user) {
-            return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Invalid token'], Response::HTTP_NOT_FOUND);
         }
 
         if (new DateTime() > $user->getResetPwdTokenLifetime()) {
-            return new JsonResponse(['error' => 'Token expired'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Token expired'], Response::HTTP_BAD_REQUEST);
         }
 
         if (!$data || !isset($data['password'])) {
-            return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
@@ -117,7 +122,7 @@ class ResetPasswordController extends AbstractController
                 ['user' => $user->getEmail()]
             );
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => 'Password has been reset successfully']);

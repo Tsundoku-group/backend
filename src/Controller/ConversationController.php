@@ -20,15 +20,13 @@ use Symfony\Component\Routing\Annotation\Route;
 class ConversationController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
-    private ConversationRepository $conversationRepository;
-    private UserRepository $userRepository;
     private ConfRedisService $confRedisService;
+    private ConversationRepository $conversationRepository;
 
-    public function __construct(EntityManagerInterface $entityManager, ConversationRepository $conversationRepository, UserRepository $userRepository, ConfRedisService $redisChatService)
+    public function __construct(EntityManagerInterface $entityManager, ConversationRepository $conversationRepository, ConfRedisService $redisChatService)
     {
         $this->entityManager = $entityManager;
         $this->conversationRepository = $conversationRepository;
-        $this->userRepository = $userRepository;
         $this->confRedisService = $redisChatService;
     }
 
@@ -62,7 +60,7 @@ class ConversationController extends AbstractController
             }
         }
 
-        $existingConversation = $this->entityManager->getRepository(Conversation::class)->findOneByParticipants($participants);
+        $existingConversation = $this->conversationRepository->findOneByParticipants($participants);
 
         if ($existingConversation) {
             return new Response('La conversation existe déjà', Response::HTTP_CONFLICT);
@@ -94,8 +92,7 @@ class ConversationController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 20);
 
-        $conversations = $this->entityManager->getRepository(Conversation::class)
-            ->findConversationsByUserOrderedByLastMessage($user, $page, $limit);
+        $conversations = $this->conversationRepository->findConversationsByUserOrderedByLastMessage($user, $page, $limit);
 
         if (!$conversations) {
             return new JsonResponse(['conversations' => []], Response::HTTP_OK);
@@ -200,7 +197,7 @@ class ConversationController extends AbstractController
     #[Route('/archived/{userId}', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
     public function getArchivedConversationsByUserId(int $userId): Response
     {
-        $conversations = $this->entityManager->getRepository(Conversation::class)->findArchivedConversationsByUserId($userId);
+        $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
 
         if (empty($conversations)) {
             return new Response('No archived conversations found for this user', Response::HTTP_NOT_FOUND);
@@ -309,6 +306,9 @@ class ConversationController extends AbstractController
         return new JsonResponse(['message' => 'Toutes les conversations ont été désarchivées avec succès.']);
     }
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
     public function muteConversation(int $conversationId, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -324,6 +324,8 @@ class ConversationController extends AbstractController
         if (null === $duration) {
             return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
         }
+
+        $muteUntil = null;
 
         if ('eternal' === $duration) {
             $conversation->setMutedUntil(new DateTime('9999-12-31 23:59:59'));
