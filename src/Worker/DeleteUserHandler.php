@@ -5,7 +5,9 @@ namespace App\Worker;
 use App\Message\DeleteUserMessage;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -27,7 +29,7 @@ class DeleteUserHandler
         $users = $this->userRepository->findAll();
 
         foreach ($users as $user) {
-            if ($user->getAccountDeletionDate() < new \DateTime()) {
+            if ($user->getAccountDeletionDate() < new DateTime()) {
                 $email = $user->getEmail();
 
                 $this->entityManager->remove($user);
@@ -49,7 +51,7 @@ class DeleteUserHandler
                 'Suppression de votre compte utilisateur',
                 $htmlContent
             );
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             error_log('Erreur lors de l\'envoi de l\'email : ' . $e->getMessage());
         }
     }

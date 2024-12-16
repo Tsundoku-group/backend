@@ -2,7 +2,8 @@
 
 namespace App\Message;
 
-class DeleteUserMessage {
+class DeleteUserMessage
+{
     public function __construct()
     {
     }

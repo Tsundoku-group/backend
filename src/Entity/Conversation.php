@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ConversationRepository;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -14,10 +16,10 @@ class Conversation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt;
+    private DateTimeInterface $createdAt;
 
     #[ORM\ManyToOne(inversedBy: 'conversations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -27,21 +29,21 @@ class Conversation
     private Collection $participants;
 
     #[ORM\Column(type: Types::BOOLEAN)]
-    private ?bool $isArchived;
+    private bool $isArchived;
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isMuted = false;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $mutedUntil = null;
+    private ?DateTimeInterface $mutedUntil = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $lastMessageAt = null;
+    private ?DateTimeInterface $lastMessageAt = null;
 
     public function __construct()
     {
         $this->participants = new ArrayCollection();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->isArchived = false;
     }
 
@@ -50,12 +52,17 @@ class Conversation
         return $this->id;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
@@ -111,26 +118,28 @@ class Conversation
     public function setIsMuted(bool $isMuted): self
     {
         $this->isMuted = $isMuted;
+
         return $this;
     }
 
-    public function getMutedUntil(): ?\DateTimeInterface
+    public function getMutedUntil(): ?DateTimeInterface
     {
         return $this->mutedUntil;
     }
 
-    public function setMutedUntil(?\DateTimeInterface $mutedUntil): self
+    public function setMutedUntil(?DateTimeInterface $mutedUntil): self
     {
         $this->mutedUntil = $mutedUntil;
+
         return $this;
     }
 
-    public function getLastMessageAt(): ?\DateTimeInterface
+    public function getLastMessageAt(): ?DateTimeInterface
     {
         return $this->lastMessageAt;
     }
 
-    public function setLastMessageAt(\DateTimeInterface $lastMessageAt): self
+    public function setLastMessageAt(DateTimeInterface $lastMessageAt): self
     {
         $this->lastMessageAt = $lastMessageAt;
 

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\FriendshipRepository;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -17,16 +19,16 @@ class Friendship
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $status;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $updatedAt = null;
+    private ?DateTimeInterface $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'friendships')]
     #[ORM\JoinColumn(nullable: false)]
@@ -37,17 +39,22 @@ class Friendship
     private ?User $receiver = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $friendAt = null;
+    private ?DateTimeInterface $friendAt = null;
 
     public function __construct()
     {
         $this->status = self::STATUS_PENDING;
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getStatus(): ?string
@@ -58,27 +65,28 @@ class Friendship
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?DateTimeInterface
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(?\DateTimeInterface $updatedAt): static
+    public function setUpdatedAt(?DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 
@@ -109,12 +117,12 @@ class Friendship
         return $this;
     }
 
-    public function getFriendAt(): ?\DateTimeInterface
+    public function getFriendAt(): ?DateTimeInterface
     {
         return $this->friendAt;
     }
 
-    public function setFriendAt(?\DateTimeInterface $friendAt): static
+    public function setFriendAt(?DateTimeInterface $friendAt): static
     {
         $this->friendAt = $friendAt;
 

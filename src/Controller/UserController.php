@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,9 +21,9 @@ class UserController extends AbstractController
     private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
     private const USER_NOT_FOUND = 'User not found';
 
-    private $entityManager;
-    private $userRepository;
-    private $mailService;
+    private EntityManagerInterface $entityManager;
+    private UserRepository $userRepository;
+    private MailService $mailService;
 
     public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository, MailService $mailService)
     {
@@ -38,11 +40,13 @@ class UserController extends AbstractController
             $usernames = [];
 
             foreach ($users as $user) {
-                $usernames[] = $user->getUserName();
+                foreach ($user->getProfiles() as $profile) {
+                    $usernames[] = $profile->getUsername();
+                }
             }
 
             return $this->json($usernames);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -65,7 +69,7 @@ class UserController extends AbstractController
             $this->entityManager->flush();
 
             return $this->json($user, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -80,16 +84,22 @@ class UserController extends AbstractController
                 return $this->json(['error' => self::USER_NOT_FOUND], 404);
             }
 
-            return $this->json([
-                'id' => $user->getId(),
-                'username' => $user->getUserName(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'birthDay' => $user->getBirthday()->format('Y-m-d'),
-                'email' => $user->getEmail(),
-                'biographie' => $user->getBiographie(),
-            ]);
-        } catch (\Exception $e) {
+            $profilesData = [];
+
+            foreach ($user->getProfiles() as $profile) {
+                $profilesData[] = [
+                    'id' => $user->getId(),
+                    'username' => $profile->getUserName(),
+                    'firstName' => $profile->getFirstName(),
+                    'lastName' => $profile->getLastName(),
+                    'birthDay' => $profile->getBirthday()?->format('Y-m-d'),
+                    'email' => $user->getEmail(),
+                    'biographie' => $profile->getBio(),
+                ];
+            }
+
+            return $this->json($profilesData);
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -110,7 +120,7 @@ class UserController extends AbstractController
             $this->entityManager->flush();
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -131,7 +141,7 @@ class UserController extends AbstractController
             }
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -144,7 +154,7 @@ class UserController extends AbstractController
             $user = $this->getUser();
             $captchaToken = $data['captchaToken'];
 
-            if (!$user) {
+            if (!$user instanceof User) {
                 return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
             }
 
@@ -166,7 +176,7 @@ class UserController extends AbstractController
             $entityManager->flush();
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -185,7 +195,7 @@ class UserController extends AbstractController
         }
 
         try {
-            $deletionDate = new \DateTime('+30 days');
+            $deletionDate = new DateTime('+30 days');
             $user->setAccountDeletionDate($deletionDate);
 
             $this->entityManager->persist($user);
@@ -194,7 +204,7 @@ class UserController extends AbstractController
             $this->sendAccountDeletionEmail($user->getEmail());
 
             return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -203,7 +213,7 @@ class UserController extends AbstractController
     {
         $subject = 'Demande de suppression de votre compte';
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/request_deletion_account_mail.html');
-        $deletionDate = (new \DateTime('+30 days'))->format('Y-m-d');
+        $deletionDate = (new DateTime('+30 days'))->format('Y-m-d');
         $htmlContent = str_replace('{deletionDate}', $deletionDate, $htmlContent);
 
         try {
@@ -212,7 +222,7 @@ class UserController extends AbstractController
                 $subject,
                 $htmlContent
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
         }
     }

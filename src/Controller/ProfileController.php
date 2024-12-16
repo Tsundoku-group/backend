@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Profile;
+use App\Entity\User;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,9 +23,9 @@ class ProfileController extends AbstractController
 
     private const USER_NOT_FOUND = 'User not found';
 
-    private $entityManager;
-    private $profileRepository;
-    private $userRepository;
+    private EntityManagerInterface $entityManager;
+    private ProfileRepository $profileRepository;
+    private UserRepository $userRepository;
 
     public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, UserRepository $userRepository)
     {
@@ -46,7 +49,7 @@ class ProfileController extends AbstractController
                 'firstName' => $profile->getFirstName(),
                 'lastName' => $profile->getLastName(),
                 'username' => $profile->getUsername(),
-                'birthday' => $profile->getBirthday()?->format('Y-m-d'),
+                'birthday' => $profile->getBirthday()->format('Y-m-d'),
                 'gender' => $profile->getGender(),
                 'phoneNumber' => $profile->getPhoneNumber(),
                 'bio' => $profile->getBio(),
@@ -54,11 +57,11 @@ class ProfileController extends AbstractController
                 'instagram' => $profile->getInstagram(),
                 'x' => $profile->getX(),
                 'type' => $profile->getType(),
-                'createdAt' => $profile->getCreatedAt()?->format(\DateTime::ATOM),
+                'createdAt' => $profile->getCreatedAt()?->format(DateTime::ATOM),
             ];
 
             return new JsonResponse($profileData);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -85,7 +88,7 @@ class ProfileController extends AbstractController
             return new JsonResponse([
                 'profiles' => $profiles,
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -107,6 +110,10 @@ class ProfileController extends AbstractController
 
             $user = $this->getUser();
 
+            if (!$user instanceof User) {
+                return new JsonResponse(['error' => 'User is not authenticated or invalid'], Response::HTTP_UNAUTHORIZED);
+            }
+
             $profileCount = $this->profileRepository->count(['user' => $user]);
 
             if ($profileCount >= 5) {
@@ -118,7 +125,7 @@ class ProfileController extends AbstractController
             $profile->setType($data['type'] ?? 'lecteur');
             $profile->setBio($data['bio'] ?? null);
 
-            $birthday = empty($data['birthday']) ? null : \DateTime::createFromFormat('Y-m-d', $data['birthday']);
+            $birthday = empty($data['birthday']) ? null : DateTime::createFromFormat('Y-m-d', $data['birthday']);
 
             $profile->setBirthday($birthday);
             $profile->setPhoneNumber($data['phoneNumber'] ?? null);
@@ -128,7 +135,7 @@ class ProfileController extends AbstractController
             $entityManager->flush();
 
             return new JsonResponse(['message' => 'Profile created successfully'], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
         }
     }
@@ -151,7 +158,7 @@ class ProfileController extends AbstractController
             $profile->setFirstName($data['firstName'] ?? $profile->getFirstName());
             $profile->setLastName($data['lastName'] ?? $profile->getLastName());
             $profile->setUsername($data['username'] ?? $profile->getUsername());
-            $profile->setBirthday(new \DateTime($data['birthday'] ?? $profile->getBirthday()));
+            $profile->setBirthday(new DateTime($data['birthday'] ?? $profile->getBirthday()));
             $profile->setGender($data['gender'] ?? $profile->getGender());
             $profile->setPhoneNumber($data['phoneNumber'] ?? $profile->getPhoneNumber());
             $profile->setBio($data['bio'] ?? $profile->getBio());
@@ -163,7 +170,7 @@ class ProfileController extends AbstractController
             $this->entityManager->flush();
 
             return $this->json($profile);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -181,7 +188,7 @@ class ProfileController extends AbstractController
             $this->entityManager->flush();
 
             return new JsonResponse(null, 204);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -217,7 +224,7 @@ class ProfileController extends AbstractController
                     'username' => $activeProfile->getUsername(),
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -257,8 +264,7 @@ class ProfileController extends AbstractController
             $this->entityManager->flush();
 
             return new JsonResponse(['message' => 'Le profil a été défini comme actif avec succès']);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }

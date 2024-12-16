@@ -3,21 +3,23 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateInterval;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
@@ -26,7 +28,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private Collection $profiles;
@@ -35,36 +37,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $tokenRegistration = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $tokenRegistrationLifetime = null;
+    private ?DateTimeInterface $tokenRegistrationLifetime = null;
 
     #[ORM\Column]
-    private ?bool $isVerified = false;
+    private bool $isVerified = false;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resetPwdToken = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $resetPwdTokenLifetime = null;
+    private ?DateTimeInterface $resetPwdTokenLifetime = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $lastPasswordResetRequest = null;
+    private ?DateTimeInterface $lastPasswordResetRequest = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $accountDeletionDate = null;
+    private ?DateTimeInterface $accountDeletionDate = null;
 
     public function __construct()
     {
         $this->profiles = new ArrayCollection();
-        $this->createdAt = new \DateTime('now');
+        $this->createdAt = new DateTime('now');
         $this->isVerified = false;
-        $this->tokenRegistrationLifetime = (new \DateTime('now'))->add(new \DateInterval('P1D'));
-        $this->resetPwdTokenLifetime = (new \DateTime('now'))->add(new \DateInterval('PT1H'));
-        $this->lastPasswordResetRequest = (new \DateTime('now'));
+        $this->tokenRegistrationLifetime = (new DateTime('now'))->add(new DateInterval('P1D'));
+        $this->resetPwdTokenLifetime = (new DateTime('now'))->add(new DateInterval('PT1H'));
+        $this->lastPasswordResetRequest = (new DateTime('now'));
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getEmail(): ?string
@@ -79,24 +86,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
-
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
@@ -115,12 +122,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getTokenRegistrationLifetime(): ?\DateTimeInterface
+    public function getTokenRegistrationLifetime(): ?DateTimeInterface
     {
         return $this->tokenRegistrationLifetime;
     }
 
-    public function setTokenRegistrationLifetime(\DateTimeInterface $tokenRegistrationLifetime): static
+    public function setTokenRegistrationLifetime(DateTimeInterface $tokenRegistrationLifetime): static
     {
         $this->tokenRegistrationLifetime = $tokenRegistrationLifetime;
 
@@ -145,6 +152,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         foreach ($this->profiles as $profile) {
             $roles[] = $profile->getRole();
         }
+
         return array_unique($roles);
     }
 
@@ -155,7 +163,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string)$this->email;
+        return (string) $this->email;
     }
 
     public function getProfiles(): Collection
@@ -196,38 +204,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getResetPwdTokenLifetime(): ?\DateTimeInterface
+    public function getResetPwdTokenLifetime(): ?DateTimeInterface
     {
         return $this->resetPwdTokenLifetime;
     }
 
-    public function setResetPwdTokenLifetime(?\DateTimeInterface $resetPwdTokenLifetime): static
+    public function setResetPwdTokenLifetime(?DateTimeInterface $resetPwdTokenLifetime): static
     {
         $this->resetPwdTokenLifetime = $resetPwdTokenLifetime;
 
         return $this;
     }
 
-    public function getLastPasswordResetRequest(): ?\DateTimeInterface
+    public function getLastPasswordResetRequest(): ?DateTimeInterface
     {
         return $this->lastPasswordResetRequest;
     }
 
-    public function setLastPasswordResetRequest(?\DateTimeInterface $lastPasswordResetRequest): static
+    public function setLastPasswordResetRequest(?DateTimeInterface $lastPasswordResetRequest): static
     {
         $this->lastPasswordResetRequest = $lastPasswordResetRequest;
 
         return $this;
     }
 
-    public function getAccountDeletionDate(): ?\DateTimeInterface
+    public function getAccountDeletionDate(): ?DateTimeInterface
     {
         return $this->accountDeletionDate;
     }
 
-    public function setAccountDeletionDate(?\DateTimeInterface $accountDeletionDate): static
+    public function setAccountDeletionDate(?DateTimeInterface $accountDeletionDate): static
     {
         $this->accountDeletionDate = $accountDeletionDate;
+
         return $this;
     }
 }

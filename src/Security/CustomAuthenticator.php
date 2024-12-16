@@ -2,11 +2,12 @@
 
 namespace App\Security;
 
-use App\Entity\User;
 use App\Entity\RefreshToken;
+use App\Entity\User;
 use App\Service\MailService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -29,13 +30,12 @@ class CustomAuthenticator extends AbstractAuthenticator
     private MailService $mailService;
 
     public function __construct(
-        JWTTokenManagerInterface       $JWTManager,
+        JWTTokenManagerInterface $JWTManager,
         RefreshTokenGeneratorInterface $refreshTokenGenerator,
-        RefreshTokenManagerInterface   $refreshTokenManager,
-        EntityManagerInterface         $entityManager,
-        MailService                    $mailService
-    )
-    {
+        RefreshTokenManagerInterface $refreshTokenManager,
+        EntityManagerInterface $entityManager,
+        MailService $mailService,
+    ) {
         $this->JWTManager = $JWTManager;
         $this->refreshTokenGenerator = $refreshTokenGenerator;
         $this->refreshTokenManager = $refreshTokenManager;
@@ -108,7 +108,7 @@ class CustomAuthenticator extends AbstractAuthenticator
                             $subject,
                             $htmlContent
                         );
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
                     }
                 }
@@ -134,8 +134,8 @@ class CustomAuthenticator extends AbstractAuthenticator
             'email' => $user->getEmail(),
             'isVerified' => $user->isVerified(),
             'token' => $jwt,
-            'refresh_token' => $refreshTokenString
-            ];
+            'refresh_token' => $refreshTokenString,
+        ];
 
         if ($accountUpdated) {
             $response['message'] = 'Votre compte a été mis à jour et ne sera pas supprimé.';

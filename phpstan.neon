@@ -10,5 +10,3 @@ parameters:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     excludePaths:
         - %currentWorkingDirectory%/src/Migrations/* # Exclure les migrations
-    ignoreErrors:
-        - '#Dummy patterns to ignore some errors#' # Optionnel : ignorer certaines erreurs spécifiques
