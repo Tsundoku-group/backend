@@ -1,0 +1,14 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - src # Répertoire à analyser
+        - tests # Analyser aussi les tests (facultatif)
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+    excludePaths:
+        - %currentWorkingDirectory%/src/Migrations/* # Exclure les migrations
+    ignoreErrors:
+        - '#Dummy patterns to ignore some errors#' # Optionnel : ignorer certaines erreurs spécifiques

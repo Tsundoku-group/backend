@@ -79,6 +79,9 @@
     },
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^3.6",
-        "symfony/maker-bundle": "^1.60"
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "symfony/maker-bundle": "^1.60",
+        "symplify/easy-coding-standard": "^12.5"
     }
 }
