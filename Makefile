@@ -47,6 +47,7 @@ composer-install:                        # Installer les dépendances avec Compo
 
 composer-require:                        # Ajouter une nouvelle dépendance Composer
 	$(COMPOSE) exec $(COMPOSER_SERVICE) composer require $(package)
+# make composer-require package="**nom du package**"
 
 composer-update:                         # Mettre à jour les dépendances Composer
 	$(COMPOSE) exec $(COMPOSER_SERVICE) composer update
@@ -94,3 +95,16 @@ validate-schema:                         # Valider le schéma de la base de donn
 
 fixtures:                                # Charger les fixtures dans la base de données
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:fixtures:load --no-interaction
+
+# PHPStan
+
+phpstan:								 # Lancer PHPStan pour analyser le code source
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpstan analyse
+
+# PHP-ECS
+
+ecs-check:								 # Vérifier le respect des standards de code avec ECS
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/ecs check src
+
+ecs-fix:								 # Corriger automatiquement les erreurs de formatage avec ECS
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/ecs check src --fix
