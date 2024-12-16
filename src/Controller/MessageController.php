@@ -2,15 +2,18 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Entity\Conversation;
+use App\Entity\User;
 use App\Service\ConfRedisService;
+use DateTime;
+use DateTimeZone;
+use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/api/message')]
 class MessageController extends AbstractController
@@ -59,7 +62,7 @@ class MessageController extends AbstractController
                 return new JsonResponse('User is not a participant in this conversation.', Response::HTTP_FORBIDDEN);
             }
 
-            $dateTime = new \DateTime('now', new \DateTimeZone('Europe/Paris'));
+            $dateTime = new DateTime('now', new DateTimeZone('Europe/Paris'));
             $formattedDate = $dateTime->format('Y-m-d H:i:s');
 
             $messageData = [
@@ -70,7 +73,7 @@ class MessageController extends AbstractController
                 'sent_by' => $createdBy->getProfiles()->first()->getUsername(),
                 'sent_at' => $formattedDate,
                 'isRead' => false,
-                'isReadAt' => null
+                'isReadAt' => null,
             ];
 
             $this->confRedisService->addMessageToConversation($conversationId, $messageData);
@@ -81,7 +84,7 @@ class MessageController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Message sent to conversation.', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -131,7 +134,7 @@ class MessageController extends AbstractController
             }, $pagedMessages);
 
             return new JsonResponse($formattedMessages, Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -166,7 +169,7 @@ class MessageController extends AbstractController
             $this->confRedisService->markMessagesRead($conversationId, $userEmail);
 
             return new Response('All messages marked as read.', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

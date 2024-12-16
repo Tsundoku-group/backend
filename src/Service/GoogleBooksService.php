@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use DateTime;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GoogleBooksService
@@ -18,7 +19,7 @@ class GoogleBooksService
     public function getLatestReleases(int $maxResults): array
     {
         $books = [];
-        $currentDate = new \DateTime();
+        $currentDate = new DateTime();
         $currentYear = $currentDate->format('Y');
         $startIndex = 0;
         $resultsPerPage = 40;
@@ -41,7 +42,7 @@ class GoogleBooksService
 
             foreach ($data['items'] as $item) {
                 $volumeInfo = $item['volumeInfo'];
-                $publishedDate = isset($volumeInfo['publishedDate']) ? new \DateTime($volumeInfo['publishedDate']) : null;
+                $publishedDate = isset($volumeInfo['publishedDate']) ? new DateTime($volumeInfo['publishedDate']) : null;
 
                 if ($publishedDate && $publishedDate > $currentDate) {
                     continue;

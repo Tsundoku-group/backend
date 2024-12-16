@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProfileRepository;
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 class Profile
@@ -36,7 +37,7 @@ class Profile
     private ?string $username = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTime $birthday = null;
+    private ?DateTime $birthday = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $gender = null;
@@ -60,16 +61,16 @@ class Profile
     private string $type = 'lecteur';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTime $createdAt = null;
+    private ?DateTime $createdAt = null;
 
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
 
-    public function  __construct()
+    public function __construct()
     {
         $this->groups = new ArrayCollection();
         $this->role = 'ROLE_USER';
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
     }
 
     public function getId(): ?int
@@ -77,9 +78,6 @@ class Profile
         return $this->id;
     }
 
-    /**
-     * @return Collection
-     */
     public function getGroups(): Collection
     {
         return $this->groups;
@@ -161,15 +159,15 @@ class Profile
         return $this;
     }
 
-    public function getBirthday(): \DateTime
+    public function getBirthday(): DateTime
     {
         return $this->birthday;
     }
 
-    public function setBirthday(?\DateTime $birthday): self
+    public function setBirthday(?DateTime $birthday): self
     {
-        if ($birthday instanceof \DateTime) {
-            $birthday = \DateTime::createFromInterface($birthday);
+        if ($birthday instanceof DateTime) {
+            $birthday = DateTime::createFromInterface($birthday);
         }
         $this->birthday = $birthday;
 
@@ -256,15 +254,16 @@ class Profile
     public function setType(string $type): self
     {
         $this->type = $type;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTime
+    public function getCreatedAt(): ?DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTime $createdAt): self
+    public function setCreatedAt(DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -279,6 +278,7 @@ class Profile
     public function setActiveProfile(bool $isActive): self
     {
         $this->activeProfile = $isActive;
+
         return $this;
     }
 }

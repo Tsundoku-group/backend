@@ -4,14 +4,16 @@ namespace App\Controller;
 
 use App\Entity\Conversation;
 use App\Entity\User;
-use App\Service\ConfRedisService;
 use App\Repository\ConversationRepository;
 use App\Repository\UserRepository;
+use App\Service\ConfRedisService;
+use DateTime;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/conversation')]
@@ -68,7 +70,7 @@ class ConversationController extends AbstractController
 
         $conversation = new Conversation();
         $conversation->setCreatedBy($createdBy);
-        $conversation->setCreatedAt(new \DateTime());
+        $conversation->setCreatedAt(new DateTime());
 
         foreach ($participants as $participant) {
             $conversation->addParticipant($participant);
@@ -144,6 +146,7 @@ class ConversationController extends AbstractController
                 'isMutedUntil' => $conversation->getMutedUntil(),
             ] : null;
         }, $limitedConversations));
+
         return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
     }
 
@@ -289,7 +292,7 @@ class ConversationController extends AbstractController
         }
 
         $conversations = $entityManager->getRepository(Conversation::class)->findBy([
-            'isArchived' => true
+            'isArchived' => true,
         ]);
 
         if (!$conversations) {
@@ -323,10 +326,10 @@ class ConversationController extends AbstractController
         }
 
         if ('eternal' === $duration) {
-            $conversation->setMutedUntil(new \DateTime('9999-12-31 23:59:59'));
+            $conversation->setMutedUntil(new DateTime('9999-12-31 23:59:59'));
         } else {
-            $timezone = new \DateTimeZone('Europe/Paris');
-            $muteUntil = (new \DateTime('now', $timezone))->modify("+{$duration} hours");
+            $timezone = new DateTimeZone('Europe/Paris');
+            $muteUntil = (new DateTime('now', $timezone))->modify("+{$duration} hours");
             $conversation->setIsMuted(true);
             $conversation->setMutedUntil($muteUntil);
         }

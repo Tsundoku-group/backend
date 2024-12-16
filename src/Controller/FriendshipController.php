@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Entity\Friendship;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,12 +40,12 @@ class FriendshipController extends AbstractController
 
         $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
             'requester' => $requester,
-            'receiver' => $receiver
+            'receiver' => $receiver,
         ]);
 
         $existingInverseFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
             'requester' => $receiver,
-            'receiver' => $requester
+            'receiver' => $requester,
         ]);
 
         if ($existingFriendship || $existingInverseFriendship) {
@@ -68,7 +68,7 @@ class FriendshipController extends AbstractController
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || $friendship->getStatus() !== 'pending') {
+        if (!$friendship || 'pending' !== $friendship->getStatus()) {
             return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
         }
 
@@ -84,7 +84,7 @@ class FriendshipController extends AbstractController
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || $friendship->getStatus() !== 'pending') {
+        if (!$friendship || 'pending' !== $friendship->getStatus()) {
             return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
         }
 
@@ -100,7 +100,7 @@ class FriendshipController extends AbstractController
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || $friendship->getStatus() !== 'accepted') {
+        if (!$friendship || 'accepted' !== $friendship->getStatus()) {
             return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
         }
 
@@ -153,7 +153,7 @@ class FriendshipController extends AbstractController
                     'username' => $friendship->getRequester()->getProfiles()->first()->getUsername(),
                 ],
                 'status' => $friendship->getStatus(),
-                'createdAt' => $friendship->getCreatedAt()->format('Y-m-d H:i:s')
+                'createdAt' => $friendship->getCreatedAt()->format('Y-m-d H:i:s'),
             ];
         }, $friendRequests);
 

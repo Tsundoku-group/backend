@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use RuntimeException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -27,8 +28,8 @@ class MailService
 
         try {
             $this->mailerInterface->send($email);
-        }  catch (TransportExceptionInterface $e) {
-            throw new \RuntimeException(sprintf('Failed to send email: %s', $e->getMessage()), 0, $e);
+        } catch (TransportExceptionInterface $e) {
+            throw new RuntimeException(sprintf('Failed to send email: %s', $e->getMessage()), 0, $e);
         }
     }
 }

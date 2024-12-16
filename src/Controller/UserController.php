@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,7 +44,7 @@ class UserController extends AbstractController
             }
 
             return $this->json($usernames);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -65,7 +67,7 @@ class UserController extends AbstractController
             $this->entityManager->flush();
 
             return $this->json($user, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -89,7 +91,7 @@ class UserController extends AbstractController
                 'email' => $user->getEmail(),
                 'biographie' => $user->getBiographie(),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -110,7 +112,7 @@ class UserController extends AbstractController
             $this->entityManager->flush();
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -131,7 +133,7 @@ class UserController extends AbstractController
             }
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -166,7 +168,7 @@ class UserController extends AbstractController
             $entityManager->flush();
 
             return $this->json($user, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -185,7 +187,7 @@ class UserController extends AbstractController
         }
 
         try {
-            $deletionDate = new \DateTime('+30 days');
+            $deletionDate = new DateTime('+30 days');
             $user->setAccountDeletionDate($deletionDate);
 
             $this->entityManager->persist($user);
@@ -194,7 +196,7 @@ class UserController extends AbstractController
             $this->sendAccountDeletionEmail($user->getEmail());
 
             return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -203,7 +205,7 @@ class UserController extends AbstractController
     {
         $subject = 'Demande de suppression de votre compte';
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/request_deletion_account_mail.html');
-        $deletionDate = (new \DateTime('+30 days'))->format('Y-m-d');
+        $deletionDate = (new DateTime('+30 days'))->format('Y-m-d');
         $htmlContent = str_replace('{deletionDate}', $deletionDate, $htmlContent);
 
         try {
@@ -212,7 +214,7 @@ class UserController extends AbstractController
                 $subject,
                 $htmlContent
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
         }
     }

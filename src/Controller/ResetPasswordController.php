@@ -4,25 +4,26 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\MailService;
+use DateInterval;
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
-
-class ResetPasswordController extends AbstractController {
-
+class ResetPasswordController extends AbstractController
+{
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['POST'])]
     public function forgotPassword(
         Request $request,
         EntityManagerInterface $entityManager,
         TokenGeneratorInterface $tokenGenerator,
-        MailService $mailService
-    ): JsonResponse
-    {
+        MailService $mailService,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
@@ -33,8 +34,8 @@ class ResetPasswordController extends AbstractController {
             return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        $cooldownPeriod = new \DateInterval('PT15M');
-        $now = new \DateTime('now');
+        $cooldownPeriod = new DateInterval('PT15M');
+        $now = new DateTime('now');
 
         $nextAllowedRequestTime = $user->getLastPasswordResetRequest()
             ? (clone $user->getLastPasswordResetRequest())->add($cooldownPeriod)
@@ -48,7 +49,7 @@ class ResetPasswordController extends AbstractController {
 
         $resetToken = $tokenGenerator->generateToken();
         $user->setResetPwdToken($resetToken);
-        $user->setResetPwdTokenLifetime((new \DateTime())->modify('+1 hour'));
+        $user->setResetPwdTokenLifetime((new DateTime())->modify('+1 hour'));
         $entityManager->flush();
 
         $resetUrl = $_ENV['FRONT_URL'] . '/(auth)/reset-password?token=';
@@ -67,7 +68,7 @@ class ResetPasswordController extends AbstractController {
             $response->headers->set('X-Reset-Token', $resetToken);
 
             return $response;
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -77,9 +78,8 @@ class ResetPasswordController extends AbstractController {
         Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
-        MailService $mailService
-    ): JsonResponse
-    {
+        MailService $mailService,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $resetToken = $data['token'] ?? null;
 
@@ -92,7 +92,7 @@ class ResetPasswordController extends AbstractController {
             return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        if (new \DateTime() > $user->getResetPwdTokenLifetime()) {
+        if (new DateTime() > $user->getResetPwdTokenLifetime()) {
             return new JsonResponse(['error' => 'Token expired'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
@@ -116,11 +116,10 @@ class ResetPasswordController extends AbstractController {
                 $htmlContent,
                 ['user' => $user->getEmail()]
             );
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => 'Password has been reset successfully']);
     }
-
 }

@@ -4,7 +4,10 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\MailService;
+use DateInterval;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,16 +17,14 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
 class RegisterController extends AbstractController
 {
-
     #[Route('/register', name: 'app_register', methods: ['POST'])]
     public function register(
-        Request                     $request,
-        EntityManagerInterface      $entityManager,
+        Request $request,
+        EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
-        MailService                 $mailService,
-        TokenGeneratorInterface     $tokenGenerator
-    ): JsonResponse
-    {
+        MailService $mailService,
+        TokenGeneratorInterface $tokenGenerator,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'], $data['password'])) {
@@ -59,10 +60,10 @@ class RegisterController extends AbstractController
                 [
                     'user' => $user->getEmail(),
                     'token' => $tokenRegistration,
-                    'LifeTimeToken' => $user->getTokenRegistrationLifetime()->format('d-m-Y H:i:s')
+                    'LifeTimeToken' => $user->getTokenRegistrationLifetime()->format('d-m-Y H:i:s'),
                 ]
             );
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -99,7 +100,7 @@ class RegisterController extends AbstractController
                     'user' => $user->getEmail(),
                 ]
             );
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -108,12 +109,11 @@ class RegisterController extends AbstractController
 
     #[Route('/resend-confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
     public function resendConfirmationEmail(
-        Request                 $request,
-        EntityManagerInterface  $entityManager,
-        MailService             $mailService,
-        TokenGeneratorInterface $tokenGenerator
-    ): JsonResponse
-    {
+        Request $request,
+        EntityManagerInterface $entityManager,
+        MailService $mailService,
+        TokenGeneratorInterface $tokenGenerator,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
@@ -130,7 +130,7 @@ class RegisterController extends AbstractController
 
         $tokenRegistration = $tokenGenerator->generateToken();
         $user->setTokenRegistration($tokenRegistration);
-        $user->setTokenRegistrationLifetime((new \DateTime('now'))->add(new \DateInterval('P1D'))); // token lifetime 1 day
+        $user->setTokenRegistrationLifetime((new DateTime('now'))->add(new DateInterval('P1D'))); // token lifetime 1 day
         $entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/confirm_mail.html');
@@ -146,10 +146,10 @@ class RegisterController extends AbstractController
                 [
                     'user' => $user->getEmail(),
                     'token' => $tokenRegistration,
-                    'LifeTimeToken' => $user->getTokenRegistrationLifetime()->format('d-m-Y H:i:s')
+                    'LifeTimeToken' => $user->getTokenRegistrationLifetime()->format('d-m-Y H:i:s'),
                 ]
             );
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
 
