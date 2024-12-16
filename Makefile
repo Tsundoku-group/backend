@@ -1,0 +1,96 @@
+# Nom des services Docker Compose
+COMPOSE=docker compose                   # Commande pour exécuter Docker Compose
+PHP_SERVICE=php                          # Service Docker pour PHP
+COMPOSER_SERVICE=composer_sf             # Service Docker pour Composer
+
+# Fichier d'environnement
+ENV_FILE=.env                            # Fichier contenant les variables d'environnement
+
+# Commandes Docker Compose
+build:                                   # Construire les images Docker des services
+	$(COMPOSE) build
+
+start:                                   # Démarrer les conteneurs sans détachement
+	$(COMPOSE) start
+
+stop:                                    # Arrêter les conteneurs en cours d'exécution
+	$(COMPOSE) stop
+
+up:                                      # Démarrer les conteneurs en arrière-plan (mode détaché)
+	$(COMPOSE) up -d
+
+down:                                    # Arrêter et supprimer les conteneurs, réseaux et volumes associés
+	$(COMPOSE) down
+
+restart:                                 # Redémarrer les conteneurs
+	$(COMPOSE) down && $(COMPOSE) up -d
+
+docker-ps:                               # Afficher l'état des conteneurs Docker
+	$(COMPOSE) ps
+
+images:                                  # Afficher les images Docker utilisées
+	$(COMPOSE) images
+
+logs:                                    # Afficher les logs des conteneurs en temps réel
+	$(COMPOSE) logs -f
+
+# Accès aux conteneurs
+php-bash:                                # Ouvrir un terminal dans le conteneur PHP
+	$(COMPOSE) exec $(PHP_SERVICE) bash
+
+composer-bash:                           # Ouvrir un terminal dans le conteneur Composer
+	$(COMPOSE) exec $(COMPOSER_SERVICE) bash
+
+# Commandes Composer
+composer-install:                        # Installer les dépendances avec Composer
+	$(COMPOSE) exec $(COMPOSER_SERVICE) composer install
+
+composer-require:                        # Ajouter une nouvelle dépendance Composer
+	$(COMPOSE) exec $(COMPOSER_SERVICE) composer require $(package)
+
+composer-update:                         # Mettre à jour les dépendances Composer
+	$(COMPOSE) exec $(COMPOSER_SERVICE) composer update
+
+composer-dumpautoload:                   # Régénérer le fichier autoload
+	$(COMPOSE) exec $(COMPOSER_SERVICE) composer dump-autoload
+
+# Commandes Symfony
+make-entity:                             # Créer une nouvelle entité Symfony
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console make:entity $(entity)
+
+make-migration:                          # Générer un fichier de migration
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console make:migration
+
+migrate:                                 # Appliquer les migrations dans la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:migrate --no-interaction
+
+cache-clear:                             # Vider le cache Symfony
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console cache:clear
+
+debug-router:                            # Lister toutes les routes définies dans Symfony
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console debug:router
+
+debug-env:                               # Afficher les variables d'environnement Symfony
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console debug:dotenv
+
+debug-autowiring:                        # Lister les services disponibles pour l'autowiring
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console debug:autowiring
+
+# Commandes Doctrine (base de données)
+create-database:                         # Créer la base de données si elle n'existe pas
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:database:create --if-not-exists
+
+drop-database:                           # Supprimer la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:database:drop --force
+
+create-schema:                           # Générer le schéma de la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:schema:create
+
+update-schema:                           # Mettre à jour le schéma de la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:schema:update --force
+
+validate-schema:                         # Valider le schéma de la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:schema:validate
+
+fixtures:                                # Charger les fixtures dans la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:fixtures:load --no-interaction
