@@ -38,7 +38,13 @@ class ProfileController extends AbstractController
     public function show(int $profileId): JsonResponse
     {
         try {
-            $profile = $this->profileRepository->findOneBy(['user' => $profileId]);
+            $user = $this->getUser();
+
+            if (!$user instanceof User) {
+                return new JsonResponse(self::USER_NOT_FOUND, self::INTERNAL_SERVER_ERROR);
+            }
+
+            $profile = $this->profileRepository->findProfileById($profileId);
 
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
@@ -263,7 +269,14 @@ class ProfileController extends AbstractController
             $profile->setActiveProfile(true);
             $this->entityManager->flush();
 
-            return new JsonResponse(['message' => 'Le profil a été défini comme actif avec succès']);
+            $profileData = [
+                'id' => $profileId,
+                'firstName' => $profile->getFirstName(),
+                'lastName' => $profile->getLastName(),
+                'username' => $profile->getUsername(),
+            ];
+
+            return new JsonResponse($profileData, 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }

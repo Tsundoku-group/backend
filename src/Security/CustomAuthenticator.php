@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use App\Entity\Profile;
 use App\Entity\RefreshToken;
 use App\Entity\User;
 use App\Service\MailService;
@@ -76,6 +77,22 @@ class CustomAuthenticator extends AbstractAuthenticator
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $activeProfile = $this->entityManager->getRepository(Profile::class)->findOneBy([
+            'user' => $user,
+            'activeProfile' => true
+        ]);
+
+        if (!$activeProfile) {
+            $activeProfile = $this->entityManager->getRepository(Profile::class)->findOneBy([
+                'user' => $user,
+                'createdAt' => 'DESC'
+            ]);
+        }
+
+        if (!$activeProfile) {
+            return new JsonResponse(['error' => 'No profiles found for this user'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
         $now = new DateTime();
         $accountUpdated = false;
 
@@ -129,12 +146,20 @@ class CustomAuthenticator extends AbstractAuthenticator
         $this->refreshTokenManager->save($refreshTokenEntity);
         $refreshTokenString = $refreshTokenEntity->getRefreshToken();
 
+        $activeProfileData = [
+            'id' => $activeProfile->getId(),
+            'firstName' => $activeProfile->getFirstName(),
+            'lastName' => $activeProfile->getLastName(),
+            'username' => $activeProfile->getUsername(),
+        ];
+
         $response = [
             'userId' => $user->getId(),
             'email' => $user->getEmail(),
             'isVerified' => $user->isVerified(),
             'token' => $jwt,
             'refresh_token' => $refreshTokenString,
+            'activeProfile' => $activeProfileData,
         ];
 
         if ($accountUpdated) {
