@@ -31,6 +31,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminActiveProfile->setCreatedAt(new DateTime());
         $adminActiveProfile->setType('admin');
         $adminActiveProfile->setActiveProfile(true);
+        $adminActiveProfile->setStatus('offline');
 
         $manager->persist($adminActiveProfile);
 
@@ -51,6 +52,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminInactiveProfile->setCreatedAt(new DateTime());
         $adminInactiveProfile->setType('admin');
         $adminInactiveProfile->setActiveProfile(false);
+        $adminInactiveProfile->setStatus('offline');
 
         $manager->persist($adminInactiveProfile);
 
@@ -73,6 +75,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $activeProfile->setCreatedAt(new DateTime());
             $activeProfile->setType('lecteur');
             $activeProfile->setActiveProfile(true);
+            $activeProfile->setStatus('offline');
 
             $manager->persist($activeProfile);
 
@@ -93,6 +96,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $inactiveProfile->setCreatedAt(new DateTime());
             $inactiveProfile->setType('lecteur');
             $inactiveProfile->setActiveProfile(false);
+            $inactiveProfile->setStatus('offline');
 
             $manager->persist($inactiveProfile);
         }
