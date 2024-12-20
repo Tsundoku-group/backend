@@ -5,8 +5,8 @@ namespace App\Controller;
 use App\Entity\Conversation;
 use App\Entity\User;
 use App\Repository\ConversationRepository;
-use App\Repository\UserRepository;
 use App\Service\ConfRedisService;
+use DateMalformedStringException;
 use DateTime;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
@@ -307,7 +307,7 @@ class ConversationController extends AbstractController
     }
 
     /**
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      */
     #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
     public function muteConversation(int $conversationId, Request $request, EntityManagerInterface $entityManager): JsonResponse
