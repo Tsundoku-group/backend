@@ -151,6 +151,7 @@ class CustomAuthenticator extends AbstractAuthenticator
             'firstName' => $activeProfile->getFirstName(),
             'lastName' => $activeProfile->getLastName(),
             'username' => $activeProfile->getUsername(),
+            'status' => $activeProfile->getStatus(),
         ];
 
         $response = [
