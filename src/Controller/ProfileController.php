@@ -41,7 +41,7 @@ class ProfileController extends AbstractController
             $user = $this->getUser();
 
             if (!$user instanceof User) {
-                return new JsonResponse(self::USER_NOT_FOUND, self::INTERNAL_SERVER_ERROR);
+                return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
             }
 
             $profile = $this->profileRepository->findProfileById($profileId);
@@ -274,11 +274,34 @@ class ProfileController extends AbstractController
                 'firstName' => $profile->getFirstName(),
                 'lastName' => $profile->getLastName(),
                 'username' => $profile->getUsername(),
+                'status' => $profile->getStatus(),
             ];
 
             return new JsonResponse($profileData, 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
+    }
+
+    #[Route('/update-status/{id}', name: 'update_status', methods: ['PUT'])]
+    public function updateProfileStatus(Request $request, int $id): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $newStatus = $data['status'] ?? null;
+
+            $profile = $this->profileRepository->find($id);
+
+            if (!$profile) {
+                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            }
+
+            $profile->setStatus($newStatus);
+            $this->entityManager->flush();
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+        }
+
+        return new JsonResponse(['success' => true, 'newStatus' => $profile->getStatus()]);
     }
 }
