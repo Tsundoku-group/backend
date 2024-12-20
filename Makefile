@@ -59,12 +59,6 @@ composer-dumpautoload:                   # Régénérer le fichier autoload
 make-entity:                             # Créer une nouvelle entité Symfony
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console make:entity $(entity)
 
-make-migration:                          # Générer un fichier de migration
-	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console make:migration
-
-migrate:                                 # Appliquer les migrations dans la base de données
-	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:migrate --no-interaction
-
 cache-clear:                             # Vider le cache Symfony
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console cache:clear
 
@@ -77,7 +71,7 @@ debug-env:                               # Afficher les variables d'environnemen
 debug-autowiring:                        # Lister les services disponibles pour l'autowiring
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console debug:autowiring
 
-# Commandes Doctrine (base de données)
+# Commandes Doctrine (base de données et migrations)
 create-database:                         # Créer la base de données si elle n'existe pas
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:database:create --if-not-exists
 
@@ -95,6 +89,27 @@ validate-schema:                         # Valider le schéma de la base de donn
 
 fixtures:                                # Charger les fixtures dans la base de données
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:fixtures:load --no-interaction
+
+make-migration:                          # Générer un fichier de migration
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console make:migration
+
+migrate:                                 # Appliquer les migrations dans la base de données
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:migrate --no-interaction
+
+migrations-list:						 # affiche la list des migrations
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:list
+
+migrations-status:                       # Vérifier le statut des migrations
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:status
+
+migrations-diff:                         # Générer une migration basée sur les changements d'entités
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:diff
+
+migrations-rollback:                     # Annuler la dernière migration exécutée
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:execute --down $(MIGRATION_ID)
+
+migrations-execute:                      # Exécuter une migration spécifique
+	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:execute $(MIGRATION_ID) --up
 
 # PHPStan
 

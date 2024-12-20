@@ -79,13 +79,13 @@ class CustomAuthenticator extends AbstractAuthenticator
 
         $activeProfile = $this->entityManager->getRepository(Profile::class)->findOneBy([
             'user' => $user,
-            'activeProfile' => true
+            'activeProfile' => true,
         ]);
 
         if (!$activeProfile) {
             $activeProfile = $this->entityManager->getRepository(Profile::class)->findOneBy([
                 'user' => $user,
-                'createdAt' => 'DESC'
+                'createdAt' => 'DESC',
             ]);
         }
 
@@ -151,6 +151,7 @@ class CustomAuthenticator extends AbstractAuthenticator
             'firstName' => $activeProfile->getFirstName(),
             'lastName' => $activeProfile->getLastName(),
             'username' => $activeProfile->getUsername(),
+            'status' => $activeProfile->getStatus(),
         ];
 
         $response = [

@@ -22,7 +22,7 @@ class ProfileRepository extends ServiceEntityRepository
             ->select('p.id, p.username, p.activeProfile')
             ->where('p.user = :userId')
             ->setParameter('userId', $userId)
-            ->orderBy('p.createdAt', 'DESC')
+            ->orderBy('p.createdAt')
             ->getQuery()
             ->getArrayResult();
     }

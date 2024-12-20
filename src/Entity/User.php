@@ -86,7 +86,6 @@ class User implements UserInterface
         return $this;
     }
 
-
     public function getPassword(): ?string
     {
         return $this->password;
@@ -95,6 +94,7 @@ class User implements UserInterface
     public function setPassword(string $password): self
     {
         $this->password = $password;
+
         return $this;
     }
 

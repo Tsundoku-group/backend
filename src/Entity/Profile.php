@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 class Profile
@@ -57,6 +58,9 @@ class Profile
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $x = null;
 
+    #[ORM\Column(length: 20, options: ['default' => 'offline'])]
+    private string $status = 'offline';
+
     #[ORM\Column(type: 'string', length: 50)]
     private string $type = 'lecteur';
 
@@ -65,6 +69,8 @@ class Profile
 
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
+
+    private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
 
     public function __construct()
     {
@@ -247,6 +253,21 @@ class Profile
     public function setX(?string $x): self
     {
         $this->x = $x;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        if (!in_array($status, self::VALID_STATUSES, true)) {
+            throw new InvalidArgumentException('Invalid status value');
+        }
+        $this->status = $status;
 
         return $this;
     }
