@@ -21,3 +21,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-15] Ajout de phpstan et phpecs [#15](https://trello.com/c/hk1xysq4/15-t-15-ajout-de-phpstan-et-phpecs)
 - [t-16] Indentation + correction code avec PhpStan et PhpEcs [#16](https://trello.com/c/OmvtEpXc/16-t-16-indentation-correction-code-avec-phpstan-et-phpecs)
 - [t-17] ajout des status profils [#17](https://trello.com/c/afa1Q1d0/17-t-17-ajout-des-status-profils)
+- [t-18] Ajout des photos profil et couverture [#18](https://trello.com/c/co3RlORa/18-t-18-ajout-des-photos-profil-et-couverture)
