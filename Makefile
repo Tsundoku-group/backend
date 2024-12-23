@@ -114,7 +114,7 @@ migrations-execute:                      # Exécuter une migration spécifique
 # PHPStan
 
 phpstan:								 # Lancer PHPStan pour analyser le code source
-	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpstan analyse
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpstan analyse --memory-limit=512M
 
 # PHP-ECS
 

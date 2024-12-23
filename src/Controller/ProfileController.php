@@ -20,7 +20,6 @@ class ProfileController extends AbstractController
 {
     private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
     private const PROFILE_NOT_FOUND = 'Profile not found';
-
     private const USER_NOT_FOUND = 'User not found';
 
     private EntityManagerInterface $entityManager;
@@ -254,6 +253,7 @@ class ProfileController extends AbstractController
             }
 
             $profile = $this->profileRepository->find($profileId);
+
             if (!$profile || $user !== $profile->getUser()) {
                 return new JsonResponse(['error' => 'Profil invalide ou non associé à cet utilisateur'], 400);
             }
@@ -261,7 +261,9 @@ class ProfileController extends AbstractController
             if ($profile->getActiveProfile()) {
                 return new JsonResponse(['message' => 'Ce profil est déjà actif']);
             }
+
             $profiles = $this->profileRepository->findBy(['user' => $user]);
+
             foreach ($profiles as $p) {
                 $p->setActiveProfile(false);
             }

@@ -7,6 +7,7 @@ use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
@@ -16,7 +17,7 @@ class Profile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
     private $groups;
@@ -24,6 +25,8 @@ class Profile
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
+    #[ORM\OneToMany(targetEntity: ProfilePhoto::class, mappedBy: 'profile', cascade: ['persist', 'remove'])]
+    private Collection $profilePhotos;
 
     #[ORM\Column(length: 255)]
     private string $role = 'ROLE_USER';
@@ -71,10 +74,12 @@ class Profile
     private bool $activeProfile = false;
 
     private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
+    private EntityManagerInterface $entityManager;
 
     public function __construct()
     {
         $this->groups = new ArrayCollection();
+        $this->profilePhotos = new ArrayCollection();
         $this->role = 'ROLE_USER';
         $this->createdAt = new DateTime();
     }
@@ -84,9 +89,42 @@ class Profile
         return $this->id;
     }
 
-    public function setId(int $id): void
+    public function getProfilePhotos(): Collection
     {
-        $this->id = $id;
+        return $this->profilePhotos;
+    }
+
+    public function activate(): void
+    {
+        $this->status = 'active';
+        $this->activeProfile = true;
+    }
+
+    public function deactivate(): void
+    {
+        $this->activeProfile = false;
+    }
+
+    public function removeProfilePhoto(ProfilePhoto $profilePhoto): self
+    {
+        if ($this->profilePhotos->removeElement($profilePhoto)) {
+            if ($profilePhoto->getProfile() === $this) {
+                $profilePhoto->setProfile(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveProfilePhoto(): ?ProfilePhoto
+    {
+        foreach ($this->profilePhotos as $photo) {
+            if ($photo->isActive()) {
+                return $photo;
+            }
+        }
+
+        return null;
     }
 
     public function getGroups(): Collection
@@ -296,9 +334,9 @@ class Profile
         return $this;
     }
 
-    public function getActiveProfile(): ?int
+    public function getActiveProfile(): ?Profile
     {
-        return $this->activeProfile ? $this->id : null;
+        return $this->activeProfile ? $this : null;
     }
 
     public function setActiveProfile(bool $isActive): self
