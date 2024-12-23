@@ -30,6 +30,7 @@ class ProfileRepository extends ServiceEntityRepository
     public function findProfileById(int $profileId): ?Profile
     {
         return $this->createQueryBuilder('p')
+            ->select('p')
             ->where('p.id = :profileId')
             ->setParameter('profileId', $profileId)
             ->getQuery()
