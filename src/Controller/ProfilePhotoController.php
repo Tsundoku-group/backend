@@ -18,7 +18,7 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/profile-photo')]
 class ProfilePhotoController extends AbstractController
 {
-    private const USER_NOT_FOUND = 'User not found';
+    private const PROFILE_NOT_FOUND = 'Profile not found';
     private ProfileRepository $profileRepository;
     private ProfilePhotoService $profilePhotoService;
     private EntityManagerInterface $entityManager;
@@ -44,7 +44,7 @@ class ProfilePhotoController extends AbstractController
             $profile = $this->profileRepository->findProfileById($data['profileId']);
 
             if (!$profile) {
-                return new JsonResponse(['error' => 'Profil invalide'], Response::HTTP_BAD_REQUEST);
+                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
             }
 
             $existingPhoto = $this->entityManager->getRepository(ProfilePhoto::class)->findOneBy(['url' => $data['url']]);
@@ -78,7 +78,7 @@ class ProfilePhotoController extends AbstractController
             $profile = $this->profileRepository->findProfileById($data['profileId']);
 
             if (!$profile) {
-                return new JsonResponse(['error' => 'Profil invalide'], Response::HTTP_BAD_REQUEST);
+                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
             }
 
             $removePhoto = $this->profilePhotoService->deletePhotoFromProfile($profile, $data['url'], $data['type']);
@@ -106,7 +106,7 @@ class ProfilePhotoController extends AbstractController
 
             $profile = $this->profileRepository->findProfileById($data['profileId']);
             if (!$profile) {
-                return new JsonResponse(['error' => 'Profil invalide'], Response::HTTP_BAD_REQUEST);
+                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
             }
 
             $activePhoto = $this->profilePhotoService->setActivateProfilePhoto($profile, $data['url'], $data['type']);

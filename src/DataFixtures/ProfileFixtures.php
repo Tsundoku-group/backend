@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\Profile;
+use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -12,7 +13,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        $adminUser = $this->getReference('user_entity');
+        $adminUser = $this->getReference('user_entity', User::class);
 
         // Profil actif pour l'admin
         $adminActiveProfile = new Profile();
@@ -60,7 +61,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         for ($i = 1; $i <= 20; ++$i) {
             // Profil actif
             $activeProfile = new Profile();
-            $activeProfile->setUser($this->getReference('user_' . $i));
+            $activeProfile->setUser($this->getReference('user_' . $i, User::class));
             $activeProfile->setRole('ROLE_USER');
             $activeProfile->setFirstName('FirstName' . $i . '_1');
             $activeProfile->setLastName('LastName' . $i . '_1');
@@ -81,7 +82,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
 
             // Profil inactif
             $inactiveProfile = new Profile();
-            $inactiveProfile->setUser($this->getReference('user_' . $i));
+            $inactiveProfile->setUser($this->getReference('user_' . $i, User::class));
             $inactiveProfile->setRole('ROLE_USER');
             $inactiveProfile->setFirstName('FirstName' . $i . '_2');
             $inactiveProfile->setLastName('LastName' . $i . '_2');
