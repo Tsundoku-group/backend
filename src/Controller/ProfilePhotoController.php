@@ -19,14 +19,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProfilePhotoController extends AbstractController
 {
     private const USER_NOT_FOUND = 'User not found';
-    private UserRepository $userRepository;
     private ProfileRepository $profileRepository;
     private ProfilePhotoService $profilePhotoService;
     private EntityManagerInterface $entityManager;
 
-    public function __construct(UserRepository $userRepository, ProfileRepository $profileRepository, ProfilePhotoService $profilePhotoService, EntityManagerInterface $entityManager)
+    public function __construct(ProfileRepository $profileRepository, ProfilePhotoService $profilePhotoService, EntityManagerInterface $entityManager)
     {
-        $this->userRepository = $userRepository;
         $this->profileRepository = $profileRepository;
         $this->profilePhotoService = $profilePhotoService;
         $this->entityManager = $entityManager;

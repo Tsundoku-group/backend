@@ -105,7 +105,7 @@ class Profile
         $this->activeProfile = false;
     }
 
-    public function removeProfilePhoto(ProfilePhoto $profilePhoto): selfz
+    public function removeProfilePhoto(ProfilePhoto $profilePhoto): self
     {
         if ($this->profilePhotos->removeElement($profilePhoto)) {
             if ($profilePhoto->getProfile() === $this) {
