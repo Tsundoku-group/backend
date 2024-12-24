@@ -112,14 +112,31 @@ migrations-execute:                      # Exécuter une migration spécifique
 	$(COMPOSE) exec $(COMPOSER_SERVICE) php bin/console doctrine:migrations:execute $(MIGRATION_ID) --up
 
 # PHPStan
-
 phpstan:								 # Lancer PHPStan pour analyser le code source
 	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpstan analyse --memory-limit=512M
 
 # PHP-ECS
-
 ecs-check:								 # Vérifier le respect des standards de code avec ECS
 	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/ecs check src
 
 ecs-fix:								 # Corriger automatiquement les erreurs de formatage avec ECS
 	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/ecs check src --fix
+
+# PHPUnit Tests
+phpunit:                                 # Exécuter tous les tests
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit
+
+phpunit-file:                            # Exécuter les tests sur un fichier spécifique
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit $(file)
+
+phpunit-filter:                          # Exécuter un test précis via un filtre
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit --filter $(filter)
+
+phpunit-coverage:                        # Générer un rapport de couverture
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit --coverage-html tests/coverage
+
+phpunit-debug:                           # Lancer les tests en mode verbose pour débug
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit --debug
+
+phpunit-group:                           # Exécuter des tests basés sur un groupe spécifique
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit --group $(group)
