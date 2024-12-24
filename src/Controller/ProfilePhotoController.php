@@ -2,17 +2,15 @@
 
 namespace App\Controller;
 
-use App\Entity\Profile;
 use App\Entity\ProfilePhoto;
-use App\Entity\User;
 use App\Repository\ProfileRepository;
-use App\Repository\UserRepository;
 use App\Service\ProfilePhotoService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/profile-photo')]
@@ -50,7 +48,7 @@ class ProfilePhotoController extends AbstractController
             $existingPhoto = $this->entityManager->getRepository(ProfilePhoto::class)->findOneBy(['url' => $data['url']]);
 
             if ($existingPhoto) {
-                throw new \Exception('URL already exists');
+                throw new Exception('URL already exists');
             }
 
             $addPhoto = $this->profilePhotoService->addPhotoToProfile($profile, $data['url'], $data['type']);
@@ -58,8 +56,9 @@ class ProfilePhotoController extends AbstractController
             if (!$addPhoto) {
                 return new JsonResponse(['error' => 'Impossible to upload'], Response::HTTP_BAD_REQUEST);
             }
+
             return new JsonResponse(['success' => 'Profile photo uploaded'], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -88,7 +87,7 @@ class ProfilePhotoController extends AbstractController
             }
 
             return new JsonResponse(['success' => 'Profile photo removed'], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -116,7 +115,7 @@ class ProfilePhotoController extends AbstractController
             }
 
             return new JsonResponse(['success' => $activePhoto['message']], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

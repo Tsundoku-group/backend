@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\UserRepository;
 use DateInterval;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -28,7 +29,7 @@ class User implements UserInterface
     private ?string $password = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private Collection $profiles;
@@ -57,7 +58,7 @@ class User implements UserInterface
     public function __construct()
     {
         $this->profiles = new ArrayCollection();
-        $this->createdAt = new \DateTimeImmutable('now');
+        $this->createdAt = new DateTimeImmutable('now');
         $this->isVerified = false;
         $this->tokenRegistrationLifetime = (new DateTime('now'))->add(new DateInterval('P1D'));
         $this->resetPwdTokenLifetime = (new DateTime('now'))->add(new DateInterval('PT1H'));
@@ -98,12 +99,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 
@@ -177,7 +178,7 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string)$this->email;
+        return (string) $this->email;
     }
 
     public function getProfiles(): Collection

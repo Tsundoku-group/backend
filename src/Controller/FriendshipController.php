@@ -156,7 +156,7 @@ class FriendshipController extends AbstractController
             'receiver' => $user,
         ]);
 
-        if (count($friendRequests) === 0) {
+        if (0 === count($friendRequests)) {
             return new JsonResponse('No friend requests found.', Response::HTTP_OK);
         }
 

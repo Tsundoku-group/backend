@@ -10,6 +10,7 @@ use App\Repository\ProfileRepository;
 use App\Service\ConfRedisService;
 use DateMalformedStringException;
 use DateTime;
+use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -73,7 +74,7 @@ class ConversationController extends AbstractController
 
         $conversation = new Conversation();
         $conversation->setCreatedBy($createdBy);
-        $conversation->setCreatedAt(new \DateTimeImmutable());
+        $conversation->setCreatedAt(new DateTimeImmutable());
 
         foreach ($participants as $participant) {
             $conversation->addParticipant($participant);
@@ -180,7 +181,7 @@ class ConversationController extends AbstractController
                 return [
                     'id' => $participant->getId(),
                     'email' => $user->getEmail(),
-                    'userName' => $participant->getUsername()
+                    'userName' => $participant->getUsername(),
                 ];
             }, $conversation->getParticipants()->toArray()),
             'isArchived' => $conversation->getIsArchived(),

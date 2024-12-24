@@ -4,10 +4,10 @@ namespace App\Entity;
 
 use App\Repository\ProfileRepository;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
@@ -81,7 +81,7 @@ class Profile
     private string $type = 'lecteur';
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
@@ -94,7 +94,7 @@ class Profile
         $this->profilePhotos = new ArrayCollection();
         $this->role = 'ROLE_USER';
         $this->activeProfile = false;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->conversations = new ArrayCollection();
         $this->conversationsParticipants = new ArrayCollection();
         $this->sentFriendships = new ArrayCollection();
@@ -350,12 +350,12 @@ class Profile
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 

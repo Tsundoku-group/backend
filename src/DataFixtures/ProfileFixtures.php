@@ -30,7 +30,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminActiveProfile->setFacebook('admin_facebook_1');
         $adminActiveProfile->setInstagram('admin_instagram_1');
         $adminActiveProfile->setX('admin_x_1');
-        $adminActiveProfile->setCreatedAt(new \DateTimeImmutable());
+        $adminActiveProfile->setCreatedAt(new DateTimeImmutable());
         $adminActiveProfile->setType('admin');
         $adminActiveProfile->setActiveProfile(true);
         $adminActiveProfile->setStatus('offline');

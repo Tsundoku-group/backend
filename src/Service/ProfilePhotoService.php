@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Profile;
 use App\Entity\ProfilePhoto;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 
 class ProfilePhotoService
 {
@@ -29,6 +30,7 @@ class ProfilePhotoService
 
                 $this->entityManager->persist($profilePhoto);
                 $this->entityManager->flush();
+
                 return true;
             }
 
@@ -48,7 +50,7 @@ class ProfilePhotoService
             $this->entityManager->flush();
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -56,8 +58,6 @@ class ProfilePhotoService
     public function deletePhotoFromProfile(Profile $profile, string $url, string $type): bool
     {
         try {
-
-
             foreach ($profile->getProfilePhotos() as $profilePhoto) {
                 if ($type === $profilePhoto->getType() && $profilePhoto->getUrl() === $url) {
                     $this->entityManager->remove($profilePhoto);
@@ -67,7 +67,7 @@ class ProfilePhotoService
             $this->entityManager->flush();
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -110,7 +110,7 @@ class ProfilePhotoService
                 'status' => 'success',
                 'message' => 'Photo activated successfully',
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'error',
                 'message' => 'Error serveur: ' . $e->getMessage(),
