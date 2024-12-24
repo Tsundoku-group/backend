@@ -24,11 +24,11 @@ class User implements UserInterface
     #[ORM\Column(length: 255)]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $password = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private Collection $profiles;
@@ -57,7 +57,7 @@ class User implements UserInterface
     public function __construct()
     {
         $this->profiles = new ArrayCollection();
-        $this->createdAt = new DateTime('now');
+        $this->createdAt = new \DateTimeImmutable('now');
         $this->isVerified = false;
         $this->tokenRegistrationLifetime = (new DateTime('now'))->add(new DateInterval('P1D'));
         $this->resetPwdTokenLifetime = (new DateTime('now'))->add(new DateInterval('PT1H'));
@@ -98,16 +98,26 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    public function isTokenValid(): bool
+    {
+        return $this->tokenRegistrationLifetime > new DateTime();
+    }
+
+    public function isDeletable(): bool
+    {
+        return $this->accountDeletionDate && $this->accountDeletionDate <= new DateTime();
     }
 
     public function getTokenRegistration(): ?string
@@ -148,6 +158,10 @@ class User implements UserInterface
 
     public function getRoles(): array
     {
+        if ($this->profiles->isEmpty()) {
+            return ['ROLE_USER'];
+        }
+
         $roles = [];
         foreach ($this->profiles as $profile) {
             $roles[] = $profile->getRole();
@@ -163,7 +177,7 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
     public function getProfiles(): Collection

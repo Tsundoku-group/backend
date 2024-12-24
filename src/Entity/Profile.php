@@ -20,13 +20,26 @@ class Profile
     private ?int $id = null;
 
     #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
-    private $groups;
+    private Collection $groups;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
-    #[ORM\OneToMany(targetEntity: ProfilePhoto::class, mappedBy: 'profile', cascade: ['persist', 'remove'])]
+
+    #[ORM\OneToMany(targetEntity: Conversation::class, mappedBy: 'createdBy')]
+    private Collection $conversations;
+
+    #[ORM\ManyToMany(targetEntity: Conversation::class, mappedBy: 'participants')]
+    private Collection $conversationsParticipants;
+
+    #[ORM\OneToMany(targetEntity: ProfilePhoto::class, mappedBy: 'profile', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $profilePhotos;
+
+    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'requester', cascade: ['persist', 'remove'])]
+    private Collection $sentFriendships;
+
+    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'receiver', cascade: ['persist', 'remove'])]
+    private Collection $receivedFriendships;
 
     #[ORM\Column(length: 255)]
     private string $role = 'ROLE_USER';
@@ -67,8 +80,8 @@ class Profile
     #[ORM\Column(type: 'string', length: 50)]
     private string $type = 'lecteur';
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTime $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
@@ -81,7 +94,12 @@ class Profile
         $this->groups = new ArrayCollection();
         $this->profilePhotos = new ArrayCollection();
         $this->role = 'ROLE_USER';
-        $this->createdAt = new DateTime();
+        $this->activeProfile = false;
+        $this->createdAt = new \DateTimeImmutable();
+        $this->conversations = new ArrayCollection();
+        $this->conversationsParticipants = new ArrayCollection();
+        $this->sentFriendships = new ArrayCollection();
+        $this->receivedFriendships = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -94,14 +112,20 @@ class Profile
         return $this->profilePhotos;
     }
 
+    public function isActiveProfile(): bool
+    {
+        return $this->activeProfile;
+    }
+
     public function activate(): void
     {
-        $this->status = 'active';
+        $this->status = 'online';
         $this->activeProfile = true;
     }
 
     public function deactivate(): void
     {
+        $this->status = 'offline';
         $this->activeProfile = false;
     }
 
@@ -322,12 +346,12 @@ class Profile
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTime
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTime $createdAt): self
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -342,6 +366,106 @@ class Profile
     public function setActiveProfile(bool $isActive): self
     {
         $this->activeProfile = $isActive;
+
+        return $this;
+    }
+
+    public function getSentFriendships(): Collection
+    {
+        return $this->sentFriendships;
+    }
+
+    public function addSentFriendship(Friendship $friendship): self
+    {
+        if (!$this->sentFriendships->contains($friendship)) {
+            $this->sentFriendships[] = $friendship;
+            $friendship->setRequester($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSentFriendship(Friendship $friendship): self
+    {
+        if ($this->sentFriendships->removeElement($friendship)) {
+            // Dissocier la relation bidirectionnelle
+            if ($friendship->getRequester() === $this) {
+                $friendship->setRequester(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getReceivedFriendships(): Collection
+    {
+        return $this->receivedFriendships;
+    }
+
+    public function addReceivedFriendship(Friendship $friendship): self
+    {
+        if (!$this->receivedFriendships->contains($friendship)) {
+            $this->receivedFriendships[] = $friendship;
+            $friendship->setReceiver($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReceivedFriendship(Friendship $friendship): self
+    {
+        if ($this->receivedFriendships->removeElement($friendship)) {
+            if ($friendship->getReceiver() === $this) {
+                $friendship->setReceiver(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getConversations(): Collection
+    {
+        return $this->conversations;
+    }
+
+    public function addConversation(Conversation $conversation): self
+    {
+        if (!$this->conversations->contains($conversation)) {
+            $this->conversations[] = $conversation;
+            $conversation->setCreatedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeConversation(Conversation $conversation): self
+    {
+        if ($this->conversations->removeElement($conversation)) {
+            if ($conversation->getCreatedBy() === $this) {
+                $conversation->setCreatedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getConversationsParticipants(): Collection
+    {
+        return $this->conversationsParticipants;
+    }
+
+    public function addConversationsParticipant(Conversation $conversation): self
+    {
+        if (!$this->conversationsParticipants->contains($conversation)) {
+            $this->conversationsParticipants[] = $conversation;
+        }
+
+        return $this;
+    }
+
+    public function removeConversationsParticipant(Conversation $conversation): self
+    {
+        $this->conversationsParticipants->removeElement($conversation);
 
         return $this;
     }

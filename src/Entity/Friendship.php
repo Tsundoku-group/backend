@@ -3,7 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\FriendshipRepository;
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -25,18 +25,18 @@ class Friendship
     private string $status;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?DateTimeInterface $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'friendships')]
+    #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'sentFriendships')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $requester = null;
+    private ?Profile $requester = null;
 
-    #[ORM\ManyToOne(inversedBy: 'receiverFriendship')]
+    #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'receivedFriendships')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $receiver = null;
+    private ?Profile $receiver = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?DateTimeInterface $friendAt = null;
@@ -44,7 +44,7 @@ class Friendship
     public function __construct()
     {
         $this->status = self::STATUS_PENDING;
-        $this->createdAt = new DateTime();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -69,12 +69,12 @@ class Friendship
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 
@@ -93,24 +93,24 @@ class Friendship
         return $this;
     }
 
-    public function getRequester(): ?User
+    public function getRequester(): ?Profile
     {
         return $this->requester;
     }
 
-    public function setRequester(?User $requester): static
+    public function setRequester(?Profile $requester): static
     {
         $this->requester = $requester;
 
         return $this;
     }
 
-    public function getReceiver(): ?User
+    public function getReceiver(): ?Profile
     {
         return $this->receiver;
     }
 
-    public function setReceiver(?User $receiver): static
+    public function setReceiver(?Profile $receiver): static
     {
         $this->receiver = $receiver;
 

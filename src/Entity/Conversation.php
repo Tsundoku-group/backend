@@ -18,14 +18,14 @@ class Conversation
     #[ORM\Column]
     private int $id;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private DateTimeInterface $createdAt;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private DateTimeImmutable $createdAt;
 
     #[ORM\ManyToOne(inversedBy: 'conversations')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $createdBy = null;
+    private ?Profile $createdBy = null;
 
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'conversationsParticipants')]
+    #[ORM\ManyToMany(targetEntity: Profile::class, inversedBy: 'conversationsParticipants')]
     private Collection $participants;
 
     #[ORM\Column(type: Types::BOOLEAN)]
@@ -62,19 +62,19 @@ class Conversation
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getCreatedBy(): ?User
+    public function getCreatedBy(): ?Profile
     {
         return $this->createdBy;
     }
 
-    public function setCreatedBy(?User $createdBy): static
+    public function setCreatedBy(?Profile $createdBy): static
     {
         $this->createdBy = $createdBy;
 
@@ -82,14 +82,14 @@ class Conversation
     }
 
     /**
-     * @return Collection<int, User>
+     * @return Collection<int, Profile>
      */
     public function getParticipants(): Collection
     {
         return $this->participants;
     }
 
-    public function addParticipant(User $participant): static
+    public function addParticipant(Profile $participant): static
     {
         if (!$this->participants->contains($participant)) {
             $this->participants->add($participant);
