@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\Profile;
 use App\Entity\User;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -29,7 +30,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminActiveProfile->setFacebook('admin_facebook_1');
         $adminActiveProfile->setInstagram('admin_instagram_1');
         $adminActiveProfile->setX('admin_x_1');
-        $adminActiveProfile->setCreatedAt(new DateTime());
+        $adminActiveProfile->setCreatedAt(new \DateTimeImmutable());
         $adminActiveProfile->setType('admin');
         $adminActiveProfile->setActiveProfile(true);
         $adminActiveProfile->setStatus('offline');
@@ -50,7 +51,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminInactiveProfile->setFacebook('admin_facebook_2');
         $adminInactiveProfile->setInstagram('admin_instagram_2');
         $adminInactiveProfile->setX('admin_x_2');
-        $adminInactiveProfile->setCreatedAt(new DateTime());
+        $adminInactiveProfile->setCreatedAt(new DateTimeImmutable());
         $adminInactiveProfile->setType('admin');
         $adminInactiveProfile->setActiveProfile(false);
         $adminInactiveProfile->setStatus('offline');
@@ -73,7 +74,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $activeProfile->setFacebook('facebook' . $i . '_1');
             $activeProfile->setInstagram('instagram' . $i . '_1');
             $activeProfile->setX('x' . $i . '_1');
-            $activeProfile->setCreatedAt(new DateTime());
+            $activeProfile->setCreatedAt(new DateTimeImmutable());
             $activeProfile->setType('lecteur');
             $activeProfile->setActiveProfile(true);
             $activeProfile->setStatus('offline');
@@ -94,7 +95,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $inactiveProfile->setFacebook('facebook' . $i . '_2');
             $inactiveProfile->setInstagram('instagram' . $i . '_2');
             $inactiveProfile->setX('x' . $i . '_2');
-            $inactiveProfile->setCreatedAt(new DateTime());
+            $inactiveProfile->setCreatedAt(new DateTimeImmutable());
             $inactiveProfile->setType('lecteur');
             $inactiveProfile->setActiveProfile(false);
             $inactiveProfile->setStatus('offline');

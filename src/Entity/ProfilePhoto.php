@@ -12,18 +12,23 @@ class ProfilePhoto
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
     #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: "profilePhotos")]
     #[ORM\JoinColumn(nullable: false)]
     private Profile $profile;
+
     #[ORM\Column(name: 'url', length: 255, unique: true)]
     #[Assert\Url(message: 'Veuillez fournir une URL valide.')]
     #[Assert\NotBlank(message: 'L\'URL ne peut pas être vide.')]
     private string $url;
+
     #[ORM\Column(name: 'type', type: 'string', length: 50)]
     #[Assert\Choice(choices: [self::TYPE_PROFILE, self::TYPE_COVER], message: 'Le type doit être valide.')]
     private string $type;
+
     #[ORM\Column(name: 'is_active', type: 'boolean', options: ['default' => false])]
     private bool $isActive = false;
+
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
