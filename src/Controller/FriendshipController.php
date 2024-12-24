@@ -31,30 +31,37 @@ class FriendshipController extends AbstractController
             return new Response('Invalid input.', Response::HTTP_BAD_REQUEST);
         }
 
-        $requester = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $requesterEmail]);
-        $receiver = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $receiverEmail]);
+        $requesterUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $requesterEmail]);
+        $receiverUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $receiverEmail]);
 
-        if (!$requester || !$receiver) {
+        if (!$requesterUser || !$receiverUser) {
             return new Response('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
         }
 
         $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
-            'requester' => $requester,
-            'receiver' => $receiver,
+            'requester' => $requesterUser,
+            'receiver' => $receiverUser,
         ]);
 
         $existingInverseFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
-            'requester' => $receiver,
-            'receiver' => $requester,
+            'requester' => $receiverUser,
+            'receiver' => $requesterUser,
         ]);
 
         if ($existingFriendship || $existingInverseFriendship) {
             return new Response('Friendship already exists or request already sent.', Response::HTTP_CONFLICT);
         }
 
+        $requesterProfile = $requesterUser->getProfiles()->first();
+        $receiverProfile = $receiverUser->getProfiles()->first();
+
+        if (!$requesterProfile || !$receiverProfile) {
+            return new JsonResponse(['message' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
         $friendship = new Friendship();
-        $friendship->setRequester($requester);
-        $friendship->setReceiver($receiver);
+        $friendship->setRequester($requesterProfile);
+        $friendship->setReceiver($receiverProfile);
         $friendship->setStatus(Friendship::STATUS_PENDING);
 
         $this->entityManager->persist($friendship);
@@ -120,11 +127,16 @@ class FriendshipController extends AbstractController
         }
 
         $friendships = $this->entityManager->getRepository(Friendship::class)->findBy(['requester' => $user, 'status' => 'accepted']);
+
         $friends = array_map(function ($friendship) {
+            $receiverProfile = $friendship->getReceiver();
+
+            $receiverEmail = $receiverProfile->getUser() ? $receiverProfile->getUser()->getEmail() : null;
+
             return [
-                'id' => $friendship->getReceiver()->getId(),
-                'email' => $friendship->getReceiver()->getEmail(),
-                'userName' => $friendship->getReceiver()->getProfiles()->first()->getUsername(),
+                'id' => $receiverProfile->getId(),
+                'email' => $receiverEmail,
+                'userName' => $receiverProfile->getUser() ? $receiverProfile->getUser()->getProfiles()->first()->getUsername() : null,
             ];
         }, $friendships);
 
@@ -144,13 +156,20 @@ class FriendshipController extends AbstractController
             'receiver' => $user,
         ]);
 
+        if (count($friendRequests) === 0) {
+            return new JsonResponse('No friend requests found.', Response::HTTP_OK);
+        }
+
         $requests = array_map(function ($friendship) {
+            $requesterProfile = $friendship->getRequester();
+            $requesterUser = $requesterProfile->getUser();
+
             return [
                 'id' => $friendship->getId(),
                 'requester' => [
-                    'id' => $friendship->getRequester()->getId(),
-                    'email' => $friendship->getRequester()->getEmail(),
-                    'username' => $friendship->getRequester()->getProfiles()->first()->getUsername(),
+                    'id' => $requesterProfile->getId(),
+                    'email' => $requesterUser ? $requesterUser->getEmail() : null,
+                    'username' => $requesterProfile->getUsername(),
                 ],
                 'status' => $friendship->getStatus(),
                 'createdAt' => $friendship->getCreatedAt()->format('Y-m-d H:i:s'),

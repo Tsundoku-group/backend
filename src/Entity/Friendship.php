@@ -24,7 +24,7 @@ class Friendship
     #[ORM\Column(type: 'string', length: 255)]
     private string $status;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
@@ -38,8 +38,8 @@ class Friendship
     #[ORM\JoinColumn(nullable: false)]
     private ?Profile $receiver = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?DateTimeInterface $friendAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $friendAt = null;
 
     public function __construct()
     {
@@ -117,12 +117,12 @@ class Friendship
         return $this;
     }
 
-    public function getFriendAt(): ?DateTimeInterface
+    public function getFriendAt(): ?DateTimeImmutable
     {
         return $this->friendAt;
     }
 
-    public function setFriendAt(?DateTimeInterface $friendAt): static
+    public function setFriendAt(?DateTimeImmutable $friendAt): static
     {
         $this->friendAt = $friendAt;
 

@@ -11,7 +11,7 @@ class ProfilePhoto
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: "profilePhotos")]
     #[ORM\JoinColumn(nullable: false)]
@@ -43,6 +43,11 @@ class ProfilePhoto
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getUrl(): ?string

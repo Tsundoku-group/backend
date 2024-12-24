@@ -17,7 +17,7 @@ class Profile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
     private Collection $groups;
@@ -87,7 +87,6 @@ class Profile
     private bool $activeProfile = false;
 
     private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
-    private EntityManagerInterface $entityManager;
 
     public function __construct()
     {
@@ -105,6 +104,11 @@ class Profile
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
     }
 
     public function getProfilePhotos(): Collection

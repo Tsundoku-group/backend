@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Conversation;
+use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\ConversationRepository;
+use App\Repository\ProfileRepository;
 use App\Service\ConfRedisService;
 use DateMalformedStringException;
 use DateTime;
@@ -21,11 +23,14 @@ class ConversationController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
     private ConfRedisService $confRedisService;
+    private ProfileRepository $profileRepository;
     private ConversationRepository $conversationRepository;
+    private const USER_NOT_FOUND = 'USER_NOT_FOUND';
 
-    public function __construct(EntityManagerInterface $entityManager, ConversationRepository $conversationRepository, ConfRedisService $redisChatService)
+    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, ConversationRepository $conversationRepository, ConfRedisService $redisChatService)
     {
         $this->entityManager = $entityManager;
+        $this->profileRepository = $profileRepository;
         $this->conversationRepository = $conversationRepository;
         $this->confRedisService = $redisChatService;
     }
@@ -40,10 +45,10 @@ class ConversationController extends AbstractController
         }
 
         $userEmail = $data['email'] ?? null;
-        $createdBy = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+        $createdBy = $this->profileRepository->findProfileByEmail($userEmail);
 
         if (!$createdBy) {
-            return new Response('User not found', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $participantsIds = $data['participants'];
@@ -54,7 +59,7 @@ class ConversationController extends AbstractController
 
         $participants = [];
         foreach ($participantsIds as $participantId) {
-            $participant = $this->entityManager->getRepository(User::class)->find($participantId);
+            $participant = $this->entityManager->getRepository(Profile::class)->find($participantId);
             if ($participant) {
                 $participants[] = $participant;
             }
@@ -68,7 +73,7 @@ class ConversationController extends AbstractController
 
         $conversation = new Conversation();
         $conversation->setCreatedBy($createdBy);
-        $conversation->setCreatedAt(new DateTime());
+        $conversation->setCreatedAt(new \DateTimeImmutable());
 
         foreach ($participants as $participant) {
             $conversation->addParticipant($participant);
@@ -86,7 +91,7 @@ class ConversationController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->find($id);
 
         if (!$user) {
-            return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $page = $request->query->getInt('page', 1);
@@ -150,6 +155,12 @@ class ConversationController extends AbstractController
     #[Route('/get-one/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
     public function getConversationById(int $id): JsonResponse
     {
+        $user = $this->entityManager->getRepository(User::class)->find($id);
+
+        if (!$user) {
+            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        }
+
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
 
         if (!$conversation) {
@@ -162,14 +173,14 @@ class ConversationController extends AbstractController
             'lastMessageAt' => $conversation->getLastMessageAt(),
             'createdBy' => [
                 'id' => $conversation->getCreatedBy()->getId(),
-                'email' => $conversation->getCreatedBy()->getEmail(),
-                'userName' => $conversation->getCreatedBy()->getProfiles()->first() ? $conversation->getCreatedBy()->getProfiles()->first()->getUsername() : null,
+                'email' => $user->getEmail(),
+                'userName' => $conversation->getCreatedBy()->getUsername(),
             ],
-            'participants' => array_map(function ($participant) {
+            'participants' => array_map(function ($participant) use ($user) {
                 return [
                     'id' => $participant->getId(),
-                    'email' => $participant->getEmail(),
-                    'userName' => $participant->getProfiles()->first() ? $participant->getProfiles()->first()->getUsername() : null,
+                    'email' => $user->getEmail(),
+                    'userName' => $participant->getUsername()
                 ];
             }, $conversation->getParticipants()->toArray()),
             'isArchived' => $conversation->getIsArchived(),

@@ -22,7 +22,7 @@ class UserFixtures extends Fixture
         $user = new User();
         $user->setEmail('admin@admin.com');
         $user->setPassword($this->passwordHasher->hashPassword($user, 'testtest'));
-        $user->setCreatedAt(new DateTime('now'));
+        $user->setCreatedAt(new \DateTimeImmutable('now'));
         $user->setTokenRegistration('');
         $user->setResetPwdToken('');
         $user->setVerified(true);
@@ -37,7 +37,7 @@ class UserFixtures extends Fixture
             $user = new User();
             $user->setEmail("user{$i}@example.com");
             $user->setPassword($this->passwordHasher->hashPassword($user, "password{$i}"));
-            $user->setCreatedAt(new DateTime('now'));
+            $user->setCreatedAt(new \DateTimeImmutable('now'));
             $user->setTokenRegistration('');
             $user->setResetPwdToken('');
             $user->setVerified(false);

@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Conversation;
+use App\Entity\Profile;
 use App\Entity\User;
+use App\Repository\ConversationRepository;
 use App\Service\ConfRedisService;
 use DateTime;
 use DateTimeZone;
@@ -18,13 +20,15 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/message')]
 class MessageController extends AbstractController
 {
-    private ConfRedisService $confRedisService;
+    private ConfRedisService $redisChatService;
     private EntityManagerInterface $entityManager;
+    private ConversationRepository $conversationRepository;
 
-    public function __construct(ConfRedisService $redisChatService, EntityManagerInterface $entityManager)
+    public function __construct(ConfRedisService $redisChatService, EntityManagerInterface $entityManager, ConversationRepository $conversationRepository)
     {
-        $this->confRedisService = $redisChatService;
+        $this->redisChatService = $redisChatService;
         $this->entityManager = $entityManager;
+        $this->conversationRepository = $conversationRepository;
     }
 
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
@@ -48,7 +52,13 @@ class MessageController extends AbstractController
                 return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
             }
 
-            $createdBy = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+            $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+
+            if (!$user) {
+                return new Response('User not found.', Response::HTTP_NOT_FOUND);
+            }
+
+            $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
             if (!$createdBy) {
                 return new Response('User not found.', Response::HTTP_NOT_FOUND);
             }
@@ -58,8 +68,8 @@ class MessageController extends AbstractController
                 return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
             }
 
-            if (!$conversation->getParticipants()->contains($createdBy)) {
-                return new JsonResponse('User is not a participant in this conversation.', Response::HTTP_FORBIDDEN);
+            if (!$this->conversationRepository->isUserParticipant($conversationId, $createdBy)) {
+                return new JsonResponse(['error' => 'User is not a participant in this conversation.'], Response::HTTP_FORBIDDEN);
             }
 
             $dateTime = new DateTime('now', new DateTimeZone('Europe/Paris'));
@@ -70,13 +80,13 @@ class MessageController extends AbstractController
                 'content' => $messageContent,
                 'sender_id' => $createdBy->getId(),
                 'sender_email' => $userEmail,
-                'sent_by' => $createdBy->getProfiles()->first()->getUsername(),
+                'sent_by' => $createdBy->getUsername(),
                 'sent_at' => $formattedDate,
                 'isRead' => false,
                 'isReadAt' => null,
             ];
 
-            $this->confRedisService->addMessageToConversation($conversationId, $messageData);
+            $this->redisChatService->addMessageToConversation($conversationId, $messageData);
 
             $conversation->setLastMessageAt($dateTime);
 
@@ -94,6 +104,7 @@ class MessageController extends AbstractController
     {
         try {
             $user = $this->getUser();
+
             if (!$user instanceof User) {
                 return new JsonResponse('User not authenticated.', Response::HTTP_UNAUTHORIZED);
             }
@@ -103,15 +114,11 @@ class MessageController extends AbstractController
                 return new JsonResponse('Conversation not found.', Response::HTTP_NOT_FOUND);
             }
 
-            if (!$conversation->getParticipants()->contains($user)) {
-                return new JsonResponse('User is not a participant in this conversation.', Response::HTTP_FORBIDDEN);
-            }
-
             $page = (int) $request->query->get('page', '1');
             $limit = (int) $request->query->get('limit', '20');
 
             $conversationId = (string) $conversationId;
-            $allMessages = $this->confRedisService->getMessagesFromConversation($conversationId);
+            $allMessages = $this->redisChatService->getMessagesFromConversation($conversationId);
 
             if (empty($allMessages)) {
                 return new JsonResponse([], Response::HTTP_OK);
@@ -163,11 +170,12 @@ class MessageController extends AbstractController
                 return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
             }
 
-            if (!$conversation->getParticipants()->contains($user)) {
-                return new JsonResponse('User is not a participant in this conversation.', Response::HTTP_FORBIDDEN);
+            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+            if (!$conversation) {
+                return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
             }
 
-            $this->confRedisService->markMessagesRead($conversationId, $userEmail);
+            $this->redisChatService->markMessagesRead($conversationId, $userEmail);
 
             return new Response('All messages marked as read.', Response::HTTP_OK);
         } catch (Exception $e) {
