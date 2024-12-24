@@ -19,14 +19,13 @@ final class Version20241210141759 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE profile ALTER active_profile SET DEFAULT false');
+        // Ajouter une colonne "active_profile" avec un type BOOLEAN et une valeur par défaut false
+        $this->addSql('ALTER TABLE profile ADD active_profile BOOLEAN DEFAULT false NOT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE SCHEMA public');
-        $this->addSql('ALTER TABLE profile ALTER active_profile DROP DEFAULT');
+        // Supprimer la colonne ajoutée lors du rollback
+        $this->addSql('ALTER TABLE profile DROP COLUMN active_profile');
     }
 }
