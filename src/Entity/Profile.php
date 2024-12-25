@@ -17,7 +17,7 @@ class Profile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
     private Collection $groups;
