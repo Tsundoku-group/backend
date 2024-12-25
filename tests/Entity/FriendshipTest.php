@@ -71,7 +71,7 @@ class FriendshipTest extends TestCase
     public function testSetAndGetFriendAt(): void
     {
         $friendship = new Friendship();
-        $date = new \DateTime();
+        $date = new \DateTimeImmutable();
 
         $friendship->setFriendAt($date);
 

@@ -184,7 +184,7 @@ class UserController extends AbstractController
     #[Route('/delete-account-request/{id}', name: 'user_delete', methods: ['DELETE'])]
     public function requestAccountDeletion(int $id): JsonResponse
     {
-        $user = $this->entityManager->getRepository(User::class)->find($id);
+        $user = $this->userRepository->find($id);
 
         if (!$user instanceof User) {
             return new JsonResponse(['error' => 'User not found'], 404);

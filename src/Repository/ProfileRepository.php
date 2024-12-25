@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Profile;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -35,5 +36,21 @@ class ProfileRepository extends ServiceEntityRepository
             ->setParameter('profileId', $profileId)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function findProfileByEmail(string $email): ?Profile
+    {
+        $result = $this->createQueryBuilder('p')
+            ->innerJoin('p.user', 'u')
+            ->where('u.email = :email')
+            ->andWhere('p.activeProfile = :activeProfile')
+            ->setParameter('email', $email)
+            ->setParameter('activeProfile', true);
+
+        try {
+            return $result->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
     }
 }
