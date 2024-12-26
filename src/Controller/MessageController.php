@@ -152,7 +152,7 @@ class MessageController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $userEmail = $data['userEmail'];
+            $userEmail = $data['userEmail'] ?? null;
 
             if (!$userEmail) {
                 return new Response('User email is required.', Response::HTTP_BAD_REQUEST);

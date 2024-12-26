@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Friendship;
 use App\Entity\Profile;
 use App\Entity\User;
+use App\Repository\ProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,99 +18,115 @@ use Symfony\Component\Routing\Annotation\Route;
 class FriendshipController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
+    private ProfileRepository $profileRepository;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository)
     {
         $this->entityManager = $entityManager;
+        $this->profileRepository = $profileRepository;
     }
 
     #[Route('/request', name: 'send_friend_request', methods: ['POST'])]
-    public function sendFriendRequest(Request $request): Response
+    public function sendFriendRequest(Request $request): JsonResponse
     {
-        $requesterUsername = $request->headers->get('requester-username');
-        $receiverUsername = $request->headers->get('receiver-username');
+        try {
+            $requesterUsername = $request->headers->get('requester-username');
+            $receiverUsername = $request->headers->get('receiver-username');
 
-        if (!$requesterUsername || !$receiverUsername) {
-            return new Response('Invalid input.', Response::HTTP_BAD_REQUEST);
+            if (!$requesterUsername || !$receiverUsername) {
+                return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+            }
+
+            $requesterProfileUser = $this->profileRepository->findOneBy(['username' => $requesterUsername]);
+            $receiverProfileUser = $this->profileRepository->findOneBy(['username' => $receiverUsername]);
+
+            if (!$requesterProfileUser || !$receiverProfileUser) {
+                return new JsonResponse('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
+            }
+
+            $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
+                'requester' => $requesterProfileUser,
+                'receiver' => $receiverProfileUser,
+            ]);
+
+            $existingInverseFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
+                'requester' => $receiverProfileUser,
+                'receiver' => $requesterProfileUser,
+            ]);
+
+            if ($existingFriendship || $existingInverseFriendship) {
+                return new JsonResponse('Friendship already exists or request already sent.', Response::HTTP_CONFLICT);
+            }
+
+            $friendship = new Friendship();
+            $friendship->setRequester($requesterProfileUser);
+            $friendship->setReceiver($receiverProfileUser);
+            $friendship->setStatus(Friendship::STATUS_PENDING);
+
+            $this->entityManager->persist($friendship);
+            $this->entityManager->flush();
+
+            return new JsonResponse(['message' => 'Friend request sent.'], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $requesterProfileUser = $this->entityManager->getRepository(Profile::class)->findOneBy(['username' => $requesterUsername]);
-        $receiverProfileUser = $this->entityManager->getRepository(Profile::class)->findOneBy(['username' => $receiverUsername]);
-
-        if (!$requesterProfileUser || !$receiverProfileUser) {
-            return new Response('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
-            'requester' => $requesterProfileUser,
-            'receiver' => $receiverProfileUser,
-        ]);
-
-        $existingInverseFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
-            'requester' => $receiverProfileUser,
-            'receiver' => $requesterProfileUser,
-        ]);
-
-        if ($existingFriendship || $existingInverseFriendship) {
-            return new Response('Friendship already exists or request already sent.', Response::HTTP_CONFLICT);
-        }
-
-        $friendship = new Friendship();
-        $friendship->setRequester($requesterProfileUser);
-        $friendship->setReceiver($receiverProfileUser);
-        $friendship->setStatus(Friendship::STATUS_PENDING);
-
-        $this->entityManager->persist($friendship);
-        $this->entityManager->flush();
-
-        return new JsonResponse(['message' => 'Friend request sent.'], Response::HTTP_CREATED);
     }
 
     #[Route('/accept/{id}', name: 'accept_friend_request', methods: ['POST'])]
     public function acceptFriendRequest(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+        try {
+            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || 'pending' !== $friendship->getStatus()) {
-            return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+            if (!$friendship || 'pending' !== $friendship->getStatus()) {
+                return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+            }
+
+            $friendship->setStatus('accepted');
+            $this->entityManager->flush();
+
+            return new Response('Friend request accepted.', Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $friendship->setStatus('accepted');
-
-        $this->entityManager->flush();
-
-        return new Response('Friend request accepted.', Response::HTTP_OK);
     }
 
     #[Route('/reject/{id}', name: 'reject_friend_request', methods: ['POST'])]
     public function rejectFriendRequest(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+        try {
+            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || 'pending' !== $friendship->getStatus()) {
-            return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+            if (!$friendship || 'pending' !== $friendship->getStatus()) {
+                return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+            }
+
+            $friendship->setStatus('rejected');
+            $this->entityManager->flush();
+
+            return new Response('Friend request rejected.', Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $friendship->setStatus('rejected');
-
-        $this->entityManager->flush();
-
-        return new Response('Friend request rejected.', Response::HTTP_OK);
     }
 
     #[Route('/remove/{id}', name: 'remove_friend', methods: ['DELETE'])]
     public function removeFriend(int $id): Response
     {
-        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+        try {
+            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
 
-        if (!$friendship || 'accepted' !== $friendship->getStatus()) {
-            return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
+            if (!$friendship || 'accepted' !== $friendship->getStatus()) {
+                return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
+            }
+
+            $this->entityManager->remove($friendship);
+            $this->entityManager->flush();
+
+            return new Response('Friend removed.', Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $this->entityManager->remove($friendship);
-        $this->entityManager->flush();
-
-        return new Response('Friend removed.', Response::HTTP_OK);
     }
 
     #[Route('/list/{id}', name: 'list_friends', methods: ['GET'])]
@@ -133,11 +150,6 @@ class FriendshipController extends AbstractController
 
             $friends = array_map(function ($friendship) {
                 $receiverProfile = $friendship->getReceiver();
-
-                if (!$receiverProfile) {
-                    throw new Exception('Friend profile not found.');
-                }
-
                 $receiverEmail = $receiverProfile->getUser() ? $receiverProfile->getUser()->getEmail() : null;
 
                 return [
@@ -148,44 +160,50 @@ class FriendshipController extends AbstractController
             }, $friendships);
 
             return new JsonResponse($friends, Response::HTTP_OK);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+
         }
     }
 
     #[Route('/list-requests/{userId}', name: 'list_friend_requests', methods: ['GET'])]
     public function listFriendRequests(int $userId): JsonResponse
     {
-        $user = $this->entityManager->getRepository(User::class)->find($userId);
+        try {
+            $user = $this->entityManager->getRepository(User::class)->find($userId);
 
-        if (!$user) {
-            return new JsonResponse('User not found.', Response::HTTP_NOT_FOUND);
+            if (!$user) {
+                return new JsonResponse('User not found.', Response::HTTP_NOT_FOUND);
+            }
+
+            $friendRequests = $this->entityManager->getRepository(Friendship::class)->findBy([
+                'receiver' => $user,
+            ]);
+
+            if (0 === count($friendRequests)) {
+                return new JsonResponse('No friend requests found.', Response::HTTP_OK);
+            }
+
+            $requests = array_map(function ($friendship) {
+                $requesterProfile = $friendship->getRequester();
+                $requesterUser = $requesterProfile->getUser();
+
+                return [
+                    'id' => $friendship->getId(),
+                    'requester' => [
+                        'id' => $requesterProfile->getId(),
+                        'email' => $requesterUser ? $requesterUser->getEmail() : null,
+                        'username' => $requesterProfile->getUsername(),
+                    ],
+                    'status' => $friendship->getStatus(),
+                    'createdAt' => $friendship->getCreatedAt()->format('Y-m-d H:i:s'),
+                ];
+            }, $friendRequests);
+
+            return new JsonResponse($requests, Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $friendRequests = $this->entityManager->getRepository(Friendship::class)->findBy([
-            'receiver' => $user,
-        ]);
-
-        if (0 === count($friendRequests)) {
-            return new JsonResponse('No friend requests found.', Response::HTTP_OK);
-        }
-
-        $requests = array_map(function ($friendship) {
-            $requesterProfile = $friendship->getRequester();
-            $requesterUser = $requesterProfile->getUser();
-
-            return [
-                'id' => $friendship->getId(),
-                'requester' => [
-                    'id' => $requesterProfile->getId(),
-                    'email' => $requesterUser ? $requesterUser->getEmail() : null,
-                    'username' => $requesterProfile->getUsername(),
-                ],
-                'status' => $friendship->getStatus(),
-                'createdAt' => $friendship->getCreatedAt()->format('Y-m-d H:i:s'),
-            ];
-        }, $friendRequests);
-
-        return new JsonResponse($requests, Response::HTTP_OK);
     }
 }

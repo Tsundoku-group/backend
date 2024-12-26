@@ -94,6 +94,7 @@ class ConversationController extends AbstractController
     {
         try {
             $user = $this->entityManager->getRepository(User::class)->find($id);
+
             if (!$user) {
                 return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
@@ -151,7 +152,7 @@ class ConversationController extends AbstractController
                             'email' => $participantUser ? $participantUser->getEmail() : null,
                             'username' => $participant->getUsername(),
                         ];
-                    }, $conversation->getParticipants()->toArray()),
+                    }, $conversation->getParticipants() ? $conversation->getParticipants()->toArray() : []),
                     'isArchived' => $conversation->getIsArchived(),
                     'isMutedUntil' => $conversation->getMutedUntil(),
                 ] : null;
