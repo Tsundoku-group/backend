@@ -6,6 +6,7 @@ use App\Entity\Friendship;
 use App\Entity\Profile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -123,7 +124,7 @@ class FriendshipController extends AbstractController
 
             $friendships = $this->entityManager->getRepository(Friendship::class)->findBy([
                 'requester' => $user,
-                'status' => 'accepted'
+                'status' => 'accepted',
             ]);
 
             if (empty($friendships)) {
@@ -134,7 +135,7 @@ class FriendshipController extends AbstractController
                 $receiverProfile = $friendship->getReceiver();
 
                 if (!$receiverProfile) {
-                    throw new \Exception("Friend profile not found.");
+                    throw new Exception('Friend profile not found.');
                 }
 
                 $receiverEmail = $receiverProfile->getUser() ? $receiverProfile->getUser()->getEmail() : null;
@@ -147,7 +148,7 @@ class FriendshipController extends AbstractController
             }, $friendships);
 
             return new JsonResponse($friends, Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

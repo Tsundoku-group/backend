@@ -8,11 +8,11 @@ use App\Entity\User;
 use App\Repository\ConversationRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ConfRedisService;
-use DateMalformedStringException;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,7 +35,6 @@ class ConversationController extends AbstractController
         $this->conversationRepository = $conversationRepository;
         $this->confRedisService = $redisChatService;
     }
-
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
     public function createConversation(Request $request): Response
@@ -85,7 +84,7 @@ class ConversationController extends AbstractController
             $this->entityManager->flush();
 
             return new JsonResponse(['message' => 'Conversation created', 'conversationId' => $conversation->getId()], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -130,7 +129,7 @@ class ConversationController extends AbstractController
             $offset = ($page - 1) * $limit;
             $limitedConversations = array_slice($conversations, $offset, $limit);
 
-            $conversationData = array_filter(array_map(function ($conversation) use ($user, $lastMessages) {
+            $conversationData = array_filter(array_map(function ($conversation) use ($lastMessages) {
                 $createdBy = $conversation->getCreatedBy();
                 $createdByUser = $createdBy->getUser();
 
@@ -159,7 +158,7 @@ class ConversationController extends AbstractController
             }, $limitedConversations));
 
             return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -189,7 +188,7 @@ class ConversationController extends AbstractController
                     'username' => $createdBy->getUsername(),
                 ],
                 'participants' => array_map(function ($participant) {
-                    if (!$participant || !$participant->getUser()) {
+                    if (!$participant->getUser()) {
                         return [];
                     }
 
@@ -204,7 +203,7 @@ class ConversationController extends AbstractController
             ];
 
             return new JsonResponse($conversationData, Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -223,7 +222,7 @@ class ConversationController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Conversation deleted', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -286,7 +285,7 @@ class ConversationController extends AbstractController
             }, $conversations);
 
             return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -309,7 +308,7 @@ class ConversationController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Conversation archived', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -332,7 +331,7 @@ class ConversationController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Conversation unarchived', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -363,14 +362,11 @@ class ConversationController extends AbstractController
             $entityManager->flush();
 
             return new JsonResponse(['message' => 'Toutes les conversations ont été désarchivées avec succès.'], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    /**
-     * @throws DateMalformedStringException
-     */
     #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
     public function muteConversation(int $conversationId, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -412,7 +408,7 @@ class ConversationController extends AbstractController
             $entityManager->flush();
 
             return new JsonResponse(['duration' => $muteUntil->format('Y-m-d H:i:s')], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -434,7 +430,7 @@ class ConversationController extends AbstractController
             $entityManager->flush();
 
             return new JsonResponse(['message' => 'La sourdine de la conversation a été annulée avec succès.'], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
