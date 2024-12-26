@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 
 class ConversationRepositoryTest extends TestCase
 {
-    private $entityManager;
     private $conversationRepository;
 
     protected function setUp(): void
