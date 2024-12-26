@@ -25,3 +25,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-20] Update de la bdd pour tout associer à Profile [#20](https://trello.com/c/K9KizulJ/20-t-20-update-de-la-bdd-pour-tout-associer-%C3%A0-profile)
 - [t-21] Correction de tous les contrôleurs afin de correspondre au nouveau schema [#21](https://trello.com/c/DodMteu0/21-t-21-correction-de-tous-les-contr%C3%B4leurs-afin-de-correspondre-au-nouveau-schema)
 - [t-22] Ajouts des tests [#22](https://trello.com/c/YNvGPm7U/22-t-22-ajouts-des-tests)
+- [t-19] Récupérer la photo de profil [#19](https://trello.com/c/Zh5lxapm/19-t-19-r%C3%A9cup%C3%A9rer-la-photo-de-profil)
