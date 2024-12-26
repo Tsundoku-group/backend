@@ -31,6 +31,6 @@ class BookController extends AbstractController
 
         $latestReleases = $this->googleBooksService->getLatestReleases($limit);
 
-        return $this->json($latestReleases);
+        return $this->json($latestReleases, Response::HTTP_OK);
     }
 }
