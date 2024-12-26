@@ -7,6 +7,7 @@ use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\ProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -140,7 +141,7 @@ class FriendshipController extends AbstractController
 
             $friendships = $this->entityManager->getRepository(Friendship::class)->findBy([
                 'requester' => $user,
-                'status' => 'accepted'
+                'status' => 'accepted',
             ]);
 
             if (empty($friendships)) {
@@ -159,8 +160,10 @@ class FriendshipController extends AbstractController
             }, $friendships);
 
             return new JsonResponse($friends, Response::HTTP_OK);
+
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+
         }
     }
 
