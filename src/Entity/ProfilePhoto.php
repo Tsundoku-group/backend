@@ -2,22 +2,22 @@
 
 namespace App\Entity;
 
-use DateTimeImmutable;
+use App\Repository\ProfilePhotoRepository;
 use Doctrine\ORM\Mapping as ORM;
-use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: ProfilePhotoRepository::class)]
+#[ORM\Table(name: '`profile_photo`')]
 class ProfilePhoto
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'profilePhotos')]
+    #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: "profilePhotos")]
     #[ORM\JoinColumn(nullable: false)]
-    private Profile $profile;
+    private ?Profile $profile;
 
     #[ORM\Column(name: 'url', length: 255, unique: true)]
     #[Assert\Url(message: 'Veuillez fournir une URL valide.')]
@@ -32,24 +32,19 @@ class ProfilePhoto
     private bool $isActive = false;
 
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
-    private DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
 
     public const TYPE_PROFILE = 'profile';
     public const TYPE_COVER = 'cover';
 
     public function __construct()
     {
-        $this->createdAt = new DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(int $id): void
-    {
-        $this->id = $id;
     }
 
     public function getUrl(): ?string
@@ -72,7 +67,7 @@ class ProfilePhoto
     public function setType(string $type): self
     {
         if (!in_array($type, [self::TYPE_PROFILE, self::TYPE_COVER], true)) {
-            throw new InvalidArgumentException('Type invalide');
+            throw new \InvalidArgumentException('Type invalide');
         }
         $this->type = $type;
 
@@ -98,12 +93,12 @@ class ProfilePhoto
         return $this;
     }
 
-    public function getCreatedAt(): DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeImmutable $createdAt): self
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 

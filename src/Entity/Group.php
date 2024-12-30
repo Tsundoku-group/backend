@@ -11,6 +11,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: GroupRepository::class)]
+#[ORM\Table(name: '`group`')]
 class Group
 {
     #[ORM\Id]
@@ -19,7 +20,8 @@ class Group
     private int $id;
 
     #[ORM\ManyToMany(targetEntity: Profile::class, inversedBy: 'groups')]
-    private $profiles;
+    #[ORM\JoinColumn(nullable: false)]
+    private ArrayCollection $profiles;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
