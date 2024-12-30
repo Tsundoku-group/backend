@@ -74,6 +74,34 @@ class ProfilePhotoService
         }
     }
 
+    public function getActiveProfilePhoto(Profile $profile): array
+    {
+        try {
+            $photos = $profile->getProfilePhotos();
+
+            $activePhotos = [];
+            foreach ($photos as $photo) {
+                if ($photo->isActive()) {
+                    $activePhotos[] = [
+                        'url' => $photo->getUrl(),
+                        'type' => $photo->getType(),
+                        'isActive' => $photo->isActive(),
+                    ];
+                }
+            }
+
+            return [
+                'status' => 'success',
+                'photos' => $activePhotos
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
     public function setActivateProfilePhoto(Profile $profile, string $url, string $type): array
     {
         try {

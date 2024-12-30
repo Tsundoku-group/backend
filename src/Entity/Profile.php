@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
+#[ORM\Table(name: '`profile`')]
 class Profile
 {
     #[ORM\Id]
@@ -19,26 +20,26 @@ class Profile
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles')]
+    #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles', fetch: 'LAZY')]
     private Collection $groups;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\OneToMany(targetEntity: Conversation::class, mappedBy: 'createdBy')]
+    #[ORM\OneToMany(targetEntity: Conversation::class, mappedBy: 'createdBy', fetch: 'LAZY')]
     private Collection $conversations;
 
-    #[ORM\ManyToMany(targetEntity: Conversation::class, mappedBy: 'participants')]
+    #[ORM\ManyToMany(targetEntity: Conversation::class, mappedBy: 'participants', fetch: 'LAZY')]
     private Collection $conversationsParticipants;
 
-    #[ORM\OneToMany(targetEntity: ProfilePhoto::class, mappedBy: 'profile', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ProfilePhoto::class, mappedBy: 'profile', cascade: ['persist', 'remove'], fetch: 'LAZY', orphanRemoval: true)]
     private Collection $profilePhotos;
 
-    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'requester', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'requester', cascade: ['persist', 'remove'], fetch: 'LAZY')]
     private Collection $sentFriendships;
 
-    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'receiver', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: Friendship::class, mappedBy: 'receiver', cascade: ['persist', 'remove'], fetch: 'LAZY')]
     private Collection $receivedFriendships;
 
     #[ORM\Column(length: 255)]

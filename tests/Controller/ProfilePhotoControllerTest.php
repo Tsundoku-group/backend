@@ -5,6 +5,8 @@ namespace App\Tests\Controller;
 use App\Controller\ProfilePhotoController;
 use App\Entity\Profile;
 use App\Entity\ProfilePhoto;
+use App\Entity\User;
+use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,8 +19,10 @@ class ProfilePhotoControllerTest extends TestCase
 {
     private $profileRepository;
     private $profilePhotoService;
+    private $profilePhotoRepository;
     private $entityManager;
     private $container;
+
 
     protected function setUp(): void
     {
@@ -26,10 +30,17 @@ class ProfilePhotoControllerTest extends TestCase
         $this->profilePhotoService = $this->createMock(ProfilePhotoService::class);
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->container = $this->createMock(ContainerInterface::class);
+        $this->profilePhotoRepository = $this->createMock(ProfilePhotoRepository::class);
 
         $profilePhotoRepo = $this->createMock(\Doctrine\ORM\EntityRepository::class);
         $this->entityManager->method('getRepository')
             ->willReturnMap([[ProfilePhoto::class, $profilePhotoRepo]]);
+
+        $profile = $this->createMock(Profile::class);
+        $user = $this->createMock(User::class);
+        $user->method('getId')->willReturn(1);
+        $profile->method('getUser')->willReturn($user);
+        $this->profileRepository->method('findProfileWithPhotos')->willReturn($profile);
     }
 
     public function testUploadProfilePhotoSuccess(): void
@@ -45,7 +56,8 @@ class ProfilePhotoControllerTest extends TestCase
         $controller = new ProfilePhotoController(
             $this->profileRepository,
             $this->profilePhotoService,
-            $this->entityManager
+            $this->entityManager,
+            $this->profilePhotoRepository
         );
 
         $controller->setContainer($this->container);
@@ -68,7 +80,8 @@ class ProfilePhotoControllerTest extends TestCase
         $controller = new ProfilePhotoController(
             $this->profileRepository,
             $this->profilePhotoService,
-            $this->entityManager
+            $this->entityManager,
+            $this->profilePhotoRepository,
         );
 
         $request = new Request([], [], [], [], [], [], json_encode([
