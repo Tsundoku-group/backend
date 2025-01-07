@@ -54,10 +54,10 @@ class ProfilePhotoController extends AbstractController
             if ($profile->getUser()->getId() !== (int)$data['id']) {
                 return new JsonResponse(['error' => 'Profile does not belong to this user'], Response::HTTP_BAD_REQUEST);
             }
-            $existingPhoto = $this->profilePhotoRepository->findOneBy(['url' => $data['url']]);
 
+            $existingPhoto = $this->profilePhotoRepository->findPhotoByUrlAndType($data['url'], $data['type']);
             if ($existingPhoto) {
-                throw new Exception('URL already exists');
+                return new JsonResponse(['error' => 'This photo already exists with the specified type'], Response::HTTP_CONFLICT);
             }
 
             $addPhoto = $this->profilePhotoService->addPhotoToProfile($profile, $data['url'], $data['type']);
@@ -132,18 +132,18 @@ class ProfilePhotoController extends AbstractController
                 return new JsonResponse(['error' => 'No photos found for this profile'], Response::HTTP_NOT_FOUND);
             }
 
-            $activePhoto = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive())->first();
-
-            if (!$activePhoto) {
-                return new JsonResponse(['error' => 'No active photo found'], Response::HTTP_NOT_FOUND);
+            $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
+            
+            $result = [];
+            foreach ($activePhotos as $photo) {
+                $result[$photo->getType()] = [
+                    'id' => $photo->getId(),
+                    'url' => $photo->getUrl(),
+                    'type' => $photo->getType(),
+                ];
             }
 
-            return new JsonResponse([
-                'id' => $activePhoto->getId(),
-                'profileId' => $profile->getId(),
-                'url' => $activePhoto->getUrl(),
-                'type' => $activePhoto->getType(),
-            ], Response::HTTP_OK);
+            return new JsonResponse($result, Response::HTTP_OK);
 
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Unexpected error: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
