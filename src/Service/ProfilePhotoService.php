@@ -36,8 +36,8 @@ class ProfilePhotoService
 
             foreach ($profilePhotos as $profilePhoto) {
                 if ($type === $profilePhoto->getType()) {
-                    $profilePhoto->deactivate();
 
+                    $profilePhoto->deactivate();
                     $this->entityManager->persist($profilePhoto);
                 }
             }
@@ -52,6 +52,7 @@ class ProfilePhotoService
             $this->entityManager->flush();
 
             return true;
+
         } catch (Exception $e) {
             return false;
         }
