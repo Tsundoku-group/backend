@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-19] Récupérer la photo de profil [#19](https://trello.com/c/Zh5lxapm/19-t-19-r%C3%A9cup%C3%A9rer-la-photo-de-profil)
   [t-23] Ajout de la photo de couverture [#23](https://trello.com/c/xOZM6P0v/23-t-23-r%C3%A9cup%C3%A9ration-de-la-photo-de-couverture)
 - [t-24] Correction: fetch les données profil user [#24](https://trello.com/c/4lqawY58/24-t-24-correction-fetch-les-donn%C3%A9es-profil-user)
+- [t-25] nouveau profil: aller sur le nouveau profil [#25](https://trello.com/c/UcBDQxee/25-t-25)
