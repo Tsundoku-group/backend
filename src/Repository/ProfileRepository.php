@@ -19,31 +19,38 @@ class ProfileRepository extends ServiceEntityRepository
 
     public function findUserProfiles(int $userId): array
     {
-        return $this->createQueryBuilder('p')
+        $result = $this->createQueryBuilder('p')
             ->select('p.id, p.username, p.activeProfile')
             ->where('p.user = :userId')
             ->setParameter('userId', $userId)
-            ->orderBy('p.createdAt')
-            ->getQuery()
-            ->getArrayResult();
+            ->orderBy('p.createdAt', "DESC");
+
+        try {
+            return $result->getQuery()->getArrayResult();
+        } catch (NonUniqueResultException $e) {
+            return [];
+        }
     }
 
     public function findProfileById(int $profileId, int $userId): ?Profile
     {
-        return $this->createQueryBuilder('p')
+        $result = $this->createQueryBuilder('p')
             ->leftJoin('p.user', 'u')
             ->addSelect('u')
             ->where('p.id = :profileId')
             ->andWhere('u.id = :userId')
             ->setParameter('profileId', $profileId)
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getOneOrNullResult();
+            ->setParameter('userId', $userId);
+        try {
+            return $result->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
     }
 
     public function findProfileWithPhotos(int $profileId, int $userId): ?Profile
     {
-        return $this->createQueryBuilder('p')
+        $result = $this->createQueryBuilder('p')
             ->leftJoin('p.profilePhotos', 'pp')
             ->addSelect('pp')
             ->leftJoin('p.user', 'u')
@@ -51,9 +58,13 @@ class ProfileRepository extends ServiceEntityRepository
             ->where('p.id = :profileId')
             ->andWhere('u.id = :userId')
             ->setParameter('profileId', $profileId)
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getOneOrNullResult();
+            ->setParameter('userId', $userId);
+
+        try {
+            return $result->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
     }
 
     public function findProfileByEmail(string $email): ?Profile

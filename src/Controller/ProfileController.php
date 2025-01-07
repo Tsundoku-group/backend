@@ -140,7 +140,13 @@ class ProfileController extends AbstractController
             $entityManager->persist($profile);
             $entityManager->flush();
 
-            return new JsonResponse(['message' => 'Profile created successfully'], Response::HTTP_CREATED);
+            return new JsonResponse([
+                'id' => $profile->getId(),
+                'firstName' => $profile->getFirstName(),
+                'lastName' => $profile->getLastName(),
+                'username' => $profile->getUsername(),
+                'status' => 'offline',
+            ], Response::HTTP_CREATED);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
         }
