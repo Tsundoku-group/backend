@@ -19,7 +19,7 @@ class ProfilePhoto
     #[ORM\JoinColumn(nullable: false)]
     private ?Profile $profile;
 
-    #[ORM\Column(name: 'url', length: 255, unique: true)]
+    #[ORM\Column(name: 'url', length: 255)]
     #[Assert\Url(message: 'Veuillez fournir une URL valide.')]
     #[Assert\NotBlank(message: 'L\'URL ne peut pas être vide.')]
     private string $url;
