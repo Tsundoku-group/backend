@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -43,7 +44,7 @@ class ProfileController extends AbstractController
                 return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
             }
 
-            $profile = $this->profileRepository->findProfileById($profileId);
+            $profile = $this->profileRepository->findProfileById($profileId, $user->getId());
 
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
@@ -62,7 +63,7 @@ class ProfileController extends AbstractController
                 'instagram' => $profile->getInstagram(),
                 'x' => $profile->getX(),
                 'type' => $profile->getType(),
-                'createdAt' => $profile->getCreatedAt()?->format(DateTime::ATOM),
+                'createdAt' => $profile->getCreatedAt()?->format(DateTimeInterface::ATOM),
             ];
 
             return new JsonResponse($profileData);
