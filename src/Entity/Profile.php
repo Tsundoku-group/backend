@@ -239,7 +239,7 @@ class Profile
 
     public function getBirthday(): DateTime
     {
-        return $this->birthday;
+        return $this->birthday ?? new DateTime();
     }
 
     public function setBirthday(?DateTime $birthday): self
