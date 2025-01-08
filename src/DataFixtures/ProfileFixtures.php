@@ -14,6 +14,9 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
+        $connection = $manager->getConnection();
+        $connection->executeStatement('ALTER SEQUENCE profile_id_seq RESTART WITH 1');
+
         $adminUser = $this->getReference('user_entity', User::class);
 
         // Profil actif pour l'admin
@@ -24,7 +27,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminActiveProfile->setLastName('AdminLastName_1');
         $adminActiveProfile->setUsername('admin_username_1');
         $adminActiveProfile->setBirthday(new DateTime('1985-01-01'));
-        $adminActiveProfile->setGender('non-binary');
+        $adminActiveProfile->setGender('Féminin');
         $adminActiveProfile->setPhoneNumber('0001112221');
         $adminActiveProfile->setBio('Admin profile 1 bio.');
         $adminActiveProfile->setFacebook('admin_facebook_1');
@@ -45,7 +48,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminInactiveProfile->setLastName('AdminLastName_2');
         $adminInactiveProfile->setUsername('admin_username_2');
         $adminInactiveProfile->setBirthday(new DateTime('1985-01-01'));
-        $adminInactiveProfile->setGender('non-binary');
+        $adminInactiveProfile->setGender('Féminin');
         $adminInactiveProfile->setPhoneNumber('0001112222');
         $adminInactiveProfile->setBio('Admin profile 2 bio.');
         $adminInactiveProfile->setFacebook('admin_facebook_2');
@@ -68,7 +71,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $activeProfile->setLastName('LastName' . $i . '_1');
             $activeProfile->setUsername('username' . $i . '_1');
             $activeProfile->setBirthday(new DateTime('1990-01-01'));
-            $activeProfile->setGender('male');
+            $activeProfile->setGender('Masculin');
             $activeProfile->setPhoneNumber('123456789' . $i . '1');
             $activeProfile->setBio('A brief bio about user ' . $i . ' (profile 1)');
             $activeProfile->setFacebook('facebook' . $i . '_1');
@@ -89,7 +92,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $inactiveProfile->setLastName('LastName' . $i . '_2');
             $inactiveProfile->setUsername('username' . $i . '_2');
             $inactiveProfile->setBirthday(new DateTime('1990-01-01'));
-            $inactiveProfile->setGender('male');
+            $inactiveProfile->setGender('Masculin');
             $inactiveProfile->setPhoneNumber('123456789' . $i . '2');
             $inactiveProfile->setBio('A brief bio about user ' . $i . ' (profile 2)');
             $inactiveProfile->setFacebook('facebook' . $i . '_2');
