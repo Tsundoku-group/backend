@@ -83,10 +83,14 @@ class CustomAuthenticator extends AbstractAuthenticator
         ]);
 
         if (!$activeProfile) {
-            $activeProfile = $this->entityManager->getRepository(Profile::class)->findOneBy([
-                'user' => $user,
-                'createdAt' => 'DESC',
-            ]);
+            $activeProfile = $this->entityManager->getRepository(Profile::class)
+                ->createQueryBuilder('p')
+                ->where('p.user = :user')
+                ->setParameter('user', $user)
+                ->orderBy('p.createdAt', 'DESC')
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
         }
 
         if (!$activeProfile) {

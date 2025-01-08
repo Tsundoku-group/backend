@@ -128,6 +128,8 @@ class ProfileController extends AbstractController
 
             $profile = new Profile();
             $profile->setUsername($data['username']);
+            $profile->setFirstName($data['firstName'] ?? null);
+            $profile->setLastName($data['lastName'] ?? null);
             $profile->setType($data['type'] ?? 'lecteur');
             $profile->setBio($data['bio'] ?? null);
 
