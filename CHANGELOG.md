@@ -30,3 +30,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-24] Correction: fetch les données profil user [#24](https://trello.com/c/4lqawY58/24-t-24-correction-fetch-les-donn%C3%A9es-profil-user)
 - [t-25] nouveau profil: aller sur le nouveau profil [#25](https://trello.com/c/UcBDQxee/25-t-25)
 - [t-26] Corrections mineures [#26](https://trello.com/c/gVitCG03/26-t-26-corrections-mineures)
+- [t-27] Fixtures updating [#27](https://trello.com/c/qNRZ8vFs/27-t-27-fixtures-updating)
