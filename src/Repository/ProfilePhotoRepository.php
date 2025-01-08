@@ -14,22 +14,6 @@ class ProfilePhotoRepository extends ServiceEntityRepository
         parent::__construct($registry, ProfilePhoto::class);
     }
 
-    public function findActiveProfilePhotosByProfileId(int $profileId): array
-    {
-        $result = $this->createQueryBuilder('pp')
-            ->innerJoin('pp.profile', 'p')
-            ->where('p.id = :profileId')
-            ->andWhere('pp.isActive = true')
-            ->setParameter('profileId', $profileId)
-            ->select('pp.id, pp.url, pp.type, pp.isActive');
-
-        try {
-            return $result->getQuery()->getArrayResult();
-        } catch (NonUniqueResultException $e) {
-            return [];
-        }
-    }
-
     public function findPhotoByUrlAndType(string $url, string $type): ?ProfilePhoto
     {
         $result = $this->createQueryBuilder('p')
