@@ -124,7 +124,7 @@ ecs-fix:								 # Corriger automatiquement les erreurs de formatage avec ECS
 
 # PHPUnit Tests
 phpunit:                                 # Exécuter tous les tests
-	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit
+	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit --testdox
 
 phpunit-file:                            # Exécuter les tests sur un fichier spécifique
 	$(COMPOSE) exec $(COMPOSER_SERVICE) vendor/bin/phpunit $(file)

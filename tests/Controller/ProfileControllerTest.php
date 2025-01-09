@@ -86,6 +86,8 @@ class ProfileControllerTest extends TestCase
             'birthday' => '2000-01-01',
             'gender' => 'male',
             'phoneNumber' => '123456789',
+            'firstName' => 'testFirstName',
+            'lastName' => 'testLastName',
         ]));
 
         $user = $this->createMock(User::class);
