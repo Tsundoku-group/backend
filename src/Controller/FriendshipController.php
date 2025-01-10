@@ -3,8 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Friendship;
-use App\Entity\Profile;
-use App\Entity\User;
 use App\Repository\ProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -67,7 +65,7 @@ class FriendshipController extends AbstractController
             $this->entityManager->flush();
 
             return new JsonResponse(['message' => 'Friend request sent.'], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -86,7 +84,7 @@ class FriendshipController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Friend request accepted.', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -105,7 +103,7 @@ class FriendshipController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Friend request rejected.', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -124,25 +122,31 @@ class FriendshipController extends AbstractController
             $this->entityManager->flush();
 
             return new Response('Friend removed.', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    #[Route('/list/{id}', name: 'list_friends', methods: ['GET'])]
-    public function listFriends(int $id): JsonResponse
+    #[Route('/list/{profileId}', name: 'list_friends', methods: ['GET'])]
+    public function listFriends(int $profileId, Request $request): JsonResponse
     {
         try {
-            $user = $this->entityManager->getRepository(User::class)->find($id);
+            $profile = $this->profileRepository->find($profileId);
 
-            if (!$user) {
-                return new JsonResponse(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+            if (!$profile) {
+                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $friendships = $this->entityManager->getRepository(Friendship::class)->findBy([
-                'requester' => $user,
-                'status' => 'accepted',
-            ]);
+            $page = max((int) $request->query->get('page', 1), 1);
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = ($page - 1) * $limit;
+
+            $friendships = $this->entityManager->getRepository(Friendship::class)->findBy(
+                ['status' => 'accepted'],
+                null,
+                $limit,
+                $offset
+            );
 
             if (empty($friendships)) {
                 return new JsonResponse(['message' => 'No friends found.'], Response::HTTP_NOT_FOUND);
@@ -150,35 +154,38 @@ class FriendshipController extends AbstractController
 
             $friends = array_map(function ($friendship) {
                 $receiverProfile = $friendship->getReceiver();
-                $receiverEmail = $receiverProfile->getUser() ? $receiverProfile->getUser()->getEmail() : null;
+
+                $receiverFirstName = $receiverProfile->getFirstName();
+                $receiverLastName = $receiverProfile->getLastName();
+                $receiverUsername = $receiverProfile->getUsername();
 
                 return [
                     'id' => $receiverProfile->getId(),
-                    'email' => $receiverEmail,
-                    'username' => $receiverProfile->getUsername(),
+                    'firstname' => $receiverFirstName,
+                    'lastname' => $receiverLastName,
+                    'username' => $receiverUsername,
                 ];
             }, $friendships);
 
             return new JsonResponse($friends, Response::HTTP_OK);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
-
         }
     }
 
-    #[Route('/list-requests/{userId}', name: 'list_friend_requests', methods: ['GET'])]
-    public function listFriendRequests(int $userId): JsonResponse
+    #[Route('/list-requests/{profileId}', name: 'list_friend_requests', methods: ['GET'])]
+    public function listFriendRequests(int $profileId): JsonResponse
     {
         try {
-            $user = $this->entityManager->getRepository(User::class)->find($userId);
+            $profile = $this->profileRepository->find($profileId);
 
-            if (!$user) {
-                return new JsonResponse('User not found.', Response::HTTP_NOT_FOUND);
+            if (!$profile) {
+                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
             $friendRequests = $this->entityManager->getRepository(Friendship::class)->findBy([
-                'receiver' => $user,
+                'receiver' => $profile,
+                'status' => 'pending',
             ]);
 
             if (0 === count($friendRequests)) {
@@ -202,7 +209,7 @@ class FriendshipController extends AbstractController
             }, $friendRequests);
 
             return new JsonResponse($requests, Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
