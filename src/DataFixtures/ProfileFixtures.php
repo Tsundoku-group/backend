@@ -104,6 +104,8 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
             $inactiveProfile->setStatus('offline');
 
             $manager->persist($inactiveProfile);
+            $this->addReference('profile_entity_' . $i . '_active', $activeProfile);
+            $this->addReference('profile_entity_' . $i . '_inactive', $inactiveProfile);
         }
 
         $manager->flush();
