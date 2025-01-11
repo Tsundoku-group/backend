@@ -9,6 +9,12 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: FriendshipRepository::class)]
+#[ORM\Table(name: "friendship", indexes: [
+    new ORM\Index(name: "idx_requester", columns: ["requester"]),
+    new ORM\Index(name: "idx_receiver", columns: ["receiver"]),
+    new ORM\Index(name: "idx_status", columns: ["status"]),
+    new ORM\Index(name: "idx_requester_receiver_status", columns: ["requester", "receiver", "status"])
+])]
 class Friendship
 {
     public const STATUS_PENDING = 'pending';
