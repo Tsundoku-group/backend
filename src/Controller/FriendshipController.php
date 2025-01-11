@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Friendship;
+use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -17,11 +18,13 @@ class FriendshipController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
     private ProfileRepository $profileRepository;
+    private FriendshipRepository $friendshipRepository;
 
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository)
+    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, FriendshipRepository $friendshipRepository)
     {
         $this->entityManager = $entityManager;
         $this->profileRepository = $profileRepository;
+        $this->friendshipRepository = $friendshipRepository;
     }
 
     #[Route('/request', name: 'send_friend_request', methods: ['POST'])]
@@ -109,13 +112,21 @@ class FriendshipController extends AbstractController
     }
 
     #[Route('/remove/{id}', name: 'remove_friend', methods: ['DELETE'])]
-    public function removeFriend(int $id): Response
+    public function removeFriend(int $id, Request $request): Response
     {
         try {
+            $data = json_decode($request->getContent(), true);
             $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+            $requesterId = $data['requesterId'];
+            $receiverId = $data['receiverId'];
 
             if (!$friendship || 'accepted' !== $friendship->getStatus()) {
                 return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
+            }
+
+            if (($friendship->getRequester()->getId() !== $requesterId && $friendship->getReceiver()->getId() !== $requesterId) ||
+                ($friendship->getRequester()->getId() !== $receiverId && $friendship->getReceiver()->getId() !== $receiverId)) {
+                return new Response('You are not authorized to remove this friendship.', Response::HTTP_FORBIDDEN);
             }
 
             $this->entityManager->remove($friendship);
@@ -123,7 +134,7 @@ class FriendshipController extends AbstractController
 
             return new Response('Friend removed.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -137,39 +148,19 @@ class FriendshipController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $page = max((int) $request->query->get('page', 1), 1);
-            $limit = max((int) $request->query->get('limit', 20), 1);
+            $page = max((int)$request->query->get('page', 1), 1);
+            $limit = max((int)$request->query->get('limit', 20), 1);
             $offset = ($page - 1) * $limit;
 
-            $friendships = $this->entityManager->getRepository(Friendship::class)->findBy(
-                ['status' => 'accepted'],
-                null,
-                $limit,
-                $offset
-            );
+            $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
 
             if (empty($friendships)) {
                 return new JsonResponse(['message' => 'No friends found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $friends = array_map(function ($friendship) {
-                $receiverProfile = $friendship->getReceiver();
-
-                $receiverFirstName = $receiverProfile->getFirstName();
-                $receiverLastName = $receiverProfile->getLastName();
-                $receiverUsername = $receiverProfile->getUsername();
-
-                return [
-                    'id' => $receiverProfile->getId(),
-                    'firstname' => $receiverFirstName,
-                    'lastname' => $receiverLastName,
-                    'username' => $receiverUsername,
-                ];
-            }, $friendships);
-
-            return new JsonResponse($friends, Response::HTTP_OK);
+            return new JsonResponse($friendships, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
