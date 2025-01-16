@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Follower;
+use App\Repository\FollowerRepository;
 use App\Repository\ProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -17,64 +18,80 @@ class FollowerController extends AbstractController
 {
     private ProfileRepository $profileRepository;
     private EntityManagerInterface $entityManager;
+    private FollowerRepository $followerRepository;
 
-    public function __construct(ProfileRepository $profileRepository, EntityManagerInterface $entityManager)
+    public function __construct(ProfileRepository $profileRepository, EntityManagerInterface $entityManager, FollowerRepository $followerRepository)
     {
         $this->profileRepository = $profileRepository;
         $this->entityManager = $entityManager;
+        $this->followerRepository = $followerRepository;
     }
 
-    #[Route('/{profileId}', name: 'get_followers_paginated', methods: ['GET'])]
+    #[Route('/{profileId}/followers', name: 'get_followers_paginated', methods: ['GET'])]
     public function getFollowersPaginated(int $profileId, Request $request): JsonResponse
     {
         try {
-            $page = $request->query->getInt('page', 1);
-            $limit = $request->query->getInt('limit', 10);
-
             $profile = $this->profileRepository->find($profileId);
 
             if (!$profile) {
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $followers = $this->entityManager->getRepository(Follower::class)->findFollowersWithPagination($profileId, $page, $limit);
+            $page = $request->query->getInt('page', 1);
+            $limit = $request->query->getInt('limit', 10);
+            $offset = ($page - 1) * $limit;
 
-            $followerList = array_map(function ($follower) {
-                $profile = $follower->getFollower();
+            $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
-                return [
-                    'id' => $profile->getId(),
-                    'username' => $profile->getUsername(),
-                    'firstName' => $profile->getFirstName(),
-                    'lastName' => $profile->getLastName(),
-                ];
-            }, $followers);
+            if (!$followers) {
+                return new JsonResponse(['error' => 'No followers found.'], Response::HTTP_NOT_FOUND);
+            }
 
-            return new JsonResponse([
-                'data' => $followerList,
-                'page' => $page,
-                'limit' => $limit,
-                'count' => count($followerList),
-            ], Response::HTTP_OK);
+            return new JsonResponse($followers, Response::HTTP_OK);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/{profileId}/followed', name: 'get_followed_paginated', methods: ['GET'])]
+    public function getFollowedPaginated(int $profileId, Request $request): JsonResponse
+    {
+        try {
+            $profile = $this->profileRepository->find($profileId);
+
+            if (!$profile) {
+                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+            }
+
+            $page = $request->query->getInt('page', 1);
+            $limit = $request->query->getInt('limit', 10);
+            $offset = ($page - 1) * $limit;
+
+            $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
+
+            if (!$followed) {
+                return new JsonResponse(['error' => 'No followed found.'], Response::HTTP_NOT_FOUND);
+            }
+
+            return new JsonResponse($followed, Response::HTTP_OK);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/follow/{profileId}', name: 'follow_profile', methods: ['POST'])]
-    public function followProfile(Request $request): JsonResponse
+    public function followProfile(int $profileId, Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $followerUsername = $data['followerUsername'] ?? null;
-            $followingUsername = $data['followingUsername'] ?? null;
+            $followingId = $data['followingId'] ?? null;
 
-            if (!$followerUsername || !$followingUsername) {
+            if (!$profileId || !$followingId) {
                 return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
             }
 
-            $follower = $this->profileRepository->findOneBy(['username' => $followerUsername]);
-            $following = $this->profileRepository->findOneBy(['username' => $followingUsername]);
+            $follower = $this->profileRepository->findOneBy(['id' => $profileId]);
+            $following = $this->profileRepository->findOneBy(['id' => $followingId]);
 
             if (!$follower || !$following) {
                 return new JsonResponse('Follower profile or following profile not found.', Response::HTTP_BAD_REQUEST);
@@ -95,42 +112,31 @@ class FollowerController extends AbstractController
 
             $this->entityManager->persist($follow);
             $this->entityManager->flush();
-
+            
             return new JsonResponse(['message' => 'Successfully followed the profile.'], Response::HTTP_CREATED);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    #[Route('/unfollow/{profileId}', name: 'unfollow_profile', methods: ['POST'])]
-    public function unfollowProfile(Request $request): JsonResponse
+    #[Route('/unfollow/{id}', name: 'unfollow_profile', methods: ['DELETE'])]
+    public function unfollowProfile(int $id, Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $followerUsername = $data['followerUsername'] ?? null;
-            $followingUsername = $data['followingUsername'] ?? null;
+            $friendship = $this->entityManager->getRepository(Follower::class)->find($id);
+            $followerId = $data['followerId'] ?? null;
+            $followingId = $data['followingId'] ?? null;
 
-            if (!$followerUsername || !$followingUsername) {
-                return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+            if (!$friendship || !$followerId || !$followingId) {
+                return new JsonResponse('Followers not found.', Response::HTTP_NOT_FOUND);
+            }
+            if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId) ||
+                ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
+                return new JsonResponse('You are not authorized to unfollow this friendship.', Response::HTTP_CONFLICT);
             }
 
-            $follower = $this->profileRepository->findOneBy(['username' => $followerUsername]);
-            $following = $this->profileRepository->findOneBy(['username' => $followingUsername]);
-
-            if (!$follower || !$following) {
-                return new JsonResponse('Follower profile or following profile not found.', Response::HTTP_BAD_REQUEST);
-            }
-
-            $follow = $this->entityManager->getRepository(Follower::class)->findOneBy([
-                'follower' => $follower,
-                'following' => $following,
-            ]);
-
-            if (!$follow) {
-                return new JsonResponse('Not following this profile.', Response::HTTP_NOT_FOUND);
-            }
-
-            $this->entityManager->remove($follow);
+            $this->entityManager->remove($friendship);
             $this->entityManager->flush();
 
             return new JsonResponse(['message' => 'Successfully unfollowed the profile.'], Response::HTTP_OK);
