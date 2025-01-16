@@ -55,8 +55,38 @@ class FriendshipController extends AbstractController
                 'receiver' => $requesterProfileUser,
             ]);
 
-            if ($existingFriendship || $existingInverseFriendship) {
-                return new JsonResponse('Friendship already exists or request already sent.', Response::HTTP_CONFLICT);
+            if ($existingFriendship) {
+                if ($existingFriendship->getStatus() === Friendship::STATUS_PENDING) {
+                    return new JsonResponse('Request already sent. Status: pending', Response::HTTP_CONFLICT);
+                }
+
+                if ($existingFriendship->getStatus() === Friendship::STATUS_REJECTED) {
+                    $existingFriendship->setStatus(Friendship::STATUS_PENDING);
+                    $this->entityManager->flush();
+
+                    return new JsonResponse('Friend request resent', Response::HTTP_CREATED);
+                }
+
+                if ($existingFriendship->getStatus() === Friendship::STATUS_ACCEPTED) {
+                    return new JsonResponse('Friendship already exists', Response::HTTP_CONFLICT);
+                }
+            }
+
+            if ($existingInverseFriendship) {
+                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_PENDING) {
+                    return new JsonResponse('You already have a pending request for you', Response::HTTP_CONFLICT);
+                }
+
+                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_REJECTED) {
+                    $existingInverseFriendship->setStatus(Friendship::STATUS_PENDING);
+                    $this->entityManager->flush();
+
+                    return new JsonResponse('Friend request resent after rejection (inverse)', Response::HTTP_CREATED);
+                }
+
+                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_ACCEPTED) {
+                    return new JsonResponse('Friendship already exists (inverse)', Response::HTTP_CONFLICT);
+                }
             }
 
             $friendship = new Friendship();
@@ -67,9 +97,9 @@ class FriendshipController extends AbstractController
             $this->entityManager->persist($friendship);
             $this->entityManager->flush();
 
-            return new JsonResponse(['message' => 'Friend request sent.'], Response::HTTP_CREATED);
+            return new JsonResponse(['message' => 'Friend request sent'], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => 'An error occurred'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

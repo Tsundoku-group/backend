@@ -78,6 +78,7 @@ class FollowerRepository extends ServiceEntityRepository
                     'friendshipId' => $follow['friendshipId'],
                     'followingId' => $follow['followingId'],
                     'following' => [
+                        'followingId' => $follow['followingId'],
                         'followingFirstname' => $follow['followingFirstName'],
                         'followingLastname' => $follow['followingLastName'],
                         'followingUsername' => $follow['followingUsername'],
