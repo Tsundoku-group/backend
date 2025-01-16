@@ -23,7 +23,7 @@ down:                                    # Arrêter et supprimer les conteneurs,
 	$(COMPOSE) down
 
 restart:                                 # Redémarrer les conteneurs
-	$(COMPOSE) down && $(COMPOSE) up -d
+	$(COMPOSE) restart
 
 docker-ps:                               # Afficher l'état des conteneurs Docker
 	$(COMPOSE) ps
