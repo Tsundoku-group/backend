@@ -7,6 +7,11 @@ use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: FollowerRepository::class)]
+#[ORM\Table(name: "follower", indexes: [
+    new ORM\Index(name: "idx_follower_id", columns: ["follower_id"]),
+    new ORM\Index(name: "idx_following_id", columns: ["following_id"]),
+    new ORM\Index(name: "idx_follower_following", columns: ["follower_id", "following_id"])
+])]
 class Follower
 {
     #[ORM\Id]
@@ -15,11 +20,11 @@ class Follower
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: "follower_id", referencedColumnName: "id", nullable: false)]
     private ?Profile $follower = null;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: "following_id", referencedColumnName: "id", nullable: false)]
     private ?Profile $following = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
