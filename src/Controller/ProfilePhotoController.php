@@ -7,10 +7,10 @@ use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/profile-photo')]
@@ -41,17 +41,17 @@ class ProfilePhotoController extends AbstractController
                 return $testingPhotoData;
             }
 
-            $profile = $this->profileRepository->findProfileWithPhotos((int)$data['profileId'], (int)$data['id']);
+            $profile = $this->profileRepository->findProfileWithPhotos((int) $data['profileId'], (int) $data['id']);
 
             if (!$profile) {
                 return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_BAD_REQUEST);
             }
 
-            if ($profile->getUser() === null) {
+            if (null === $profile->getUser()) {
                 return new JsonResponse(['error' => 'Profile has no associated user'], Response::HTTP_BAD_REQUEST);
             }
 
-            if ($profile->getUser()->getId() !== (int)$data['id']) {
+            if ($profile->getUser()->getId() !== (int) $data['id']) {
                 return new JsonResponse(['error' => 'Profile does not belong to this user'], Response::HTTP_BAD_REQUEST);
             }
 
@@ -83,7 +83,7 @@ class ProfilePhotoController extends AbstractController
                 return $testingPhotoData;
             }
 
-            $profile = $this->profileRepository->findProfileById((int)$data['profileId'], (int)$data['id']);
+            $profile = $this->profileRepository->findProfileById((int) $data['profileId'], (int) $data['id']);
 
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
@@ -132,8 +132,8 @@ class ProfilePhotoController extends AbstractController
                 return new JsonResponse(['error' => 'No photos found for this profile'], Response::HTTP_NOT_FOUND);
             }
 
-            $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
-            
+            $activePhotos = $profile->getProfilePhotos()->filter(fn ($photo) => $photo->isActive());
+
             $result = [];
             foreach ($activePhotos as $photo) {
                 $result[$photo->getType()] = [
@@ -144,8 +144,7 @@ class ProfilePhotoController extends AbstractController
             }
 
             return new JsonResponse($result, Response::HTTP_OK);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => 'Unexpected error: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -161,7 +160,7 @@ class ProfilePhotoController extends AbstractController
                 return $testingPhotoData;
             }
 
-            $profile = $this->profileRepository->findProfileById((int)$data['profileId'], (int)$data['id']);
+            $profile = $this->profileRepository->findProfileById((int) $data['profileId'], (int) $data['id']);
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
             }
@@ -185,7 +184,6 @@ class ProfilePhotoController extends AbstractController
         }
 
         if (array_key_exists('url', $data)) {
-
             if (!filter_var($data['url'], FILTER_VALIDATE_URL)) {
                 return new JsonResponse(['error' => 'L\'URL is not valid.'], Response::HTTP_BAD_REQUEST);
             }

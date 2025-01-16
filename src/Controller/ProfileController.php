@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Profile;
 use App\Entity\User;
+use App\Repository\FollowerRepository;
+use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use DateTime;
@@ -26,12 +28,16 @@ class ProfileController extends AbstractController
     private EntityManagerInterface $entityManager;
     private ProfileRepository $profileRepository;
     private UserRepository $userRepository;
+    private FriendshipRepository $friendshipRepository;
+    private FollowerRepository $followerRepository;
 
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, UserRepository $userRepository)
+    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, UserRepository $userRepository, FriendshipRepository $friendshipRepository, FollowerRepository $followerRepository)
     {
         $this->entityManager = $entityManager;
         $this->profileRepository = $profileRepository;
         $this->userRepository = $userRepository;
+        $this->friendshipRepository = $friendshipRepository;
+        $this->followerRepository = $followerRepository;
     }
 
     #[Route('/{profileId}', name: 'profile_show', methods: ['GET'])]
@@ -64,6 +70,8 @@ class ProfileController extends AbstractController
                 'x' => $profile->getX(),
                 'type' => $profile->getType(),
                 'createdAt' => $profile->getCreatedAt()?->format(DateTimeInterface::ATOM),
+                'friendsCount' =>  $this->friendshipRepository->countFriends($profileId),
+                'followersCount' =>  $this->followerRepository->countFollowers($profileId),
             ];
 
             return new JsonResponse($profileData);

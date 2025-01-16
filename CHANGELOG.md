@@ -32,3 +32,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-26] Corrections mineures [#26](https://trello.com/c/gVitCG03/26-t-26-corrections-mineures)
 - [t-27] Fixtures updating [#27](https://trello.com/c/qNRZ8vFs/27-t-27-fixtures-updating)
 - [t-29] Ajout d'une bdd test [#29](https://trello.com/c/OOmfzIPo/29-t-29-ajout-dune-bdd-test)
+- [t-28] Gestion des relations d’amis et de followers [#28](https://trello.com/c/kIGYCyhd/28-t-28-gestion-des-relations-damis-et-de-followers)
