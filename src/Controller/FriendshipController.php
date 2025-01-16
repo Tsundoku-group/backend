@@ -27,19 +27,19 @@ class FriendshipController extends AbstractController
         $this->friendshipRepository = $friendshipRepository;
     }
 
-    #[Route('/request', name: 'send_friend_request', methods: ['POST'])]
-    public function sendFriendRequest(Request $request): JsonResponse
+    #[Route('/request/{profileId}', name: 'send_friend_request', methods: ['POST'])]
+    public function sendFriendRequest(int $profileId, Request $request): JsonResponse
     {
         try {
-            $requesterUsername = $request->headers->get('requester-username');
-            $receiverUsername = $request->headers->get('receiver-username');
+            $data = json_decode($request->getContent(), true);
+            $friendIdToRequest = $data["friendId"];
 
-            if (!$requesterUsername || !$receiverUsername) {
+            if (!$profileId || !$friendIdToRequest) {
                 return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
             }
 
-            $requesterProfileUser = $this->profileRepository->findOneBy(['username' => $requesterUsername]);
-            $receiverProfileUser = $this->profileRepository->findOneBy(['username' => $receiverUsername]);
+            $requesterProfileUser = $this->profileRepository->findOneBy(['id' => $profileId]);
+            $receiverProfileUser = $this->profileRepository->findOneBy(['id' => $friendIdToRequest]);
 
             if (!$requesterProfileUser || !$receiverProfileUser) {
                 return new JsonResponse('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
