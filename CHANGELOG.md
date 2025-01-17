@@ -34,3 +34,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-29] Ajout d'une bdd test [#29](https://trello.com/c/OOmfzIPo/29-t-29-ajout-dune-bdd-test)
 - [t-28] Gestion des relations d’amis et de followers [#28](https://trello.com/c/kIGYCyhd/28-t-28-gestion-des-relations-damis-et-de-followers)
 - [t-30] Gestion des requêtes friendship [#30](https://trello.com/c/A4yVopmX/30-t-30-gestion-des-requ%C3%AAtes-friendship)
+- [t-31] fonction pour remonter les amis en communs [#31](https://trello.com/c/SzAsh5V8/31-t-31-fonction-pour-remonter-les-amis-en-communs)
