@@ -21,8 +21,8 @@ class FriendshipRepository extends ServiceEntityRepository
     {
         $friendships = $this->createQueryBuilder('f')
             ->select('f.id AS friendshipId, 
-                      requester.id AS requesterId, requester.firstName AS requesterFirstName, requester.lastName AS requesterLastName, requester.username AS requesterUsername, 
-                      receiver.id AS receiverId, receiver.firstName AS receiverFirstName, receiver.lastName AS receiverLastName, receiver.username AS receiverUsername')
+                  requester.id AS requesterId, requester.firstName AS requesterFirstName, requester.lastName AS requesterLastName, requester.username AS requesterUsername, 
+                  receiver.id AS receiverId, receiver.firstName AS receiverFirstName, receiver.lastName AS receiverLastName, receiver.username AS receiverUsername')
             ->join('f.requester', 'requester')
             ->join('f.receiver', 'receiver')
             ->where('f.requester = :profileId OR f.receiver = :profileId')
@@ -34,28 +34,24 @@ class FriendshipRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-        try {
-            $result = [];
-            foreach ($friendships as $friendship) {
-                $isRequester = ($friendship['requesterId'] === $profileId);
+        $result = [];
+        foreach ($friendships as $friendship) {
+            $isRequester = ($friendship['requesterId'] === $profileId);
 
-                $result[] = [
-                    'friendshipId' => $friendship['friendshipId'],
-                    'requesterId' => $friendship['requesterId'],
-                    'receiverId' => $friendship['receiverId'],
-                    'friend' => [
-                        'friendId' => $isRequester ? $friendship['receiverId'] : $friendship['requesterId'],
-                        'firstname' => $isRequester ? $friendship['receiverFirstName'] : $friendship['requesterFirstName'],
-                        'lastname' => $isRequester ? $friendship['receiverLastName'] : $friendship['requesterLastName'],
-                        'username' => $isRequester ? $friendship['receiverUsername'] : $friendship['requesterUsername'],
-                    ],
-                ];
-            }
-
-            return $result;
-        } catch (NonUniqueResultException $e) {
-            return [];
+            $result[] = [
+                'friendshipId' => $friendship['friendshipId'],
+                'requesterId' => $friendship['requesterId'],
+                'receiverId' => $friendship['receiverId'],
+                'friend' => [
+                    'friendId' => $isRequester ? $friendship['receiverId'] : $friendship['requesterId'],
+                    'firstname' => $isRequester ? $friendship['receiverFirstName'] : $friendship['requesterFirstName'],
+                    'lastname' => $isRequester ? $friendship['receiverLastName'] : $friendship['requesterLastName'],
+                    'username' => $isRequester ? $friendship['receiverUsername'] : $friendship['requesterUsername'],
+                ],
+            ];
         }
+
+        return $result;
     }
 
     public function getAllProfilesWithCommonFriends(int $profileId, int $limit, int $offset): array

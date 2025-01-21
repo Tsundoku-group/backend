@@ -5,18 +5,14 @@ namespace App\Tests\Repository;
 use App\Entity\Conversation;
 use App\Entity\User;
 use App\Repository\ConversationRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 class ConversationRepositoryTest extends TestCase
 {
-    private $entityManager;
     private $conversationRepository;
 
     protected function setUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-
         $this->conversationRepository = $this->createMock(ConversationRepository::class);
 
         $this->conversationRepository->method('findConversationsByUserOrderedByLastMessage')

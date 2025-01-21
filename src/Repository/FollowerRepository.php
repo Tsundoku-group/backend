@@ -32,7 +32,6 @@ class FollowerRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-        try {
             $result = [];
 
             foreach ($followers as $follower) {
@@ -52,9 +51,6 @@ class FollowerRepository extends ServiceEntityRepository
             }
 
             return $result;
-        } catch (NoResultException $e) {
-            return [];
-        }
     }
 
     public function findFollowedWithPagination(int $profileId, int $limit, int $offset): array
@@ -70,7 +66,6 @@ class FollowerRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-        try {
             $result = [];
 
             foreach ($followed as $follow) {
@@ -87,9 +82,6 @@ class FollowerRepository extends ServiceEntityRepository
             }
 
             return $result;
-        } catch (NoResultException $e) {
-            return [];
-        }
     }
 
     public function countFollowers(int $profileId): int
