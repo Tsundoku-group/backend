@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Friendship;
 use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
+use App\Service\FriendshipService;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,12 +20,14 @@ class FriendshipController extends AbstractController
     private EntityManagerInterface $entityManager;
     private ProfileRepository $profileRepository;
     private FriendshipRepository $friendshipRepository;
+    private FriendshipService $friendshipService;
 
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, FriendshipRepository $friendshipRepository)
+    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, FriendshipRepository $friendshipRepository, FriendshipService $friendshipService)
     {
         $this->entityManager = $entityManager;
         $this->profileRepository = $profileRepository;
         $this->friendshipRepository = $friendshipRepository;
+        $this->friendshipService = $friendshipService;
     }
 
     #[Route('/request/{profileId}', name: 'send_friend_request', methods: ['POST'])]
@@ -233,5 +236,17 @@ class FriendshipController extends AbstractController
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+
+    #[Route('/{profileId}/suggestions', name: 'profile_suggestions', methods: ['GET'])]
+    public function getProfileFriendsSuggestions(int $profileId, Request $request): JsonResponse
+    {
+        $limit = max((int)$request->query->get('limit', 20), 1);
+        $offset = max((int)$request->query->get('offset', 0), 0);
+
+        $friendsSuggestions = $this->friendshipService->getSuggestionsFriendsByProfile($profileId, $limit, $offset);
+
+        return new JsonResponse(['suggestions' => $friendsSuggestions], Response::HTTP_OK);
     }
 }
