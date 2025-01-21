@@ -35,7 +35,7 @@ class FriendshipController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $friendIdToRequest = $data["friendId"];
+            $friendIdToRequest = $data['friendId'];
 
             if (!$profileId || !$friendIdToRequest) {
                 return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
@@ -59,35 +59,35 @@ class FriendshipController extends AbstractController
             ]);
 
             if ($existingFriendship) {
-                if ($existingFriendship->getStatus() === Friendship::STATUS_PENDING) {
+                if (Friendship::STATUS_PENDING === $existingFriendship->getStatus()) {
                     return new JsonResponse('Request already sent. Status: pending', Response::HTTP_CONFLICT);
                 }
 
-                if ($existingFriendship->getStatus() === Friendship::STATUS_REJECTED) {
+                if (Friendship::STATUS_REJECTED === $existingFriendship->getStatus()) {
                     $existingFriendship->setStatus(Friendship::STATUS_PENDING);
                     $this->entityManager->flush();
 
                     return new JsonResponse('Friend request resent', Response::HTTP_CREATED);
                 }
 
-                if ($existingFriendship->getStatus() === Friendship::STATUS_ACCEPTED) {
+                if (Friendship::STATUS_ACCEPTED === $existingFriendship->getStatus()) {
                     return new JsonResponse('Friendship already exists', Response::HTTP_CONFLICT);
                 }
             }
 
             if ($existingInverseFriendship) {
-                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_PENDING) {
+                if (Friendship::STATUS_PENDING === $existingInverseFriendship->getStatus()) {
                     return new JsonResponse('You already have a pending request for you', Response::HTTP_CONFLICT);
                 }
 
-                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_REJECTED) {
+                if (Friendship::STATUS_REJECTED === $existingInverseFriendship->getStatus()) {
                     $existingInverseFriendship->setStatus(Friendship::STATUS_PENDING);
                     $this->entityManager->flush();
 
                     return new JsonResponse('Friend request resent after rejection (inverse)', Response::HTTP_CREATED);
                 }
 
-                if ($existingInverseFriendship->getStatus() === Friendship::STATUS_ACCEPTED) {
+                if (Friendship::STATUS_ACCEPTED === $existingInverseFriendship->getStatus()) {
                     return new JsonResponse('Friendship already exists (inverse)', Response::HTTP_CONFLICT);
                 }
             }
@@ -157,8 +157,8 @@ class FriendshipController extends AbstractController
                 return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
             }
 
-            if (($friendship->getRequester()->getId() !== $requesterId && $friendship->getReceiver()->getId() !== $requesterId) ||
-                ($friendship->getRequester()->getId() !== $receiverId && $friendship->getReceiver()->getId() !== $receiverId)) {
+            if (($friendship->getRequester()->getId() !== $requesterId && $friendship->getReceiver()->getId() !== $requesterId)
+                || ($friendship->getRequester()->getId() !== $receiverId && $friendship->getReceiver()->getId() !== $receiverId)) {
                 return new Response('You are not authorized to remove this friendship.', Response::HTTP_FORBIDDEN);
             }
 
@@ -181,8 +181,8 @@ class FriendshipController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $page = max((int)$request->query->get('page', 1), 1);
-            $limit = max((int)$request->query->get('limit', 20), 1);
+            $page = max((int) $request->query->get('page', 1), 1);
+            $limit = max((int) $request->query->get('limit', 20), 1);
             $offset = ($page - 1) * $limit;
 
             $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
@@ -238,12 +238,11 @@ class FriendshipController extends AbstractController
         }
     }
 
-
     #[Route('/{profileId}/suggestions', name: 'profile_suggestions', methods: ['GET'])]
     public function getProfileFriendsSuggestions(int $profileId, Request $request): JsonResponse
     {
-        $limit = max((int)$request->query->get('limit', 20), 1);
-        $offset = max((int)$request->query->get('offset', 0), 0);
+        $limit = max((int) $request->query->get('limit', 20), 1);
+        $offset = max((int) $request->query->get('offset', 0), 0);
 
         $friendsSuggestions = $this->friendshipService->getSuggestionsFriendsByProfile($profileId, $limit, $offset);
 

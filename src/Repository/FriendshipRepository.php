@@ -109,8 +109,8 @@ class FriendshipRepository extends ServiceEntityRepository
             $profile['commonFriendsCount'] = count($commonFriends);
         }
 
-        $profilesWithCommonFriends = array_filter($profiles, fn($p) => $p['commonFriendsCount'] > 0);
-        $profilesWithoutCommonFriends = array_filter($profiles, fn($p) => $p['commonFriendsCount'] === 0);
+        $profilesWithCommonFriends = array_filter($profiles, fn ($p) => $p['commonFriendsCount'] > 0);
+        $profilesWithoutCommonFriends = array_filter($profiles, fn ($p) => 0 === $p['commonFriendsCount']);
 
         return array_merge($profilesWithCommonFriends, $profilesWithoutCommonFriends);
     }
@@ -124,7 +124,7 @@ class FriendshipRepository extends ServiceEntityRepository
             ->setParameter('status', Friendship::STATUS_ACCEPTED)
             ->setParameter('profileId', $profileId);
         try {
-            return (int)$result->getQuery()->getSingleScalarResult();
+            return (int) $result->getQuery()->getSingleScalarResult();
         } catch (NonUniqueResultException $e) {
             return 0;
         }

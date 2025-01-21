@@ -112,7 +112,7 @@ class FollowerController extends AbstractController
 
             $this->entityManager->persist($follow);
             $this->entityManager->flush();
-            
+
             return new JsonResponse(['message' => 'Successfully followed the profile.'], Response::HTTP_CREATED);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -131,8 +131,8 @@ class FollowerController extends AbstractController
             if (!$friendship || !$followerId || !$followingId) {
                 return new JsonResponse('Followers not found.', Response::HTTP_NOT_FOUND);
             }
-            if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId) ||
-                ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
+            if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId)
+                || ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
                 return new JsonResponse('You are not authorized to unfollow this friendship.', Response::HTTP_CONFLICT);
             }
 

@@ -100,7 +100,7 @@ class FollowerRepository extends ServiceEntityRepository
             ->setParameter('profileId', $profileId);
 
         try {
-           return (int) $result->getQuery()->getSingleScalarResult();
+            return (int) $result->getQuery()->getSingleScalarResult();
         } catch (NoResultException $e) {
             return 0;
         }
