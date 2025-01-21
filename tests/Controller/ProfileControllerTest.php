@@ -5,6 +5,8 @@ namespace App\Tests\Controller;
 use App\Controller\ProfileController;
 use App\Entity\Profile;
 use App\Entity\User;
+use App\Repository\FollowerRepository;
+use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,12 +21,16 @@ class ProfileControllerTest extends TestCase
     private $profileRepository;
     private $userRepository;
     private $container;
+    private $friendshipRepository;
+    private $followerRepository;
 
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->profileRepository = $this->createMock(ProfileRepository::class);
         $this->userRepository = $this->createMock(UserRepository::class);
+        $this->friendshipRepository = $this->createMock(FriendshipRepository::class);
+        $this->followerRepository = $this->createMock(FollowerRepository::class);
         $this->container = $this->createMock(ContainerInterface::class);
     }
 
@@ -37,6 +43,8 @@ class ProfileControllerTest extends TestCase
                 $this->entityManager,
                 $this->profileRepository,
                 $this->userRepository,
+                $this->friendshipRepository,
+                $this->followerRepository,
             ])
             ->onlyMethods(['getUser'])
             ->getMock();
@@ -64,7 +72,9 @@ class ProfileControllerTest extends TestCase
         $controller = new ProfileController(
             $this->entityManager,
             $this->profileRepository,
-            $this->userRepository
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
         );
         $controller->setContainer($this->container);
 
@@ -97,6 +107,8 @@ class ProfileControllerTest extends TestCase
                 $this->entityManager,
                 $this->profileRepository,
                 $this->userRepository,
+                $this->friendshipRepository,
+                $this->followerRepository,
             ])
             ->onlyMethods(['getUser'])
             ->getMock();
@@ -143,7 +155,9 @@ class ProfileControllerTest extends TestCase
         $controller = new ProfileController(
             $this->entityManager,
             $this->profileRepository,
-            $this->userRepository
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
         );
         $controller->setContainer($this->container);
 
