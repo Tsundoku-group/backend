@@ -70,8 +70,8 @@ class ProfileController extends AbstractController
                 'x' => $profile->getX(),
                 'type' => $profile->getType(),
                 'createdAt' => $profile->getCreatedAt()?->format(DateTimeInterface::ATOM),
-                'friendsCount' =>  $this->friendshipRepository->countFriends($profileId),
-                'followersCount' =>  $this->followerRepository->countFollowers($profileId),
+                'friendsCount' => $this->friendshipRepository->countFriends($profileId),
+                'followersCount' => $this->followerRepository->countFollowers($profileId),
             ];
 
             return new JsonResponse($profileData);

@@ -28,60 +28,56 @@ class FollowerControllerTest extends TestCase
         $profileId = 1;
 
         $profile = $this->createMock(Profile::class);
-        $profile->method('getId')->willReturn(1);
-        $profile->method('getUsername')->willReturn('testUsername');
-        $profile->method('getFirstName')->willReturn('John');
-        $profile->method('getLastName')->willReturn('Doe');
+        $this->profileRepository->method('find')->with($profileId)->willReturn($profile);
 
         $followers = [
-            (new Follower())->setFollower($profile)->setFollowing($profile),
-            (new Follower())->setFollower($profile)->setFollowing($profile),
+            ['id' => 1, 'username' => 'follower1', 'firstName' => 'John', 'lastName' => 'Doe'],
+            ['id' => 2, 'username' => 'follower2', 'firstName' => 'Jane', 'lastName' => 'Doe'],
         ];
-
-        $this->profileRepository->method('find')->with($profileId)->willReturn($profile);
 
         $followerRepository = $this->createMock(FollowerRepository::class);
         $followerRepository->method('findFollowersWithPagination')->willReturn($followers);
 
-        $this->entityManager->method('getRepository')->willReturn($followerRepository);
-
-        $controller = new FollowerController($this->profileRepository, $this->entityManager);
-        $request = new Request(['page' => 1, 'limit' => 10]);
+        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
+        $request = new Request([], ['page' => 1, 'limit' => 10]);
 
         $response = $controller->getFollowersPaginated($profileId, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $responseData = json_decode($response->getContent(), true);
 
-        $this->assertArrayHasKey('data', $responseData);
-        $this->assertCount(2, $responseData['data']);
-        $this->assertEquals('testUsername', $responseData['data'][0]['username']);
-        $this->assertEquals('John', $responseData['data'][0]['firstName']);
-        $this->assertEquals('Doe', $responseData['data'][0]['lastName']);
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertIsArray($responseData);
+        $this->assertCount(2, $responseData);
+        $this->assertEquals('follower1', $responseData[0]['username']);
+        $this->assertEquals('John', $responseData[0]['firstName']);
+        $this->assertEquals('Doe', $responseData[0]['lastName']);
     }
 
     public function testFollowProfileSuccess(): void
     {
+        $profileId = 1;
         $request = new Request([], [], [], [], [], [], json_encode([
-            'followerUsername' => 'follower',
-            'followingUsername' => 'following',
+            'followingId' => 2,
         ]));
 
         $follower = $this->createMock(Profile::class);
         $following = $this->createMock(Profile::class);
 
         $this->profileRepository->method('findOneBy')->willReturnMap([
-            [['username' => 'follower'], null, $follower],
-            [['username' => 'following'], null, $following],
+            [['id' => $profileId], null, $follower],
+            [['id' => 2], null, $following],
         ]);
+
+        $followerRepository = $this->createMock(FollowerRepository::class);
 
         $this->entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(Follower::class));
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new FollowerController($this->profileRepository, $this->entityManager);
 
-        $response = $controller->followProfile($request);
+        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
+
+        $response = $controller->followProfile($profileId, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(201, $response->getStatusCode());
@@ -89,25 +85,35 @@ class FollowerControllerTest extends TestCase
 
     public function testUnfollowProfileSuccess(): void
     {
+        $profileId = 1;
+        $followingId = 2;
+
         $request = new Request([], [], [], [], [], [], json_encode([
-            'followerUsername' => 'follower',
-            'followingUsername' => 'following',
+            'followerId' => $profileId,
+            'followingId' => $followingId,
         ]));
 
         $follower = $this->createMock(Profile::class);
+        $follower->method('getId')->willReturn($profileId);
+
         $following = $this->createMock(Profile::class);
-        $followerEntity = new Follower();
+        $following->method('getId')->willReturn($followingId);
+
+        $followerEntity = $this->createMock(Follower::class);
+        $followerEntity->method('getFollower')->willReturn($follower);
+        $followerEntity->method('getFollowing')->willReturn($following);
 
         $this->profileRepository->method('findOneBy')->willReturnMap([
-            [['username' => 'follower'], null, $follower],
-            [['username' => 'following'], null, $following],
+            [['id' => $profileId], null, $follower],
+            [['id' => $followingId], null, $following],
         ]);
 
-        $this->entityManager->method('getRepository')->willReturnCallback(function ($class) use ($followerEntity) {
+        $followerRepository = $this->createMock(FollowerRepository::class);
+        $followerRepository->method('find')->willReturn($followerEntity);
+
+        $this->entityManager->method('getRepository')->willReturnCallback(function ($class) use ($followerRepository) {
             if ($class === Follower::class) {
-                $repository = $this->createMock(FollowerRepository::class);
-                $repository->method('findOneBy')->willReturn($followerEntity);
-                return $repository;
+                return $followerRepository;
             }
             return null;
         });
@@ -115,9 +121,9 @@ class FollowerControllerTest extends TestCase
         $this->entityManager->expects($this->once())->method('remove')->with($followerEntity);
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new FollowerController($this->profileRepository, $this->entityManager);
+        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
 
-        $response = $controller->unfollowProfile($request);
+        $response = $controller->unfollowProfile(1, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
