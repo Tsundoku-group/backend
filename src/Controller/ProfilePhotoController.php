@@ -84,7 +84,7 @@ class ProfilePhotoController extends AbstractController
                 return $testingPhotoData;
             }
 
-            $profile = $this->profileRepository->findProfileById((int) $data['profileId'], (int) $data['id']);
+            $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
 
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
@@ -161,7 +161,7 @@ class ProfilePhotoController extends AbstractController
                 return $testingPhotoData;
             }
 
-            $profile = $this->profileRepository->findProfileById((int) $data['profileId'], (int) $data['id']);
+            $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
             }

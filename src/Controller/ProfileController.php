@@ -44,13 +44,7 @@ class ProfileController extends AbstractController
     public function show(int $profileId): JsonResponse
     {
         try {
-            $user = $this->getUser();
-
-            if (!$user instanceof User) {
-                return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
-            }
-
-            $profile = $this->profileRepository->findProfileById($profileId, $user->getId());
+            $profile = $this->profileRepository->findProfileById($profileId);
 
             if (!$profile) {
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
