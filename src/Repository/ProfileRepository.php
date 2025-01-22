@@ -32,7 +32,20 @@ class ProfileRepository extends ServiceEntityRepository
         }
     }
 
-    public function findProfileById(int $profileId, int $userId): ?Profile
+    public function findProfileById(int $profileId): ?Profile
+    {
+        $result = $this->createQueryBuilder('p')
+            ->andWhere('p.id = :profileId')
+            ->setParameter('profileId', $profileId);
+
+        try {
+            return $result->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
+
+    public function findProfileByIdAndUserId(int $profileId, int $userId): ?Profile
     {
         $result = $this->createQueryBuilder('p')
             ->leftJoin('p.user', 'u')
