@@ -35,3 +35,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-28] Gestion des relations d’amis et de followers [#28](https://trello.com/c/kIGYCyhd/28-t-28-gestion-des-relations-damis-et-de-followers)
 - [t-30] Gestion des requêtes friendship [#30](https://trello.com/c/A4yVopmX/30-t-30-gestion-des-requ%C3%AAtes-friendship)
 - [t-31] fonction pour remonter les amis en communs [#31](https://trello.com/c/SzAsh5V8/31-t-31-fonction-pour-remonter-les-amis-en-communs)
+- [t-32] Ajout pagination sur les fonctions pour amis followers suivies [#32](https://trello.com/c/eYpfcvCq/32-t-32-ajout-pagination-sur-les-fonctions-pour-amis-followers-suivies)
