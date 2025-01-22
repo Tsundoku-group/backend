@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,13 +20,15 @@ class ProfilePhotoController extends AbstractController
     private const PROFILE_NOT_FOUND = 'Profile not found';
     private ProfileRepository $profileRepository;
     private ProfilePhotoService $profilePhotoService;
+    private EntityManagerInterface $entityManager;
     private ProfilePhotoRepository $profilePhotoRepository;
 
-    public function __construct(ProfileRepository $profileRepository, ProfilePhotoService $profilePhotoService, ProfilePhotoRepository $profilePhotoRepository)
+    public function __construct(ProfileRepository $profileRepository, ProfilePhotoService $profilePhotoService, EntityManagerInterface $entityManager, ProfilePhotoRepository $profilePhotoRepository)
     {
         $this->profileRepository = $profileRepository;
         $this->profilePhotoService = $profilePhotoService;
         $this->profilePhotoRepository = $profilePhotoRepository;
+        $this->entityManager = $entityManager;
     }
 
     #[Route('/add-photo', name: 'add_profile_photo', methods: 'POST')]
