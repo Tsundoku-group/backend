@@ -6,7 +6,6 @@ use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
