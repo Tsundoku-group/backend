@@ -36,7 +36,7 @@ class ProfileControllerTest extends TestCase
 
     public function testShowProfileNotFound(): void
     {
-        $this->profileRepository->method('findProfileById')->willReturn(null);
+        $this->profileRepository->method('findProfileByIdAndUserId')->willReturn(null);
 
         $controller = $this->getMockBuilder(ProfileController::class)
             ->setConstructorArgs([

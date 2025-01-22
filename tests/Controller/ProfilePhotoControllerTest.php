@@ -48,7 +48,7 @@ class ProfilePhotoControllerTest extends TestCase
         $profile = $this->createMock(Profile::class);
         $profilePhoto = $this->createMock(ProfilePhoto::class);
 
-        $this->profileRepository->method('findProfileById')->willReturn($profile);
+        $this->profileRepository->method('findProfileByIdAndUserId')->willReturn($profile);
         $this->entityManager->getRepository(ProfilePhoto::class)
             ->method('findOneBy')->willReturn(null);
         $this->profilePhotoService->method('addPhotoToProfile')->willReturn(true);
