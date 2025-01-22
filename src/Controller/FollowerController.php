@@ -37,9 +37,8 @@ class FollowerController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $page = $request->query->getInt('page', 1);
-            $limit = $request->query->getInt('limit', 10);
-            $offset = ($page - 1) * $limit;
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
@@ -63,9 +62,8 @@ class FollowerController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $page = $request->query->getInt('page', 1);
-            $limit = $request->query->getInt('limit', 10);
-            $offset = ($page - 1) * $limit;
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 
