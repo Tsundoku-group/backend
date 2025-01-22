@@ -32,25 +32,25 @@ class FollowerRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-            $result = [];
+        $result = [];
 
-            foreach ($followers as $follower) {
-                $isFollower = ($follower['followerId'] === $profileId);
+        foreach ($followers as $follower) {
+            $isFollower = ($follower['followerId'] === $profileId);
 
-                $result[] = [
-                    'friendshipId' => $follower['friendshipId'],
-                    'followerId' => $follower['followerId'],
-                    'followingId' => $follower['followingId'],
-                    'following' => [
-                        'followingId' => $isFollower ? $follower['followingId'] : $follower['followerId'],
-                        'followingFirstname' => $isFollower ? $follower['followingFirstName'] : $follower['followerFirstName'],
-                        'followingLastname' => $isFollower ? $follower['followingLastName'] : $follower['followerLastName'],
-                        'followingUsername' => $isFollower ? $follower['followingUsername'] : $follower['followerUsername'],
-                    ],
-                ];
-            }
+            $result[] = [
+                'friendshipId' => $follower['friendshipId'],
+                'followerId' => $follower['followerId'],
+                'followingId' => $follower['followingId'],
+                'following' => [
+                    'followingId' => $isFollower ? $follower['followingId'] : $follower['followerId'],
+                    'followingFirstname' => $isFollower ? $follower['followingFirstName'] : $follower['followerFirstName'],
+                    'followingLastname' => $isFollower ? $follower['followingLastName'] : $follower['followerLastName'],
+                    'followingUsername' => $isFollower ? $follower['followingUsername'] : $follower['followerUsername'],
+                ],
+            ];
+        }
 
-            return $result;
+        return $result;
     }
 
     public function findFollowedWithPagination(int $profileId, int $limit, int $offset): array
@@ -66,22 +66,22 @@ class FollowerRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-            $result = [];
+        $result = [];
 
-            foreach ($followed as $follow) {
-                $result[] = [
-                    'friendshipId' => $follow['friendshipId'],
+        foreach ($followed as $follow) {
+            $result[] = [
+                'friendshipId' => $follow['friendshipId'],
+                'followingId' => $follow['followingId'],
+                'following' => [
                     'followingId' => $follow['followingId'],
-                    'following' => [
-                        'followingId' => $follow['followingId'],
-                        'followingFirstname' => $follow['followingFirstName'],
-                        'followingLastname' => $follow['followingLastName'],
-                        'followingUsername' => $follow['followingUsername'],
-                    ],
-                ];
-            }
+                    'followingFirstname' => $follow['followingFirstName'],
+                    'followingLastname' => $follow['followingLastName'],
+                    'followingUsername' => $follow['followingUsername'],
+                ],
+            ];
+        }
 
-            return $result;
+        return $result;
     }
 
     public function countFollowers(int $profileId): int
