@@ -181,9 +181,8 @@ class FriendshipController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $page = max((int) $request->query->get('page', '1'), 1);
-            $limit = max((int) $request->query->get('limit', '20'), 1);
-            $offset = ($page - 1) * $limit;
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
 
@@ -241,7 +240,6 @@ class FriendshipController extends AbstractController
     #[Route('/{profileId}/suggestions', name: 'profile_suggestions', methods: ['GET'])]
     public function getProfileFriendsSuggestions(int $profileId, Request $request): JsonResponse
     {
-        $page = max((int) $request->query->get('page', '1'), 1);
         $limit = max((int) $request->query->get('limit', '20'), 1);
         $offset = max((int) $request->query->get('offset', '0'), 0);
 
