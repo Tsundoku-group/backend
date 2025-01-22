@@ -20,9 +20,9 @@ class ProfileControllerTest extends TestCase
     private $entityManager;
     private $profileRepository;
     private $userRepository;
-    private $container;
     private $friendshipRepository;
     private $followerRepository;
+    private $container;
 
     protected function setUp(): void
     {
@@ -36,38 +36,7 @@ class ProfileControllerTest extends TestCase
 
     public function testShowProfileNotFound(): void
     {
-        $this->profileRepository->method('findProfileByIdAndUserId')->willReturn(null);
-
-        $controller = $this->getMockBuilder(ProfileController::class)
-            ->setConstructorArgs([
-                $this->entityManager,
-                $this->profileRepository,
-                $this->userRepository,
-                $this->friendshipRepository,
-                $this->followerRepository,
-            ])
-            ->onlyMethods(['getUser'])
-            ->getMock();
-
-        $controller->expects($this->once())
-            ->method('getUser')
-            ->willReturn(null);
-
-        $controller->setContainer($this->container);
-
-        $response = $controller->show(999);
-
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'User not found']),
-            $response->getContent()
-        );
-    }
-
-    public function testShowUserNotFound(): void
-    {
-        $this->userRepository->method('find')->willReturn(null);
+        $this->profileRepository->method('findProfileById')->willReturn(null);
 
         $controller = new ProfileController(
             $this->entityManager,
@@ -76,14 +45,15 @@ class ProfileControllerTest extends TestCase
             $this->friendshipRepository,
             $this->followerRepository
         );
+
         $controller->setContainer($this->container);
 
-        $response = $controller->getAllProfiles(999);
+        $response = $controller->show(999);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'User not found']),
+            json_encode(['error' => 'Profile not found']),
             $response->getContent()
         );
     }
@@ -91,16 +61,20 @@ class ProfileControllerTest extends TestCase
     public function testCreateProfileSuccess(): void
     {
         $request = new Request([], [], [], [], [], [], json_encode([
-            'username' => 'testUsername',
-            'type' => 'lecteur',
-            'birthday' => '2000-01-01',
-            'gender' => 'male',
-            'phoneNumber' => '123456789',
+            'username' => 'newuser',
             'firstName' => 'John',
             'lastName' => 'Doe',
+            'type' => 'lecteur',
+            'phoneNumber' => '0612233435',
+            'birthday' => '2000-01-01',
+            'bio' => 'New user bio',
         ]));
 
         $user = $this->createMock(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $this->profileRepository->method('findOneBy')->willReturn(null);
+        $this->profileRepository->method('count')->willReturn(0);
 
         $controller = $this->getMockBuilder(ProfileController::class)
             ->setConstructorArgs([
@@ -117,40 +91,124 @@ class ProfileControllerTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $controller->setContainer($this->container);
-
-        $this->profileRepository->method('findOneBy')->willReturn(null);
-        $this->entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(Profile::class));
+        $this->entityManager->expects($this->once())
+            ->method('persist')
+            ->with($this->isInstanceOf(Profile::class));
         $this->entityManager->expects($this->once())->method('flush');
+
+        $controller->setContainer($this->container);
 
         $response = $controller->createProfile($request, $this->entityManager);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(201, $response->getStatusCode());
+        $this->assertJson($response->getContent());
+    }
+
+    public function testCreateProfileDuplicateUsername(): void
+    {
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'username' => 'existinguser',
+            'firstName' => 'John',
+            'lastName' => 'Doe',
+            'type' => 'lecteur',
+            'birthday' => '2000-01-01',
+            'bio' => 'Duplicate username',
+        ]));
+
+        $existingProfile = $this->createMock(Profile::class);
+        $this->profileRepository->method('findOneBy')->willReturn($existingProfile);
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+
+        $controller->setContainer($this->container);
+
+        $response = $controller->createProfile($request, $this->entityManager);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertJsonStringEqualsJsonString(
+            json_encode(['error' => 'Le nom d\'utilisateur est déjà pris']),
+            $response->getContent()
+        );
     }
 
     public function testUpdateProfileSuccess(): void
     {
         $request = new Request([], [], [], [], [], [], json_encode([
-            'firstName' => 'John',
-            'lastName' => 'Doe',
-            'username' => 'updatedUsername',
+            'firstName' => 'Updated John',
+            'lastName' => 'Updated Doe',
+            'username' => 'updateduser',
+            'gender' => 'masculin',
+            'phoneNumber' => '0612233435',
             'birthday' => '1990-01-01',
-            'gender' => 'male',
-            'phoneNumber' => '123456789',
+            'bio' => 'Updated bio',
         ]));
 
         $profile = $this->createMock(Profile::class);
+        $this->profileRepository->method('findOneBy')->willReturn(null);
 
-        $profile->method('getFirstName')->willReturn('John');
-        $profile->method('getLastName')->willReturn('Doe');
-        $profile->method('getUsername')->willReturn('updatedUsername');
-        $profile->method('getBirthday')->willReturn(new \DateTime('1990-01-01'));
-        $profile->method('getGender')->willReturn('male');
-        $profile->method('getPhoneNumber')->willReturn('123456789');
-
-        $this->profileRepository->method('findOneBy')->willReturn(null); // Pas de doublon
         $this->entityManager->expects($this->once())->method('flush');
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+
+        $controller->setContainer($this->container);
+
+        $response = $controller->update($request, $profile);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertJson($response->getContent());
+    }
+
+    public function testDeleteProfileSuccess(): void
+    {
+        $profile = $this->createMock(Profile::class);
+
+        $this->profileRepository->method('findOneBy')->willReturn($profile);
+
+        $this->entityManager->expects($this->once())->method('remove')->with($profile);
+        $this->entityManager->expects($this->once())->method('flush');
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+
+        $controller->setContainer($this->container);
+
+        $response = $controller->delete(1);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(204, $response->getStatusCode());
+    }
+
+    public function testGetActiveProfileSuccess(): void
+    {
+        $user = $this->createMock(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $activeProfile = $this->createMock(Profile::class);
+        $activeProfile->method('getId')->willReturn(1);
+        $activeProfile->method('getUsername')->willReturn('johndoe');
+
+        $this->userRepository->method('find')->willReturn($user);
+        $this->profileRepository->method('findOneBy')->willReturn($activeProfile);
 
         $controller = new ProfileController(
             $this->entityManager,
@@ -161,9 +219,104 @@ class ProfileControllerTest extends TestCase
         );
         $controller->setContainer($this->container);
 
-        $response = $controller->update($request, $profile);
+        $response = $controller->getActiveProfile(1);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
+        $this->assertJsonStringEqualsJsonString(
+            json_encode([
+                'activeProfile' => [
+                    'id' => 1,
+                    'username' => 'johndoe',
+                ],
+            ]),
+            $response->getContent()
+        );
+    }
+
+    public function testGetActiveProfileNotFound(): void
+    {
+        $this->userRepository->method('find')->willReturn(null);
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+        $controller->setContainer($this->container);
+
+        $response = $controller->getActiveProfile(999);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertJsonStringEqualsJsonString(
+            json_encode(['error' => 'Utilisateur introuvable']),
+            $response->getContent()
+        );
+    }
+
+    public function testSetActiveProfileSuccess(): void
+    {
+        $user = $this->createMock(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $profile = $this->createMock(Profile::class);
+        $profile->method('getId')->willReturn(1);
+        $profile->method('getUser')->willReturn($user);
+
+        $this->userRepository->method('find')->willReturn($user);
+        $this->profileRepository->method('find')->willReturn($profile);
+
+        $this->profileRepository->method('findBy')->willReturn([$profile]);
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+        $controller->setContainer($this->container);
+
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'id' => 1,
+            'profileId' => 1,
+        ]));
+
+        $response = $controller->setActiveProfile($request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertJson($response->getContent());
+    }
+
+    public function testSetActiveProfileNotFound(): void
+    {
+        $this->userRepository->method('find')->willReturn(null);
+
+        $controller = new ProfileController(
+            $this->entityManager,
+            $this->profileRepository,
+            $this->userRepository,
+            $this->friendshipRepository,
+            $this->followerRepository
+        );
+        $controller->setContainer($this->container);
+
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'id' => 999,
+            'profileId' => 999,
+        ]));
+
+        $response = $controller->setActiveProfile($request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertJsonStringEqualsJsonString(
+            json_encode(['error' => 'User not found']),
+            $response->getContent()
+        );
     }
 }
