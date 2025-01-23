@@ -20,13 +20,13 @@ class FollowerRepository extends ServiceEntityRepository
     public function findFollowersWithPagination(int $profileId, int $limit, int $offset): array
     {
         $followers = $this->createQueryBuilder('f')
-            ->select('DISTINCT f.id AS friendshipId,
+            ->select('f.id AS friendshipId,
                   follower.id AS followerId, 
                   follower.firstName AS followerFirstName, 
                   follower.lastName AS followerLastName, 
                   follower.username AS followerUsername')
             ->join('f.follower', 'follower')
-            ->where('f.follower = :profileId')
+            ->where('f.following = :profileId')
             ->setParameter('profileId', $profileId)
             ->setMaxResults($limit)
             ->setFirstResult($offset)
@@ -85,7 +85,7 @@ class FollowerRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('f')
             ->select('COUNT(f.id)')
-            ->where('f.follower = :profileId')
+            ->where('f.following = :profileId')
             ->setParameter('profileId', $profileId);
 
         try {
