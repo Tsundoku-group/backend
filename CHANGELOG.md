@@ -38,3 +38,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-32] Ajout pagination sur les fonctions pour amis followers suivies [#32](https://trello.com/c/eYpfcvCq/32-t-32-ajout-pagination-sur-les-fonctions-pour-amis-followers-suivies)
 - [t-33] Correction findProfileById pour remonter les profils [#33](https://trello.com/c/IbRdIuF0/33-t-33-correction-findprofilebyid-pour-remonter-les-profils)
 - [t-34] Correction: followers [#34](https://trello.com/c/MQOVEfLC/34-t-34-correction-followers)
+- [t-35] Correction: followers (2) [#35](https://trello.com/c/O1F6LdjR/35-t-35-correction-followers-2)
