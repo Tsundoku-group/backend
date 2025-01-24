@@ -45,3 +45,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-39] Amélioration des blocks try/catch [#39](https://trello.com/c/BzjnN4dR/39-t-39-am%C3%A9lioration-des-blocks-try-catch)
 - [t-40] Ajout dossier validator [#40](https://trello.com/c/1jqLYxBf/40-t-40-ajout-dossier-validator)
 - [t-42] Déplacement dossier Validator dans Validator/Constraints [#42](https://trello.com/c/ZL80jpBa/42-t-42-d%C3%A9placement-dossier-validator-dans-validator-constraints)
+- [t-43] Ajout $googleRecaptchaSecret dans services.yaml [#43](https://trello.com/c/hYmh94gq/43-t-43-ajout-googlerecaptchasecret-dans-servicesyaml)
