@@ -43,3 +43,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-37] Remonter les urls images des deux derniers amis [#37](https://trello.com/c/DXEZzYm7/37-t-37-remonter-les-urls-images-des-deux-derniers-amis)
 - [t-38] changement des paramètres construct des class [#38](https://trello.com/c/X4cQfGZf/38-t-38-changement-des-param%C3%A8tres-construct-des-class)
 - [t-39] Amélioration des blocks try/catch [#39](https://trello.com/c/BzjnN4dR/39-t-39-am%C3%A9lioration-des-blocks-try-catch)
+- [t-40] Ajout dossier validator [#40](https://trello.com/c/1jqLYxBf/40-t-40-ajout-dossier-validator)
