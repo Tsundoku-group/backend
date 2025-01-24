@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Conversation\CreateConversationDTO;
 use App\DTO\Conversation\MuteConversationDTO;
 use App\Entity\Conversation;
@@ -24,8 +25,6 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/conversation')]
 class ConversationController extends AbstractController
 {
-    private const USER_NOT_FOUND = 'USER_NOT_FOUND';
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProfileRepository $profileRepository,
@@ -35,19 +34,19 @@ class ConversationController extends AbstractController
     }
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
-    public function createConversation(Request $request): Response
+    public function createConversation(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $dto = new CreateConversationDTO($data);
 
         if (!isset($dto->participants) || !isset($dto->email)) {
-            return new Response('Invalid input', Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $createdBy = $this->profileRepository->findProfileByEmail($dto->email);
 
         if (!$createdBy) {
-            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -67,7 +66,7 @@ class ConversationController extends AbstractController
             $existingConversation = $this->conversationRepository->findOneByParticipants($participants);
 
             if ($existingConversation) {
-                return new Response('La conversation existe déjà', Response::HTTP_CONFLICT);
+                return new JsonResponse(['error' => 'La conversation existe déjà'], Response::HTTP_CONFLICT);
             }
 
             $conversation = new Conversation();
@@ -83,7 +82,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['message' => 'Conversation created', 'conversationId' => $conversation->getId()], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -93,7 +92,7 @@ class ConversationController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->find($id);
 
         if (!$user) {
-            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -158,7 +157,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -168,13 +167,13 @@ class ConversationController extends AbstractController
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
 
         if (!$conversation) {
-            return new JsonResponse(['message' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
         }
 
         try {
             $createdBy = $conversation->getCreatedBy();
             if (!$createdBy || !$createdBy->getUser()) {
-                return new JsonResponse(['message' => 'Creator not found'], Response::HTTP_NOT_FOUND);
+                return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             $conversationData = [
@@ -203,36 +202,36 @@ class ConversationController extends AbstractController
 
             return new JsonResponse($conversationData, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
     #[Route('/delete/{id}', name: 'delete_conversation', methods: ['DELETE'])]
-    public function deleteConversationById(int $id): Response
+    public function deleteConversationById(int $id): JsonResponse
     {
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
 
         if (!$conversation) {
-            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
         }
 
         try {
             $this->entityManager->remove($conversation);
             $this->entityManager->flush();
 
-            return new Response('Conversation deleted', Response::HTTP_OK);
+            return new JsonResponse('Conversation deleted', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
     #[Route('/archived/{userId}', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
-    public function getArchivedConversationsByUserId(int $userId): Response
+    public function getArchivedConversationsByUserId(int $userId): JsonResponse
     {
         $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
 
         if (empty($conversations)) {
-            return new Response('No archived conversations found for this user', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'No archived conversations found for this user'], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -285,7 +284,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -295,20 +294,20 @@ class ConversationController extends AbstractController
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
 
         if (!$conversation) {
-            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
         }
 
         try {
             if ($conversation->getIsArchived()) {
-                return new Response('Conversation is already archived', Response::HTTP_FORBIDDEN);
+                return new JsonResponse(['error' => 'Conversation is already archived'], Response::HTTP_FORBIDDEN);
             }
 
             $conversation->setIsArchived(true);
             $this->entityManager->flush();
 
-            return new Response('Conversation archived', Response::HTTP_OK);
+            return new JsonResponse(['message' => 'Conversation archived'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -318,12 +317,12 @@ class ConversationController extends AbstractController
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
 
         if (!$conversation) {
-            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
         }
 
         try {
             if (!$conversation->getIsArchived()) {
-                return new Response('Conversation déjà unarchived', Response::HTTP_CONFLICT);
+                return new JsonResponse(['error' => 'Conversation déjà unarchived'], Response::HTTP_CONFLICT);
             }
 
             $conversation->setIsArchived(false);
@@ -331,7 +330,7 @@ class ConversationController extends AbstractController
 
             return new Response('Conversation unarchived', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('Erreur interne', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -341,7 +340,7 @@ class ConversationController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->find($id);
 
         if (!$user) {
-            return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -350,7 +349,7 @@ class ConversationController extends AbstractController
             ]);
 
             if (empty($conversations)) {
-                return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
+                return new JsonResponse(['error' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
             }
 
             foreach ($conversations as $conversation) {
@@ -362,7 +361,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['message' => 'Toutes les conversations ont été désarchivées avec succès.'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -372,20 +371,20 @@ class ConversationController extends AbstractController
         $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
 
         if (!$conversation) {
-            return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
         }
 
         $data = json_decode($request->getContent(), true);
         $dto = new MuteConversationDTO($data);
 
         if (!$data) {
-            return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $duration = $dto->duration;
 
         if (!$duration) {
-            return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -410,7 +409,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['duration' => $muteUntil->format('Y-m-d H:i:s')], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -432,7 +431,7 @@ class ConversationController extends AbstractController
 
             return new JsonResponse(['message' => 'La sourdine de la conversation a été annulée avec succès.'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => 'Erreur interne.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

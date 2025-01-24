@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Register\RegisterUserDTO;
 use App\DTO\Register\ResendConfirmationEmailDTO;
 use App\Entity\User;
@@ -13,6 +14,7 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
@@ -33,7 +35,7 @@ class RegisterController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'], $data['password'])) {
-            return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new RegisterUserDTO(
@@ -46,7 +48,7 @@ class RegisterController extends AbstractController
 
         $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if ($existingUser) {
-            return new JsonResponse(['error' => 'Email already in use'], JsonResponse::HTTP_CONFLICT);
+            return new JsonResponse(['error' => ErrorMessagesConstant::EMAIL_ALREADY_IN_USE], Response::HTTP_CONFLICT);
         }
 
         $tokenRegistration = $this->tokenGenerator->generateToken();
@@ -74,7 +76,7 @@ class RegisterController extends AbstractController
                 ]
             );
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' =>  ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => true]);
@@ -86,13 +88,13 @@ class RegisterController extends AbstractController
         $token = $request->query->get('token');
 
         if (!$token) {
-            return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_TOKEN], Response::HTTP_BAD_REQUEST);
         }
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['tokenRegistration' => $token]);
 
         if (!$user) {
-            return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }
 
         $user->setTokenRegistration(null);
@@ -111,7 +113,7 @@ class RegisterController extends AbstractController
                 ]
             );
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => 'Account confirmed']);
@@ -122,7 +124,7 @@ class RegisterController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
-            return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new ResendConfirmationEmailDTO(
@@ -131,16 +133,16 @@ class RegisterController extends AbstractController
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         if ($user->isVerified()) {
-            return new JsonResponse(['error' => 'User is already verified'], JsonResponse::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'User is already verified'], Response::HTTP_BAD_REQUEST);
         }
 
         $tokenRegistration = $this->tokenGenerator->generateToken();
         $user->setTokenRegistration($tokenRegistration);
-        $user->setTokenRegistrationLifetime((new DateTime('now'))->add(new DateInterval('P1D'))); // token lifetime 1 day
+        $user->setTokenRegistrationLifetime((new DateTime('now'))->add(new DateInterval('P1D')));
         $this->entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/confirm_mail.html');
@@ -159,7 +161,7 @@ class RegisterController extends AbstractController
                 ]
             );
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => 'Confirmation email resent successfully']);

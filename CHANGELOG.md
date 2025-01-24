@@ -48,3 +48,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-43] Ajout $googleRecaptchaSecret dans services.yaml [#43](https://trello.com/c/hYmh94gq/43-t-43-ajout-googlerecaptchasecret-dans-servicesyaml)
 - [t-41] Ajout des DTO [#41](https://trello.com/c/huZKpZkG/41-t-41-ajout-des-dto)
 - [t-44] Ajout des exceptions [#44](https://trello.com/c/ux3qw9k2/44-t-44-ajout-des-exceptions)
+- [t-45] Ajout du dossier constante [#45](https://trello.com/c/L9gx9JSk/45-t-45-ajout-du-dossier-constante)

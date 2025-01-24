@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Friendship\RemoveFriendDTO;
 use App\DTO\Friendship\SendFriendRequestDTO;
 use App\Entity\Friendship;
@@ -34,7 +35,7 @@ class FriendshipController extends AbstractController
         $dto = new SendFriendRequestDTO($data, $profileId);
 
         if (!$dto->profileId || !$dto->friendId) {
-            return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA , Response::HTTP_BAD_REQUEST]);
         }
 
         try {
@@ -99,7 +100,7 @@ class FriendshipController extends AbstractController
 
             return new JsonResponse(['message' => 'Friend request sent'], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -118,7 +119,7 @@ class FriendshipController extends AbstractController
 
             return new Response('Friend request accepted.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -137,7 +138,7 @@ class FriendshipController extends AbstractController
 
             return new Response('Friend request rejected.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -163,7 +164,7 @@ class FriendshipController extends AbstractController
 
             return new Response('Friend removed.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -173,7 +174,7 @@ class FriendshipController extends AbstractController
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -188,7 +189,7 @@ class FriendshipController extends AbstractController
 
             return new JsonResponse($friendships, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -229,7 +230,7 @@ class FriendshipController extends AbstractController
 
             return new JsonResponse($requests, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
