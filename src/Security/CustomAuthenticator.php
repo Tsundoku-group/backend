@@ -5,6 +5,7 @@ namespace App\Security;
 use App\Entity\Profile;
 use App\Entity\RefreshToken;
 use App\Entity\User;
+use App\Exception\InvalidCredentialsException;
 use App\Service\MailService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,7 +55,7 @@ class CustomAuthenticator extends AbstractAuthenticator
         $content = $request->getContent();
 
         if (!json_validate($content)) {
-            throw new AuthenticationException('Invalid JSON provided');
+            throw new InvalidCredentialsException('Invalid JSON provided');
         }
 
         $data = json_decode($content, true);
@@ -176,6 +177,10 @@ class CustomAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
+        if ($exception instanceof InvalidCredentialsException) {
+            return new JsonResponse(['error' => $exception->getReason()], Response::HTTP_UNAUTHORIZED);
+        }
+
         return new JsonResponse(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
     }
 }
