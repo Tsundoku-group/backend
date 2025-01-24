@@ -46,3 +46,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-40] Ajout dossier validator [#40](https://trello.com/c/1jqLYxBf/40-t-40-ajout-dossier-validator)
 - [t-42] Déplacement dossier Validator dans Validator/Constraints [#42](https://trello.com/c/ZL80jpBa/42-t-42-d%C3%A9placement-dossier-validator-dans-validator-constraints)
 - [t-43] Ajout $googleRecaptchaSecret dans services.yaml [#43](https://trello.com/c/hYmh94gq/43-t-43-ajout-googlerecaptchasecret-dans-servicesyaml)
+- [t-41] Ajout des DTO [#41](https://trello.com/c/huZKpZkG/41-t-41-ajout-des-dto)
