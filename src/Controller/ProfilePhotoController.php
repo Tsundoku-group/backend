@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\ProfilePhoto\ProfilePhotoDTO;
 use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
@@ -38,7 +39,9 @@ class ProfilePhotoController extends AbstractController
             return $testingPhotoData;
         }
 
-        $profile = $this->profileRepository->findProfileWithPhotos((int)$data['profileId'], (int)$data['id']);
+        $dto = new ProfilePhotoDTO($data);
+
+        $profile = $this->profileRepository->findProfileWithPhotos($dto->profileId, $dto->userId);
 
         if (!$profile) {
             return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_BAD_REQUEST);
@@ -52,13 +55,13 @@ class ProfilePhotoController extends AbstractController
             return new JsonResponse(['error' => 'Profile does not belong to this user'], Response::HTTP_BAD_REQUEST);
         }
 
-        $existingPhoto = $this->profilePhotoRepository->findPhotoByUrlAndType($data['url'], $data['type']);
+        $existingPhoto = $this->profilePhotoRepository->findPhotoByUrlAndType($dto->url, $dto->type);
         if ($existingPhoto) {
             return new JsonResponse(['error' => 'This photo already exists with the specified type'], Response::HTTP_CONFLICT);
         }
 
         try {
-            $addPhoto = $this->profilePhotoService->addPhotoToProfile($profile, $data['url'], $data['type']);
+            $addPhoto = $this->profilePhotoService->addPhotoToProfile($profile, $dto->url, $dto->type);
 
             if (!$addPhoto) {
                 return new JsonResponse(['error' => 'Impossible to upload'], Response::HTTP_BAD_REQUEST);

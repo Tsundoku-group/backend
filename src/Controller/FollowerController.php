@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\Follower\FollowProfileDTO;
+use App\DTO\Follower\UnfollowProfileDTO;
 use App\Entity\Follower;
 use App\Repository\FollowerRepository;
 use App\Repository\ProfileRepository;
@@ -78,15 +80,15 @@ class FollowerController extends AbstractController
     public function followProfile(int $profileId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $followingId = $data['followingId'] ?? null;
+        $dto = new FollowProfileDTO($data, $profileId);
 
-        if (!$profileId || !$followingId) {
+        if (!$dto->profileId || !$dto->followingId) {
             return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            $follower = $this->profileRepository->findOneBy(['id' => $profileId]);
-            $following = $this->profileRepository->findOneBy(['id' => $followingId]);
+            $follower = $this->profileRepository->findOneBy(['id' => $dto->profileId]);
+            $following = $this->profileRepository->findOneBy(['id' => $dto->followingId]);
 
             if (!$follower || !$following) {
                 return new JsonResponse('Follower profile or following profile not found.', Response::HTTP_BAD_REQUEST);
@@ -119,16 +121,15 @@ class FollowerController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $friendship = $this->entityManager->getRepository(Follower::class)->find($id);
-        $followerId = $data['followerId'] ?? null;
-        $followingId = $data['followingId'] ?? null;
+        $dto = new UnfollowProfileDTO($data);
 
-        if (!$friendship || !$followerId || !$followingId) {
+        if (!$friendship || !$dto->followerId || !$dto->followingId) {
             return new JsonResponse('Followers not found.', Response::HTTP_NOT_FOUND);
         }
 
         try {
-            if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId)
-                || ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
+            if (($friendship->getFollower()->getId() !== $dto->followerId && $friendship->getFollowing()->getId() !== $dto->followerId)
+                || ($friendship->getFollower()->getId() !== $dto->followerId && $friendship->getFollowing()->getId() !== $dto->followingId)) {
                 return new JsonResponse('You are not authorized to unfollow this friendship.', Response::HTTP_CONFLICT);
             }
 

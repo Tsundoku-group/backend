@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\Friendship\RemoveFriendDTO;
+use App\DTO\Friendship\SendFriendRequestDTO;
 use App\Entity\Friendship;
 use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
@@ -29,15 +31,15 @@ class FriendshipController extends AbstractController
     public function sendFriendRequest(int $profileId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $friendIdToRequest = $data['friendId'];
+        $dto = new SendFriendRequestDTO($data, $profileId);
 
-        if (!$profileId || !$friendIdToRequest) {
+        if (!$dto->profileId || !$dto->friendId) {
             return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            $requesterProfileUser = $this->profileRepository->findOneBy(['id' => $profileId]);
-            $receiverProfileUser = $this->profileRepository->findOneBy(['id' => $friendIdToRequest]);
+            $requesterProfileUser = $this->profileRepository->findOneBy(['id' => $dto->profileId]);
+            $receiverProfileUser = $this->profileRepository->findOneBy(['id' => $dto->friendId]);
 
             if (!$requesterProfileUser || !$receiverProfileUser) {
                 return new JsonResponse('Requester or receiver not found.', Response::HTTP_NOT_FOUND);
@@ -144,16 +146,15 @@ class FriendshipController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
-        $requesterId = $data['requesterId'];
-        $receiverId = $data['receiverId'];
+        $dto = new RemoveFriendDTO($data);
 
         if (!$friendship || 'accepted' !== $friendship->getStatus()) {
             return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
         }
 
         try {
-            if (($friendship->getRequester()->getId() !== $requesterId && $friendship->getReceiver()->getId() !== $requesterId)
-                || ($friendship->getRequester()->getId() !== $receiverId && $friendship->getReceiver()->getId() !== $receiverId)) {
+            if (($friendship->getRequester()->getId() !== $dto->requesterId && $friendship->getReceiver()->getId() !== $dto->requesterId)
+                || ($friendship->getRequester()->getId() !== $dto->receiverId && $friendship->getReceiver()->getId() !== $dto->receiverId)) {
                 return new Response('You are not authorized to remove this friendship.', Response::HTTP_FORBIDDEN);
             }
 

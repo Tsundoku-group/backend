@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\ResetPassword\ForgotPasswordRequestDTO;
+use App\DTO\ResetPassword\ResetPasswordRequestDTO;
 use App\Entity\User;
 use App\Service\MailService;
 use DateInterval;
@@ -19,21 +21,28 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 class ResetPasswordController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly MailService $mailService,
-        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly EntityManagerInterface      $entityManager,
+        private readonly MailService                 $mailService,
+        private readonly TokenGeneratorInterface     $tokenGenerator,
         private readonly UserPasswordHasherInterface $passwordHasher,
     )
     {
     }
+
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['POST'])]
-    public function forgotPassword(Request $request): JsonResponse {
+    public function forgotPassword(Request $request): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
+
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        $dto = new ForgotPasswordRequestDTO(
+            $data['email'],
+        );
+
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
@@ -82,7 +91,8 @@ class ResetPasswordController extends AbstractController
     }
 
     #[Route('/reset-password', name: 'app_reset_password', methods: ['POST'])]
-    public function resetPassword(Request $request): JsonResponse {
+    public function resetPassword(Request $request): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
         $resetToken = $data['token'] ?? null;
 
@@ -90,7 +100,13 @@ class ResetPasswordController extends AbstractController
             return new JsonResponse(['error' => 'Token not found'], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $resetToken]);
+        $dto = new ResetPasswordRequestDTO(
+            $data['token'],
+            $data['password']
+        );
+
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $dto->token]);
+
         if (!$user) {
             return new JsonResponse(['error' => 'Invalid token'], Response::HTTP_NOT_FOUND);
         }
@@ -103,7 +119,7 @@ class ResetPasswordController extends AbstractController
             return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $dto->password);
         $user->setPassword($hashedPassword);
 
         $user->setResetPwdToken(null);

@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\Message\GetMessageDTO;
+use App\DTO\Message\MarkMessageReadDTO;
+use App\DTO\Message\SendMessageDTO;
 use App\Entity\Conversation;
 use App\Entity\Profile;
 use App\Entity\User;
@@ -32,15 +35,13 @@ class MessageController extends AbstractController
     public function sendMessage(int $conversationId, Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
-        $userEmail = $data['userEmail'] ?? null;
-        $messageContent = $data['message'] ?? null;
-        $messageId = $data['id'] ?? null;
+        $dto = new SendMessageDTO($data);
 
-        if (empty($userEmail)) {
+        if (empty($dto->userEmail)) {
             return new JsonResponse(['error' => 'User email is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (empty($messageContent)) {
+        if (empty($dto->message)) {
             return new JsonResponse(['error' => 'Message content is required'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -48,7 +49,7 @@ class MessageController extends AbstractController
             return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
 
         if (!$user) {
             return new Response('User not found.', Response::HTTP_NOT_FOUND);
@@ -73,10 +74,10 @@ class MessageController extends AbstractController
             $formattedDate = $dateTime->format('Y-m-d H:i:s');
 
             $messageData = [
-                'id' => $messageId,
-                'content' => $messageContent,
+                'id' => $dto->id,
+                'content' => $dto->message,
                 'sender_id' => $createdBy->getId(),
-                'sender_email' => $userEmail,
+                'sender_email' => $dto->userEmail,
                 'sent_by' => $createdBy->getUsername(),
                 'sent_at' => $formattedDate,
                 'isRead' => false,
@@ -111,8 +112,8 @@ class MessageController extends AbstractController
         }
 
         try {
-            $page = (int)$request->query->get('page', '1');
-            $limit = (int)$request->query->get('limit', '20');
+            $queryParams = $request->query->all();
+            $dto = new GetMessageDTO($queryParams);
 
             $conversationId = (string)$conversationId;
             $allMessages = $this->redisChatService->getMessagesFromConversation($conversationId);
@@ -122,8 +123,8 @@ class MessageController extends AbstractController
             }
 
             $totalMessages = count($allMessages);
-            $startIndex = max($totalMessages - $page * $limit, 0);
-            $pagedMessages = array_slice($allMessages, $startIndex, $limit);
+            $startIndex = max($totalMessages - $dto->page * $dto->limit, 0);
+            $pagedMessages = array_slice($allMessages, $startIndex, $dto->limit);
 
             $formattedMessages = array_map(function ($message) use ($user) {
                 return [
@@ -148,13 +149,14 @@ class MessageController extends AbstractController
     public function markMessagesRead(int $conversationId, Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
-        $userEmail = $data['userEmail'] ?? null;
 
-        if (!$userEmail) {
+        $dto = new MarkMessageReadDTO($data);
+
+        if (!$dto->userEmail) {
             return new Response('User email is required.', Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
 
         if (!$user) {
             return new Response('User not found.', Response::HTTP_NOT_FOUND);
@@ -172,7 +174,7 @@ class MessageController extends AbstractController
         }
 
         try {
-            $this->redisChatService->markMessagesRead($conversationId, $userEmail);
+            $this->redisChatService->markMessagesRead($conversationId, $dto->userEmail);
 
             return new Response('All messages marked as read.', Response::HTTP_OK);
         } catch (Exception $e) {

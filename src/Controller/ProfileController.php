@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\Profile\ProfileDTO;
+use App\DTO\Profile\SetActiveProfileDTO;
+use App\DTO\Profile\UpdateProfileStatusDTO;
 use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\FollowerRepository;
@@ -97,7 +100,9 @@ class ProfileController extends AbstractController
             return new JsonResponse(['error' => 'Username is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
+        $dto = new ProfileDTO($data);
+
+        $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $dto->username]);
         if ($existingUsernameProfile) {
             return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
         }
@@ -116,16 +121,13 @@ class ProfileController extends AbstractController
             }
 
             $profile = new Profile();
-            $profile->setUsername($data['username']);
-            $profile->setFirstName($data['firstName'] ?? null);
-            $profile->setLastName($data['lastName'] ?? null);
-            $profile->setType($data['type'] ?? 'lecteur');
-            $profile->setBio($data['bio'] ?? null);
-
-            $birthday = empty($data['birthday']) ? null : DateTime::createFromFormat('Y-m-d', $data['birthday']);
-
-            $profile->setBirthday($birthday);
-            $profile->setPhoneNumber($data['phoneNumber'] ?? null);
+            $profile->setUsername($dto->username);
+            $profile->setFirstName($dto->firstName);
+            $profile->setLastName($dto->lastName);
+            $profile->setType($dto->type);
+            $profile->setBio($dto->bio);
+            $profile->setBirthday($dto->birthday ? new DateTime($dto->birthday) : null);
+            $profile->setPhoneNumber($dto->phoneNumber);
             $profile->setUser($user);
 
             $entityManager->persist($profile);
@@ -242,15 +244,14 @@ class ProfileController extends AbstractController
             return new JsonResponse(['error' => 'Invalid request data'], 400);
         }
 
-        $userId = $data['id'];
-        $profileId = $data['profileId'];
+        $dto = new SetActiveProfileDTO($data);
 
-        $user = $this->userRepository->find($userId);
+        $user = $this->userRepository->find($dto->userId);
         if (!$user) {
             return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
         }
 
-        $profile = $this->profileRepository->find($profileId);
+        $profile = $this->profileRepository->find($dto->profileId);
 
         if (!$profile || $user !== $profile->getUser()) {
             return new JsonResponse(['error' => 'Profil invalide ou non associé à cet utilisateur'], 400);
@@ -271,7 +272,7 @@ class ProfileController extends AbstractController
             $this->entityManager->flush();
 
             $profileData = [
-                'id' => $profileId,
+                'id' => $profile->getId(),
                 'firstName' => $profile->getFirstName(),
                 'lastName' => $profile->getLastName(),
                 'username' => $profile->getUsername(),
@@ -288,7 +289,7 @@ class ProfileController extends AbstractController
     public function updateProfileStatus(Request $request, int $id): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $newStatus = $data['status'] ?? null;
+        $dto = new UpdateProfileStatusDTO($data);
 
         $profile = $this->profileRepository->find($id);
 
@@ -297,7 +298,7 @@ class ProfileController extends AbstractController
         }
 
         try {
-            $profile->setStatus($newStatus);
+            $profile->setStatus($dto->status);
             $this->entityManager->flush();
         } catch (Exception $e) {
             return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
