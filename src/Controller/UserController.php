@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
-use App\Validator\CaptchaValidator;
+use App\Validator\Constraints\CaptchaValidator;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
