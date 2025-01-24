@@ -89,13 +89,13 @@ class ConversationController extends AbstractController
     #[Route('/get-all/{id}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
     public function getAllConversationsWithLastMessages(int $id, Request $request): JsonResponse
     {
+        $user = $this->entityManager->getRepository(User::class)->find($id);
+
+        if (!$user) {
+            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $user = $this->entityManager->getRepository(User::class)->find($id);
-
-            if (!$user) {
-                return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
-
             $page = $request->query->getInt('page', 1);
             $limit = $request->query->getInt('limit', 20);
 
@@ -164,13 +164,13 @@ class ConversationController extends AbstractController
     #[Route('/get-one/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
     public function getConversationById(int $id): JsonResponse
     {
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
+
+        if (!$conversation) {
+            return new JsonResponse(['message' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
-
-            if (!$conversation) {
-                return new JsonResponse(['message' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
-            }
-
             $createdBy = $conversation->getCreatedBy();
             if (!$createdBy || !$createdBy->getUser()) {
                 return new JsonResponse(['message' => 'Creator not found'], Response::HTTP_NOT_FOUND);
@@ -209,12 +209,13 @@ class ConversationController extends AbstractController
     #[Route('/delete/{id}', name: 'delete_conversation', methods: ['DELETE'])]
     public function deleteConversationById(int $id): Response
     {
-        try {
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
 
-            if (!$conversation) {
-                return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
-            }
+        if (!$conversation) {
+            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        try {
 
             $this->entityManager->remove($conversation);
             $this->entityManager->flush();
@@ -228,13 +229,13 @@ class ConversationController extends AbstractController
     #[Route('/archived/{userId}', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
     public function getArchivedConversationsByUserId(int $userId): Response
     {
+        $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
+
+        if (empty($conversations)) {
+            return new Response('No archived conversations found for this user', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
-
-            if (empty($conversations)) {
-                return new Response('No archived conversations found for this user', Response::HTTP_NOT_FOUND);
-            }
-
             $lastMessages = [];
             foreach ($conversations as $conversation) {
                 $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
@@ -291,13 +292,13 @@ class ConversationController extends AbstractController
     #[Route('/archive/{conversationId}', name: 'archive_conversation', methods: ['POST'])]
     public function archiveConversation(int $conversationId): Response
     {
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+
+        if (!$conversation) {
+            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-            if (!$conversation) {
-                return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
-            }
-
             if ($conversation->getIsArchived()) {
                 return new Response('Conversation is already archived', Response::HTTP_FORBIDDEN);
             }
@@ -314,13 +315,13 @@ class ConversationController extends AbstractController
     #[Route('/unarchive/{conversationId}', name: 'unarchive_conversation', methods: ['POST'])]
     public function unarchiveConversation(int $conversationId): Response
     {
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+
+        if (!$conversation) {
+            return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-            if (!$conversation) {
-                return new Response('Conversation not found', Response::HTTP_NOT_FOUND);
-            }
-
             if (!$conversation->getIsArchived()) {
                 return new Response('Conversation déjà unarchived', Response::HTTP_CONFLICT);
             }
@@ -337,13 +338,13 @@ class ConversationController extends AbstractController
     #[Route('/unarchive-all/{id}', name: 'unarchive_all_conversations', methods: ['POST'])]
     public function unarchiveAllConversations(int $id, EntityManagerInterface $entityManager): JsonResponse
     {
+        $user = $this->entityManager->getRepository(User::class)->find($id);
+
+        if (!$user) {
+            return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $user = $this->entityManager->getRepository(User::class)->find($id);
-
-            if (!$user) {
-                return new JsonResponse(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
-            }
-
             $conversations = $entityManager->getRepository(Conversation::class)->findBy([
                 'isArchived' => true,
             ]);
@@ -368,13 +369,13 @@ class ConversationController extends AbstractController
     #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
     public function muteConversation(int $conversationId, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
+
+        if (!$conversation) {
+            return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
-
-            if (!$conversation) {
-                return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
-            }
-
             $data = json_decode($request->getContent(), true);
             if (!$data) {
                 return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
@@ -414,13 +415,13 @@ class ConversationController extends AbstractController
     #[Route('/unmute/{conversationId}', name: 'unmute_conversation', methods: ['POST'])]
     public function unmuteConversation(int $conversationId, EntityManagerInterface $entityManager): JsonResponse
     {
+        $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
+
+        if (!$conversation) {
+            return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
-
-            if (!$conversation) {
-                return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
-            }
-
             $conversation->setIsMuted(false);
             $conversation->setMutedUntil(null);
 

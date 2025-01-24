@@ -51,13 +51,13 @@ class UserController extends AbstractController
     #[Route('/new', name: 'user_new', methods: ['POST'])]
     public function new(Request $request): Response
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!$data) {
-                return $this->json(['error' => 'Invalid JSON'], 400);
-            }
-
             $user = new User();
             $user->setEmail($data['email']);
             $user->setPassword($data['password']);
@@ -74,13 +74,13 @@ class UserController extends AbstractController
     #[Route('/{id}', name: 'user_show', methods: ['GET'])]
     public function show(int $id): Response
     {
+        $user = $this->userRepository->find($id);
+
+        if (!$user) {
+            return $this->json(['error' => self::USER_NOT_FOUND], 404);
+        }
+
         try {
-            $user = $this->userRepository->find($id);
-
-            if (!$user) {
-                return $this->json(['error' => self::USER_NOT_FOUND], 404);
-            }
-
             $profilesData = [];
 
             foreach ($user->getProfiles() as $profile) {
@@ -104,13 +104,13 @@ class UserController extends AbstractController
     #[Route('/{id}/edit', name: 'user_edit', methods: ['PUT'])]
     public function update(Request $request, User $user): Response
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!$data) {
-                return $this->json(['error' => 'Invalid JSON'], 400);
-            }
-
             $user->setEmail($data['email'] ?? $user->getEmail());
             $user->setPassword($data['password'] ?? $user->getPassword());
 
@@ -125,14 +125,14 @@ class UserController extends AbstractController
     #[Route('/verify-password', methods: ['POST'])]
     public function verifyPassword(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $user = $this->getUser();
-
-            if (!$user) {
-                return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
-            }
-
             if (!$passwordHasher->isPasswordValid($user, $data['currentPassword'])) {
                 return new JsonResponse(['error' => 'Ancien mot de passe incorrect'], 400);
             }
@@ -146,27 +146,27 @@ class UserController extends AbstractController
     #[Route('/update-password', methods: ['POST'])]
     public function updatePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+        $captchaToken = $data['captchaToken'];
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
+        }
+
+        if (empty($data['newPassword'])) {
+            return new JsonResponse(['error' => 'Le nouveau mot de passe est requis'], 400);
+        }
+
+        if (empty($data['captchaToken'])) {
+            return new JsonResponse(['error' => 'Le captcha est manquant'], 400);
+        }
+
+        if (!$this->verifyCaptcha($captchaToken)) {
+            return $this->json(['message' => 'Captcha invalide.'], 400);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $user = $this->getUser();
-            $captchaToken = $data['captchaToken'];
-
-            if (!$user instanceof User) {
-                return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
-            }
-
-            if (empty($data['newPassword'])) {
-                return new JsonResponse(['error' => 'Le nouveau mot de passe est requis'], 400);
-            }
-
-            if (empty($data['captchaToken'])) {
-                return new JsonResponse(['error' => 'Le captcha est manquant'], 400);
-            }
-
-            if (!$this->verifyCaptcha($captchaToken)) {
-                return $this->json(['message' => 'Captcha invalide.'], 400);
-            }
-
             $hashedPassword = $passwordHasher->hashPassword($user, $data['newPassword']);
             $user->setPassword($hashedPassword);
 

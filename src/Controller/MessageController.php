@@ -31,24 +31,24 @@ class MessageController extends AbstractController
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
     public function sendMessage(int $conversationId, Request $request): Response
     {
+        $data = json_decode($request->getContent(), true);
+        $userEmail = $data['userEmail'] ?? null;
+        $messageContent = $data['message'] ?? null;
+        $messageId = $data['id'] ?? null;
+
+        if (empty($userEmail)) {
+            return new JsonResponse(['error' => 'User email is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (empty($messageContent)) {
+            return new JsonResponse(['error' => 'Message content is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$conversationId) {
+            return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $userEmail = $data['userEmail'] ?? null;
-            $messageContent = $data['message'] ?? null;
-            $messageId = $data['id'] ?? null;
-
-            if (empty($userEmail)) {
-                return new JsonResponse(['error' => 'User email is required'], Response::HTTP_BAD_REQUEST);
-            }
-
-            if (empty($messageContent)) {
-                return new JsonResponse(['error' => 'Message content is required'], Response::HTTP_BAD_REQUEST);
-            }
-
-            if (!$conversationId) {
-                return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
-            }
-
             $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
 
             if (!$user) {
@@ -99,18 +99,18 @@ class MessageController extends AbstractController
     #[Route('/get/{conversationId}', name: 'get_messages', methods: ['GET'])]
     public function getMessages(int $conversationId, Request $request): JsonResponse
     {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse('User not authenticated.', Response::HTTP_UNAUTHORIZED);
+        }
+
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+        if (!$conversation) {
+            return new JsonResponse('Conversation not found.', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $user = $this->getUser();
-
-            if (!$user instanceof User) {
-                return new JsonResponse('User not authenticated.', Response::HTTP_UNAUTHORIZED);
-            }
-
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-            if (!$conversation) {
-                return new JsonResponse('Conversation not found.', Response::HTTP_NOT_FOUND);
-            }
-
             $page = (int)$request->query->get('page', '1');
             $limit = (int)$request->query->get('limit', '20');
 
@@ -147,31 +147,31 @@ class MessageController extends AbstractController
     #[Route('/mark-messages-read/{conversationId}', name: 'mark_messages_read', methods: ['POST'])]
     public function markMessagesRead(int $conversationId, Request $request): Response
     {
+        $data = json_decode($request->getContent(), true);
+        $userEmail = $data['userEmail'] ?? null;
+
+        if (!$userEmail) {
+            return new Response('User email is required.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+
+        if (!$user) {
+            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+
+        if (!$conversation) {
+            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+        if (!$conversation) {
+            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $userEmail = $data['userEmail'] ?? null;
-
-            if (!$userEmail) {
-                return new Response('User email is required.', Response::HTTP_BAD_REQUEST);
-            }
-
-            $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
-
-            if (!$user) {
-                return new Response('User not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-            if (!$conversation) {
-                return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-            if (!$conversation) {
-                return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-            }
-
             $this->redisChatService->markMessagesRead($conversationId, $userEmail);
 
             return new Response('All messages marked as read.', Response::HTTP_OK);

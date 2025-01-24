@@ -28,14 +28,14 @@ class FriendshipController extends AbstractController
     #[Route('/request/{profileId}', name: 'send_friend_request', methods: ['POST'])]
     public function sendFriendRequest(int $profileId, Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $friendIdToRequest = $data['friendId'];
+
+        if (!$profileId || !$friendIdToRequest) {
+            return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $friendIdToRequest = $data['friendId'];
-
-            if (!$profileId || !$friendIdToRequest) {
-                return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
-            }
-
             $requesterProfileUser = $this->profileRepository->findOneBy(['id' => $profileId]);
             $receiverProfileUser = $this->profileRepository->findOneBy(['id' => $friendIdToRequest]);
 
@@ -104,13 +104,13 @@ class FriendshipController extends AbstractController
     #[Route('/accept/{id}', name: 'accept_friend_request', methods: ['POST'])]
     public function acceptFriendRequest(int $id): Response
     {
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+
+        if (!$friendship || 'pending' !== $friendship->getStatus()) {
+            return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
-
-            if (!$friendship || 'pending' !== $friendship->getStatus()) {
-                return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
-            }
-
             $friendship->setStatus('accepted');
             $this->entityManager->flush();
 
@@ -123,13 +123,13 @@ class FriendshipController extends AbstractController
     #[Route('/reject/{id}', name: 'reject_friend_request', methods: ['POST'])]
     public function rejectFriendRequest(int $id): Response
     {
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+
+        if (!$friendship || 'pending' !== $friendship->getStatus()) {
+            return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
-
-            if (!$friendship || 'pending' !== $friendship->getStatus()) {
-                return new Response('Friend request not found or already processed.', Response::HTTP_NOT_FOUND);
-            }
-
             $friendship->setStatus('rejected');
             $this->entityManager->flush();
 
@@ -142,16 +142,16 @@ class FriendshipController extends AbstractController
     #[Route('/remove/{id}', name: 'remove_friend', methods: ['DELETE'])]
     public function removeFriend(int $id, Request $request): Response
     {
+        $data = json_decode($request->getContent(), true);
+        $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
+        $requesterId = $data['requesterId'];
+        $receiverId = $data['receiverId'];
+
+        if (!$friendship || 'accepted' !== $friendship->getStatus()) {
+            return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
-            $requesterId = $data['requesterId'];
-            $receiverId = $data['receiverId'];
-
-            if (!$friendship || 'accepted' !== $friendship->getStatus()) {
-                return new Response('Friendship not found or not accepted.', Response::HTTP_NOT_FOUND);
-            }
-
             if (($friendship->getRequester()->getId() !== $requesterId && $friendship->getReceiver()->getId() !== $requesterId)
                 || ($friendship->getRequester()->getId() !== $receiverId && $friendship->getReceiver()->getId() !== $receiverId)) {
                 return new Response('You are not authorized to remove this friendship.', Response::HTTP_FORBIDDEN);
@@ -169,13 +169,13 @@ class FriendshipController extends AbstractController
     #[Route('/list/{profileId}', name: 'list_friends', methods: ['GET'])]
     public function listFriends(int $profileId, Request $request): JsonResponse
     {
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $profile = $this->profileRepository->find($profileId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
-            }
-
             $limit = max((int)$request->query->get('limit', 20), 1);
             $offset = max((int)$request->query->get('offset', 0), 0);
 
@@ -194,13 +194,13 @@ class FriendshipController extends AbstractController
     #[Route('/list-requests/{profileId}', name: 'list_friend_requests', methods: ['GET'])]
     public function listFriendRequests(int $profileId): JsonResponse
     {
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $profile = $this->profileRepository->find($profileId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
-            }
-
             $friendRequests = $this->entityManager->getRepository(Friendship::class)->findBy([
                 'receiver' => $profile,
                 'status' => 'pending',

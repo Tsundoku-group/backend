@@ -29,33 +29,33 @@ class ProfilePhotoController extends AbstractController
     #[Route('/add-photo', name: 'add_profile_photo', methods: 'POST')]
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        $testingPhotoData = $this->validateProfilePhotoData($data);
+        if ($testingPhotoData) {
+            return $testingPhotoData;
+        }
+
+        $profile = $this->profileRepository->findProfileWithPhotos((int)$data['profileId'], (int)$data['id']);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (null === $profile->getUser()) {
+            return new JsonResponse(['error' => 'Profile has no associated user'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($profile->getUser()->getId() !== (int)$data['id']) {
+            return new JsonResponse(['error' => 'Profile does not belong to this user'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $existingPhoto = $this->profilePhotoRepository->findPhotoByUrlAndType($data['url'], $data['type']);
+        if ($existingPhoto) {
+            return new JsonResponse(['error' => 'This photo already exists with the specified type'], Response::HTTP_CONFLICT);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            $testingPhotoData = $this->validateProfilePhotoData($data);
-            if ($testingPhotoData) {
-                return $testingPhotoData;
-            }
-
-            $profile = $this->profileRepository->findProfileWithPhotos((int)$data['profileId'], (int)$data['id']);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_BAD_REQUEST);
-            }
-
-            if (null === $profile->getUser()) {
-                return new JsonResponse(['error' => 'Profile has no associated user'], Response::HTTP_BAD_REQUEST);
-            }
-
-            if ($profile->getUser()->getId() !== (int)$data['id']) {
-                return new JsonResponse(['error' => 'Profile does not belong to this user'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $existingPhoto = $this->profilePhotoRepository->findPhotoByUrlAndType($data['url'], $data['type']);
-            if ($existingPhoto) {
-                return new JsonResponse(['error' => 'This photo already exists with the specified type'], Response::HTTP_CONFLICT);
-            }
-
             $addPhoto = $this->profilePhotoService->addPhotoToProfile($profile, $data['url'], $data['type']);
 
             if (!$addPhoto) {
@@ -71,20 +71,20 @@ class ProfilePhotoController extends AbstractController
     #[Route('/remove-photo', name: 'delete_profile_photo', methods: 'DELETE')]
     public function removeProfilePhoto(Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        $testingPhotoData = $this->validateProfilePhotoData($data);
+        if ($testingPhotoData) {
+            return $testingPhotoData;
+        }
+
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            $testingPhotoData = $this->validateProfilePhotoData($data);
-            if ($testingPhotoData) {
-                return $testingPhotoData;
-            }
-
-            $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
-            }
-
             $removePhoto = $this->profilePhotoService->deletePhotoFromProfile($profile, $data['url'], $data['type']);
 
             if (!$removePhoto) {
@@ -100,34 +100,34 @@ class ProfilePhotoController extends AbstractController
     #[Route('/get-active-photo/{profileId}', name: 'get_active_photo', methods: ['GET'])]
     public function getProfileWithPhoto(int $profileId): JsonResponse
     {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'Unauthorized access'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $userId = $user->getId();
+
+        if (!$profileId) {
+            return new JsonResponse(['error' => 'Invalid profile ID'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $profile = $this->profileRepository->findProfileWithPhotos($profileId, $userId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($profile->getUser()->getId() !== $userId) {
+            return new JsonResponse(['error' => 'Access denied to this profile'], Response::HTTP_FORBIDDEN);
+        }
+
+        $photos = $profile->getProfilePhotos();
+
+        if ($photos->isEmpty()) {
+            return new JsonResponse(['error' => 'No photos found for this profile'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $user = $this->getUser();
-            if (!$user instanceof User) {
-                return new JsonResponse(['error' => 'Unauthorized access'], Response::HTTP_UNAUTHORIZED);
-            }
-
-            $userId = $user->getId();
-
-            if (!$profileId) {
-                return new JsonResponse(['error' => 'Invalid profile ID'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $profile = $this->profileRepository->findProfileWithPhotos($profileId, $userId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found'], Response::HTTP_NOT_FOUND);
-            }
-
-            if ($profile->getUser()->getId() !== $userId) {
-                return new JsonResponse(['error' => 'Access denied to this profile'], Response::HTTP_FORBIDDEN);
-            }
-
-            $photos = $profile->getProfilePhotos();
-
-            if ($photos->isEmpty()) {
-                return new JsonResponse(['error' => 'No photos found for this profile'], Response::HTTP_NOT_FOUND);
-            }
-
             $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
 
             $result = [];
@@ -148,19 +148,19 @@ class ProfilePhotoController extends AbstractController
     #[Route('/set-active-photo', name: 'set_active_photo', methods: 'PUT')]
     public function setActivePhotoProfile(Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        $testingPhotoData = $this->validateProfilePhotoData($data);
+        if ($testingPhotoData) {
+            return $testingPhotoData;
+        }
+
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
+        if (!$profile) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            $testingPhotoData = $this->validateProfilePhotoData($data);
-            if ($testingPhotoData) {
-                return $testingPhotoData;
-            }
-
-            $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
-            if (!$profile) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
-            }
-
             $activePhoto = $this->profilePhotoService->setActivateProfilePhoto($profile, $data['url'], $data['type']);
 
             if ('error' === $activePhoto['status']) {
