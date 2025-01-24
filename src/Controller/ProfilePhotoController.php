@@ -6,7 +6,7 @@ use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
-use App\Validator\ProfilePhotoDataValidator;
+use App\Validator\Constraints\ProfilePhotoDataValidator;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
