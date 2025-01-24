@@ -6,7 +6,7 @@ use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Validator\ProfilePhotoDataValidator;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,7 +22,9 @@ class ProfilePhotoController extends AbstractController
     public function __construct(
         private readonly ProfileRepository      $profileRepository,
         private readonly ProfilePhotoService    $profilePhotoService,
-        private readonly ProfilePhotoRepository $profilePhotoRepository)
+        private readonly ProfilePhotoRepository $profilePhotoRepository,
+        private readonly ProfilePhotoDataValidator $profilePhotoDataValidator
+    )
     {
     }
 
@@ -31,7 +33,7 @@ class ProfilePhotoController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $testingPhotoData = $this->validateProfilePhotoData($data);
+        $testingPhotoData = $this->profilePhotoDataValidator->validate($data);
         if ($testingPhotoData) {
             return $testingPhotoData;
         }
@@ -73,7 +75,7 @@ class ProfilePhotoController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $testingPhotoData = $this->validateProfilePhotoData($data);
+        $testingPhotoData = $this->profilePhotoDataValidator->validate($data);
         if ($testingPhotoData) {
             return $testingPhotoData;
         }
@@ -150,7 +152,7 @@ class ProfilePhotoController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $testingPhotoData = $this->validateProfilePhotoData($data);
+        $testingPhotoData = $this->profilePhotoDataValidator->validate($data);
         if ($testingPhotoData) {
             return $testingPhotoData;
         }
@@ -171,24 +173,5 @@ class ProfilePhotoController extends AbstractController
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private function validateProfilePhotoData(array $data): ?JsonResponse
-    {
-        if (!isset($data['id'], $data['profileId'], $data['type'])) {
-            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (array_key_exists('url', $data)) {
-            if (!filter_var($data['url'], FILTER_VALIDATE_URL)) {
-                return new JsonResponse(['error' => 'L\'URL is not valid.'], Response::HTTP_BAD_REQUEST);
-            }
-        }
-
-        if (!in_array($data['type'], ['profile', 'cover'])) {
-            return new JsonResponse(['error' => 'Type is not valid.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        return null;
     }
 }
