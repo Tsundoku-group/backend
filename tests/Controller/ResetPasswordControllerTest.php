@@ -8,7 +8,6 @@ use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -21,7 +20,6 @@ class ResetPasswordControllerTest extends TestCase
     private $passwordHasher;
     private $mailService;
     private $tokenGenerator;
-    private $container;
 
     protected function setUp(): void
     {
@@ -30,7 +28,6 @@ class ResetPasswordControllerTest extends TestCase
         $this->passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
         $this->mailService = $this->createMock(MailService::class);
         $this->tokenGenerator = $this->createMock(TokenGeneratorInterface::class);
-        $this->container = $this->createMock(ContainerInterface::class);
 
         $this->entityManager->method('getRepository')->willReturn($this->userRepository);
     }
@@ -46,17 +43,16 @@ class ResetPasswordControllerTest extends TestCase
 
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new ResetPasswordController();
-        $controller->setContainer($this->container);
+        $controller = new ResetPasswordController(
+            $this->entityManager,
+            $this->mailService,
+            $this->tokenGenerator,
+            $this->passwordHasher
+        );
 
         $request = new Request([], [], [], [], [], [], json_encode(['email' => 'test@example.com']));
 
-        $response = $controller->forgotPassword(
-            $request,
-            $this->entityManager,
-            $this->tokenGenerator,
-            $this->mailService
-        );
+        $response = $controller->forgotPassword($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
@@ -66,12 +62,16 @@ class ResetPasswordControllerTest extends TestCase
     {
         $this->userRepository->method('findOneBy')->willReturn(null);
 
-        $controller = new ResetPasswordController();
-        $controller->setContainer($this->container);
+        $controller = new ResetPasswordController(
+            $this->entityManager,
+            $this->mailService,
+            $this->tokenGenerator,
+            $this->passwordHasher
+        );
 
         $request = new Request([], [], [], [], [], [], json_encode(['email' => 'test@example.com']));
 
-        $response = $controller->forgotPassword($request, $this->entityManager, $this->tokenGenerator, $this->mailService);
+        $response = $controller->forgotPassword($request);
 
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals(['error' => 'User not found'], json_decode($response->getContent(), true));
@@ -90,20 +90,19 @@ class ResetPasswordControllerTest extends TestCase
 
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new ResetPasswordController();
-        $controller->setContainer($this->container);
+        $controller = new ResetPasswordController(
+            $this->entityManager,
+            $this->mailService,
+            $this->tokenGenerator,
+            $this->passwordHasher
+        );
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'token' => 'valid-token',
             'password' => 'new-password'
         ]));
 
-        $response = $controller->resetPassword(
-            $request,
-            $this->entityManager,
-            $this->passwordHasher,
-            $this->mailService
-        );
+        $response = $controller->resetPassword($request);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals(['success' => 'Password has been reset successfully'], json_decode($response->getContent(), true));
@@ -113,15 +112,19 @@ class ResetPasswordControllerTest extends TestCase
     {
         $this->userRepository->method('findOneBy')->willReturn(null);
 
-        $controller = new ResetPasswordController();
-        $controller->setContainer($this->container);
+        $controller = new ResetPasswordController(
+            $this->entityManager,
+            $this->mailService,
+            $this->tokenGenerator,
+            $this->passwordHasher
+        );
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'token' => 'invalid-token',
             'password' => 'new-password'
         ]));
 
-        $response = $controller->resetPassword($request, $this->entityManager, $this->passwordHasher, $this->mailService);
+        $response = $controller->resetPassword($request);
 
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals(['error' => 'Invalid token'], json_decode($response->getContent(), true));
@@ -135,15 +138,19 @@ class ResetPasswordControllerTest extends TestCase
 
         $this->userRepository->method('findOneBy')->willReturn($user);
 
-        $controller = new ResetPasswordController();
-        $controller->setContainer($this->container);
+        $controller = new ResetPasswordController(
+            $this->entityManager,
+            $this->mailService,
+            $this->tokenGenerator,
+            $this->passwordHasher
+        );
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'token' => 'valid-token',
             'password' => 'new-password'
         ]));
 
-        $response = $controller->resetPassword($request, $this->entityManager, $this->passwordHasher, $this->mailService);
+        $response = $controller->resetPassword($request);
 
         $this->assertEquals(400, $response->getStatusCode());
         $this->assertEquals(['error' => 'Token expired'], json_decode($response->getContent(), true));

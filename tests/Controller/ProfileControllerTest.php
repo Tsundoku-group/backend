@@ -252,7 +252,7 @@ class ProfileControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'Utilisateur introuvable']),
+            json_encode(['error' => 'User not found']),
             $response->getContent()
         );
     }

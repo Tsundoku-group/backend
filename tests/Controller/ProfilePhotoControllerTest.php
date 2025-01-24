@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ProfilePhotoService;
+use App\Validator\Constraints\ProfilePhotoDataValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,19 +23,16 @@ class ProfilePhotoControllerTest extends TestCase
     private $profilePhotoRepository;
     private $entityManager;
     private $container;
-
+    private $profilePhotoDataValidator;
 
     protected function setUp(): void
     {
         $this->profileRepository = $this->createMock(ProfileRepository::class);
         $this->profilePhotoService = $this->createMock(ProfilePhotoService::class);
+        $this->profilePhotoRepository = $this->createMock(ProfilePhotoRepository::class);
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->container = $this->createMock(ContainerInterface::class);
-        $this->profilePhotoRepository = $this->createMock(ProfilePhotoRepository::class);
-
-        $profilePhotoRepo = $this->createMock(\Doctrine\ORM\EntityRepository::class);
-        $this->entityManager->method('getRepository')
-            ->willReturnMap([[ProfilePhoto::class, $profilePhotoRepo]]);
+        $this->profilePhotoDataValidator = $this->createMock(ProfilePhotoDataValidator::class);
 
         $profile = $this->createMock(Profile::class);
         $user = $this->createMock(User::class);
@@ -43,23 +41,23 @@ class ProfilePhotoControllerTest extends TestCase
         $this->profileRepository->method('findProfileWithPhotos')->willReturn($profile);
     }
 
-    public function testUploadProfilePhotoSuccess(): void
+    private function createController(): ProfilePhotoController
     {
-        $profile = $this->createMock(Profile::class);
-        $profilePhoto = $this->createMock(ProfilePhoto::class);
-
-        $this->profileRepository->method('findProfileByIdAndUserId')->willReturn($profile);
-        $this->entityManager->getRepository(ProfilePhoto::class)
-            ->method('findOneBy')->willReturn(null);
-        $this->profilePhotoService->method('addPhotoToProfile')->willReturn(true);
-
-        $controller = new ProfilePhotoController(
+        return new ProfilePhotoController(
             $this->profileRepository,
             $this->profilePhotoService,
-            $this->entityManager,
-            $this->profilePhotoRepository
+            $this->profilePhotoRepository,
+            $this->profilePhotoDataValidator
         );
+    }
 
+    public function testUploadProfilePhotoSuccess(): void
+    {
+        $this->profileRepository->method('findProfileWithPhotos')->willReturn($this->createMock(Profile::class));
+        $this->profilePhotoRepository->method('findPhotoByUrlAndType')->willReturn(null);
+        $this->profilePhotoService->method('addPhotoToProfile')->willReturn(true);
+
+        $controller = $this->createController();
         $controller->setContainer($this->container);
 
         $request = new Request([], [], [], [], [], [], json_encode([
@@ -77,12 +75,10 @@ class ProfilePhotoControllerTest extends TestCase
 
     public function testUploadProfilePhotoInvalidData(): void
     {
-        $controller = new ProfilePhotoController(
-            $this->profileRepository,
-            $this->profilePhotoService,
-            $this->entityManager,
-            $this->profilePhotoRepository,
-        );
+        $this->profilePhotoDataValidator->method('validate')->willReturn(new JsonResponse(['error' => "L'URL is not valid."], 400));
+
+        $controller = $this->createController();
+        $controller->setContainer($this->container);
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'id' => 1,
