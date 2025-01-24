@@ -17,17 +17,12 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/friendship')]
 class FriendshipController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
-    private ProfileRepository $profileRepository;
-    private FriendshipRepository $friendshipRepository;
-    private FriendshipService $friendshipService;
-
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, FriendshipRepository $friendshipRepository, FriendshipService $friendshipService)
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ProfileRepository      $profileRepository,
+        private readonly FriendshipRepository   $friendshipRepository,
+        private readonly FriendshipService      $friendshipService)
     {
-        $this->entityManager = $entityManager;
-        $this->profileRepository = $profileRepository;
-        $this->friendshipRepository = $friendshipRepository;
-        $this->friendshipService = $friendshipService;
     }
 
     #[Route('/request/{profileId}', name: 'send_friend_request', methods: ['POST'])]
@@ -181,8 +176,8 @@ class FriendshipController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $limit = max((int) $request->query->get('limit', 20), 1);
-            $offset = max((int) $request->query->get('offset', 0), 0);
+            $limit = max((int)$request->query->get('limit', 20), 1);
+            $offset = max((int)$request->query->get('offset', 0), 0);
 
             $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
 
@@ -240,8 +235,8 @@ class FriendshipController extends AbstractController
     #[Route('/{profileId}/suggestions', name: 'profile_suggestions', methods: ['GET'])]
     public function getProfileFriendsSuggestions(int $profileId, Request $request): JsonResponse
     {
-        $limit = max((int) $request->query->get('limit', '20'), 1);
-        $offset = max((int) $request->query->get('offset', '0'), 0);
+        $limit = max((int)$request->query->get('limit', '20'), 1);
+        $offset = max((int)$request->query->get('offset', '0'), 0);
 
         $friendsSuggestions = $this->friendshipService->getSuggestionsFriendsByProfile($profileId, $limit, $offset);
 

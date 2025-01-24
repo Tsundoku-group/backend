@@ -16,15 +16,12 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/followers')]
 class FollowerController extends AbstractController
 {
-    private ProfileRepository $profileRepository;
-    private EntityManagerInterface $entityManager;
-    private FollowerRepository $followerRepository;
-
-    public function __construct(ProfileRepository $profileRepository, EntityManagerInterface $entityManager, FollowerRepository $followerRepository)
+    public function __construct(
+        private readonly ProfileRepository      $profileRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly FollowerRepository     $followerRepository
+    )
     {
-        $this->profileRepository = $profileRepository;
-        $this->entityManager = $entityManager;
-        $this->followerRepository = $followerRepository;
     }
 
     #[Route('/{profileId}/followers', name: 'get_followers_paginated', methods: ['GET'])]
@@ -37,8 +34,8 @@ class FollowerController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $limit = max((int) $request->query->get('limit', 20), 1);
-            $offset = max((int) $request->query->get('offset', 0), 0);
+            $limit = max((int)$request->query->get('limit', 20), 1);
+            $offset = max((int)$request->query->get('offset', 0), 0);
 
             $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
@@ -62,8 +59,8 @@ class FollowerController extends AbstractController
                 return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            $limit = max((int) $request->query->get('limit', 20), 1);
-            $offset = max((int) $request->query->get('offset', 0), 0);
+            $limit = max((int)$request->query->get('limit', 20), 1);
+            $offset = max((int)$request->query->get('offset', 0), 0);
 
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 

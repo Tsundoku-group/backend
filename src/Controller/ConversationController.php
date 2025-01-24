@@ -22,18 +22,15 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/conversation')]
 class ConversationController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
-    private ConfRedisService $confRedisService;
-    private ProfileRepository $profileRepository;
-    private ConversationRepository $conversationRepository;
     private const USER_NOT_FOUND = 'USER_NOT_FOUND';
 
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, ConversationRepository $conversationRepository, ConfRedisService $redisChatService)
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ProfileRepository      $profileRepository,
+        private readonly ConversationRepository $conversationRepository,
+        private readonly ConfRedisService       $confRedisService,
+    )
     {
-        $this->entityManager = $entityManager;
-        $this->profileRepository = $profileRepository;
-        $this->conversationRepository = $conversationRepository;
-        $this->confRedisService = $redisChatService;
     }
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]

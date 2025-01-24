@@ -18,19 +18,22 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
 class ResetPasswordController extends AbstractController
 {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly MailService $mailService,
+        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+    )
+    {
+    }
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['POST'])]
-    public function forgotPassword(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        TokenGeneratorInterface $tokenGenerator,
-        MailService $mailService,
-    ): JsonResponse {
+    public function forgotPassword(Request $request): JsonResponse {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
@@ -52,17 +55,17 @@ class ResetPasswordController extends AbstractController
 
         $user->setLastPasswordResetRequest($now);
 
-        $resetToken = $tokenGenerator->generateToken();
+        $resetToken = $this->tokenGenerator->generateToken();
         $user->setResetPwdToken($resetToken);
         $user->setResetPwdTokenLifetime((new DateTime())->modify('+1 hour'));
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         $resetUrl = $_ENV['FRONT_URL'] . '/(auth)/reset-password?token=';
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/reset_password_mail.html');
         $htmlContent = str_replace('{{ reset_url }}', $resetUrl, $htmlContent);
 
         try {
-            $mailService->sendMail(
+            $this->mailService->sendMail(
                 $user->getEmail(),
                 'Réinitialisation du mot de passe',
                 $htmlContent,
@@ -79,12 +82,7 @@ class ResetPasswordController extends AbstractController
     }
 
     #[Route('/reset-password', name: 'app_reset_password', methods: ['POST'])]
-    public function resetPassword(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher,
-        MailService $mailService,
-    ): JsonResponse {
+    public function resetPassword(Request $request): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $resetToken = $data['token'] ?? null;
 
@@ -92,7 +90,7 @@ class ResetPasswordController extends AbstractController
             return new JsonResponse(['error' => 'Token not found'], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $resetToken]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $resetToken]);
         if (!$user) {
             return new JsonResponse(['error' => 'Invalid token'], Response::HTTP_NOT_FOUND);
         }
@@ -105,17 +103,17 @@ class ResetPasswordController extends AbstractController
             return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
-        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
         $user->setResetPwdToken(null);
         $user->setResetPwdTokenLifetime(null);
 
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/reset_password_confirmation_mail.html');
         try {
-            $mailService->sendMail(
+            $this->mailService->sendMail(
                 $user->getEmail(),
                 'Confirmation de réinitialisation du mot de passe',
                 $htmlContent,
