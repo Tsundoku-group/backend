@@ -37,13 +37,13 @@ class ProfileController extends AbstractController
     #[Route('/{profileId}', name: 'profile_show', methods: ['GET'])]
     public function show(int $profileId): JsonResponse
     {
+        $profile = $this->profileRepository->findProfileById($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+        }
+
         try {
-            $profile = $this->profileRepository->findProfileById($profileId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
-            }
-
             $twoFriendsWithProfilePhotos = $this->friendshipRepository->findLastTwoFriendsWithPhotos($profileId);
 
             $profileData = array_merge(
@@ -64,22 +64,22 @@ class ProfileController extends AbstractController
     #[Route('/all/{id}', name: 'get_profiles', methods: ['GET'])]
     public function getAllProfiles(int $id): JsonResponse
     {
-        try {
-            $profiles = $this->profileRepository->findUserProfiles($id);
+        $profiles = $this->profileRepository->findUserProfiles($id);
 
-            if (empty($profiles)) {
-                $user = $this->userRepository->find($id);
+        if (empty($profiles)) {
+            $user = $this->userRepository->find($id);
 
-                if (!$user) {
-                    return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
-                }
-
-                return new JsonResponse([
-                    'email' => $user->getEmail(),
-                    'hasProfiles' => false,
-                ], 200);
+            if (!$user) {
+                return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
             }
 
+            return new JsonResponse([
+                'email' => $user->getEmail(),
+                'hasProfiles' => false,
+            ], 200);
+        }
+
+        try {
             return new JsonResponse([
                 'profiles' => $profiles,
             ], 200);
@@ -91,24 +91,24 @@ class ProfileController extends AbstractController
     #[Route('/new', name: 'create_profile', methods: ['POST'])]
     public function createProfile(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (empty($data['username'])) {
+            return new JsonResponse(['error' => 'Username is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
+        if ($existingUsernameProfile) {
+            return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User is not authenticated or invalid'], Response::HTTP_UNAUTHORIZED);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (empty($data['username'])) {
-                return new JsonResponse(['error' => 'Username is required'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
-            if ($existingUsernameProfile) {
-                return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $user = $this->getUser();
-
-            if (!$user instanceof User) {
-                return new JsonResponse(['error' => 'User is not authenticated or invalid'], Response::HTTP_UNAUTHORIZED);
-            }
-
             $profileCount = $this->profileRepository->count(['user' => $user]);
 
             if ($profileCount >= 5) {
@@ -146,13 +146,13 @@ class ProfileController extends AbstractController
     #[Route('/{id}/edit', name: 'profile_edit', methods: ['PUT'])]
     public function update(Request $request, Profile $profile): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!$data) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
-            }
-
             $existingUsernameProfile = $this->profileRepository->findOneBy(['username' => $data['username']]);
             if ($existingUsernameProfile) {
                 return new JsonResponse(['error' => 'Le nom d\'utilisateur est déjà pris'], Response::HTTP_BAD_REQUEST);
@@ -181,12 +181,13 @@ class ProfileController extends AbstractController
     #[Route('/{profileId}', name: 'delete_profile', methods: ['DELETE'])]
     public function delete(int $profileId): JsonResponse
     {
-        try {
-            $profile = $this->profileRepository->findOneBy(['user' => $profileId]);
+        $profile = $this->profileRepository->findOneBy(['user' => $profileId]);
 
-            if (!$profile) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
-            }
+        if (!$profile) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+        }
+
+        try {
             $this->entityManager->remove($profile);
             $this->entityManager->flush();
 
@@ -199,12 +200,12 @@ class ProfileController extends AbstractController
     #[Route('/get-active/{id}', name: 'get_active_profile', methods: ['GET'])]
     public function getActiveProfile(int $id): JsonResponse
     {
-        try {
-            $user = $this->userRepository->find($id);
-            if (!$user) {
-                return new JsonResponse(['error' => 'Utilisateur introuvable'], 404);
-            }
+        $user = $this->userRepository->find($id);
+        if (!$user) {
+            return new JsonResponse(['error' => 'Utilisateur introuvable'], 404);
+        }
 
+        try {
             $activeProfile = $this->profileRepository->findOneBy([
                 'user' => $user,
                 'activeProfile' => true,
@@ -235,31 +236,31 @@ class ProfileController extends AbstractController
     #[Route('/set-active', name: 'set_active_profile', methods: ['POST'])]
     public function setActiveProfile(Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['id']) || !isset($data['profileId'])) {
+            return new JsonResponse(['error' => 'Invalid request data'], 400);
+        }
+
+        $userId = $data['id'];
+        $profileId = $data['profileId'];
+
+        $user = $this->userRepository->find($userId);
+        if (!$user) {
+            return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
+        }
+
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile || $user !== $profile->getUser()) {
+            return new JsonResponse(['error' => 'Profil invalide ou non associé à cet utilisateur'], 400);
+        }
+
+        if ($profile->getActiveProfile()) {
+            return new JsonResponse(['message' => 'Ce profil est déjà actif']);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!isset($data['id']) || !isset($data['profileId'])) {
-                return new JsonResponse(['error' => 'Invalid request data'], 400);
-            }
-
-            $userId = $data['id'];
-            $profileId = $data['profileId'];
-
-            $user = $this->userRepository->find($userId);
-            if (!$user) {
-                return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
-            }
-
-            $profile = $this->profileRepository->find($profileId);
-
-            if (!$profile || $user !== $profile->getUser()) {
-                return new JsonResponse(['error' => 'Profil invalide ou non associé à cet utilisateur'], 400);
-            }
-
-            if ($profile->getActiveProfile()) {
-                return new JsonResponse(['message' => 'Ce profil est déjà actif']);
-            }
-
             $profiles = $this->profileRepository->findBy(['user' => $user]);
 
             foreach ($profiles as $p) {
@@ -286,16 +287,16 @@ class ProfileController extends AbstractController
     #[Route('/update-status/{id}', name: 'update_status', methods: ['PUT'])]
     public function updateProfileStatus(Request $request, int $id): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $newStatus = $data['status'] ?? null;
+
+        $profile = $this->profileRepository->find($id);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $newStatus = $data['status'] ?? null;
-
-            $profile = $this->profileRepository->find($id);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
-            }
-
             $profile->setStatus($newStatus);
             $this->entityManager->flush();
         } catch (Exception $e) {

@@ -27,13 +27,13 @@ class FollowerController extends AbstractController
     #[Route('/{profileId}/followers', name: 'get_followers_paginated', methods: ['GET'])]
     public function getFollowersPaginated(int $profileId, Request $request): JsonResponse
     {
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $profile = $this->profileRepository->find($profileId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
-            }
-
             $limit = max((int)$request->query->get('limit', 20), 1);
             $offset = max((int)$request->query->get('offset', 0), 0);
 
@@ -52,13 +52,13 @@ class FollowerController extends AbstractController
     #[Route('/{profileId}/followed', name: 'get_followed_paginated', methods: ['GET'])]
     public function getFollowedPaginated(int $profileId, Request $request): JsonResponse
     {
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $profile = $this->profileRepository->find($profileId);
-
-            if (!$profile) {
-                return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
-            }
-
             $limit = max((int)$request->query->get('limit', 20), 1);
             $offset = max((int)$request->query->get('offset', 0), 0);
 
@@ -77,14 +77,14 @@ class FollowerController extends AbstractController
     #[Route('/follow/{profileId}', name: 'follow_profile', methods: ['POST'])]
     public function followProfile(int $profileId, Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $followingId = $data['followingId'] ?? null;
+
+        if (!$profileId || !$followingId) {
+            return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            $followingId = $data['followingId'] ?? null;
-
-            if (!$profileId || !$followingId) {
-                return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
-            }
-
             $follower = $this->profileRepository->findOneBy(['id' => $profileId]);
             $following = $this->profileRepository->findOneBy(['id' => $followingId]);
 
@@ -117,15 +117,16 @@ class FollowerController extends AbstractController
     #[Route('/unfollow/{id}', name: 'unfollow_profile', methods: ['DELETE'])]
     public function unfollowProfile(int $id, Request $request): JsonResponse
     {
-        try {
-            $data = json_decode($request->getContent(), true);
-            $friendship = $this->entityManager->getRepository(Follower::class)->find($id);
-            $followerId = $data['followerId'] ?? null;
-            $followingId = $data['followingId'] ?? null;
+        $data = json_decode($request->getContent(), true);
+        $friendship = $this->entityManager->getRepository(Follower::class)->find($id);
+        $followerId = $data['followerId'] ?? null;
+        $followingId = $data['followingId'] ?? null;
 
-            if (!$friendship || !$followerId || !$followingId) {
-                return new JsonResponse('Followers not found.', Response::HTTP_NOT_FOUND);
-            }
+        if (!$friendship || !$followerId || !$followingId) {
+            return new JsonResponse('Followers not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        try {
             if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId)
                 || ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
                 return new JsonResponse('You are not authorized to unfollow this friendship.', Response::HTTP_CONFLICT);
