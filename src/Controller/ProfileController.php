@@ -50,23 +50,16 @@ class ProfileController extends AbstractController
                 return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
             }
 
-            $profileData = [
-                'id' => $profile->getId(),
-                'firstName' => $profile->getFirstName(),
-                'lastName' => $profile->getLastName(),
-                'username' => $profile->getUsername(),
-                'birthday' => $profile->getBirthday()->format('Y-m-d'),
-                'gender' => $profile->getGender(),
-                'phoneNumber' => $profile->getPhoneNumber(),
-                'bio' => $profile->getBio(),
-                'facebook' => $profile->getFacebook(),
-                'instagram' => $profile->getInstagram(),
-                'x' => $profile->getX(),
-                'type' => $profile->getType(),
-                'createdAt' => $profile->getCreatedAt()?->format(DateTimeInterface::ATOM),
-                'friendsCount' => $this->friendshipRepository->countFriends($profileId),
-                'followersCount' => $this->followerRepository->countFollowers($profileId),
-            ];
+            $twoFriendsWithProfilePhotos = $this->friendshipRepository->findLastTwoFriendsWithPhotos($profileId);
+
+            $profileData = array_merge(
+                $profile,
+                [
+                    'friendsCount' => $this->friendshipRepository->countFriends($profileId),
+                    'followersCount' => $this->followerRepository->countFollowers($profileId),
+                    'lastTwoFriends' => $twoFriendsWithProfilePhotos,
+                ]
+            );
 
             return new JsonResponse($profileData);
         } catch (Exception $e) {
