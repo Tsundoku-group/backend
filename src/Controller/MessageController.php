@@ -20,15 +20,12 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/message')]
 class MessageController extends AbstractController
 {
-    private ConfRedisService $redisChatService;
-    private EntityManagerInterface $entityManager;
-    private ConversationRepository $conversationRepository;
-
-    public function __construct(ConfRedisService $redisChatService, EntityManagerInterface $entityManager, ConversationRepository $conversationRepository)
+    public function __construct(
+        private readonly ConfRedisService       $redisChatService,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ConversationRepository $conversationRepository
+    )
     {
-        $this->redisChatService = $redisChatService;
-        $this->entityManager = $entityManager;
-        $this->conversationRepository = $conversationRepository;
     }
 
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
@@ -114,10 +111,10 @@ class MessageController extends AbstractController
                 return new JsonResponse('Conversation not found.', Response::HTTP_NOT_FOUND);
             }
 
-            $page = (int) $request->query->get('page', '1');
-            $limit = (int) $request->query->get('limit', '20');
+            $page = (int)$request->query->get('page', '1');
+            $limit = (int)$request->query->get('limit', '20');
 
-            $conversationId = (string) $conversationId;
+            $conversationId = (string)$conversationId;
             $allMessages = $this->redisChatService->getMessagesFromConversation($conversationId);
 
             if (empty($allMessages)) {

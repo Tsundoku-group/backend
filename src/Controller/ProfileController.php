@@ -9,7 +9,6 @@ use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use DateTime;
-use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,19 +24,14 @@ class ProfileController extends AbstractController
     private const PROFILE_NOT_FOUND = 'Profile not found';
     private const USER_NOT_FOUND = 'User not found';
 
-    private EntityManagerInterface $entityManager;
-    private ProfileRepository $profileRepository;
-    private UserRepository $userRepository;
-    private FriendshipRepository $friendshipRepository;
-    private FollowerRepository $followerRepository;
-
-    public function __construct(EntityManagerInterface $entityManager, ProfileRepository $profileRepository, UserRepository $userRepository, FriendshipRepository $friendshipRepository, FollowerRepository $followerRepository)
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ProfileRepository      $profileRepository,
+        private readonly UserRepository         $userRepository,
+        private readonly FriendshipRepository   $friendshipRepository,
+        private readonly FollowerRepository     $followerRepository
+    )
     {
-        $this->entityManager = $entityManager;
-        $this->profileRepository = $profileRepository;
-        $this->userRepository = $userRepository;
-        $this->friendshipRepository = $friendshipRepository;
-        $this->followerRepository = $followerRepository;
     }
 
     #[Route('/{profileId}', name: 'profile_show', methods: ['GET'])]

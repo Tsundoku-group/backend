@@ -17,14 +17,18 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
 class RegisterController extends AbstractController
 {
+    public function __construct(
+        private readonly EntityManagerInterface      $entityManager,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly TokenGeneratorInterface     $tokenGenerator,
+        private readonly MailService                 $mailService
+    )
+    {
+    }
+
     #[Route('/register', name: 'app_register', methods: ['POST'])]
-    public function register(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher,
-        MailService $mailService,
-        TokenGeneratorInterface $tokenGenerator,
-    ): JsonResponse {
+    public function register(Request $request): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'], $data['password'])) {
@@ -34,26 +38,26 @@ class RegisterController extends AbstractController
         $user = new User();
         $user->setEmail($data['email']);
 
-        $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
         if ($existingUser) {
             return new JsonResponse(['error' => 'Email already in use'], JsonResponse::HTTP_CONFLICT);
         }
 
-        $tokenRegistration = $tokenGenerator->generateToken();
+        $tokenRegistration = $this->tokenGenerator->generateToken();
 
-        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
         $user->setTokenRegistration($tokenRegistration);
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/confirm_mail.html');
         $confirmationUrl = $_ENV['APP_URL'] . '/confirm?token=' . $tokenRegistration;
         $htmlContent = str_replace('{{ confirmation_url }}', $confirmationUrl, $htmlContent);
 
         try {
-            $mailService->sendMail(
+            $this->mailService->sendMail(
                 $user->getEmail(),
                 'Confirmation du compte utilisateur',
                 $htmlContent,
@@ -71,7 +75,7 @@ class RegisterController extends AbstractController
     }
 
     #[Route('/confirm', name: 'app_confirm', methods: ['GET'])]
-    public function confirm(Request $request, EntityManagerInterface $entityManager, MailService $mailService): JsonResponse
+    public function confirm(Request $request): JsonResponse
     {
         $token = $request->query->get('token');
 
@@ -79,7 +83,7 @@ class RegisterController extends AbstractController
             return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $user = $entityManager->getRepository(User::class)->findOneBy(['tokenRegistration' => $token]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['tokenRegistration' => $token]);
 
         if (!$user) {
             return new JsonResponse(['error' => 'Invalid token'], JsonResponse::HTTP_BAD_REQUEST);
@@ -87,12 +91,12 @@ class RegisterController extends AbstractController
 
         $user->setTokenRegistration(null);
         $user->setVerified(true);
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/isActive_mail.html');
 
         try {
-            $mailService->sendMail(
+            $this->mailService->sendMail(
                 $user->getEmail(),
                 'Activation du compte réussie',
                 $htmlContent,
@@ -108,18 +112,14 @@ class RegisterController extends AbstractController
     }
 
     #[Route('/resend-confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
-    public function resendConfirmationEmail(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        MailService $mailService,
-        TokenGeneratorInterface $tokenGenerator,
-    ): JsonResponse {
+    public function resendConfirmationEmail(Request                 $request): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
         }
@@ -128,18 +128,17 @@ class RegisterController extends AbstractController
             return new JsonResponse(['error' => 'User is already verified'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $tokenRegistration = $tokenGenerator->generateToken();
+        $tokenRegistration = $this->tokenGenerator->generateToken();
         $user->setTokenRegistration($tokenRegistration);
         $user->setTokenRegistrationLifetime((new DateTime('now'))->add(new DateInterval('P1D'))); // token lifetime 1 day
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         $htmlContent = file_get_contents(__DIR__ . '/../Emails/confirm_mail.html');
         $confirmationUrl = $_ENV['APP_URL'] . '/confirm?token=' . $tokenRegistration;
         $htmlContent = str_replace('{{ confirmation_url }}', $confirmationUrl, $htmlContent);
 
         try {
-            // Send mail
-            $mailService->sendMail(
+            $this->mailService->sendMail(
                 $user->getEmail(),
                 'Confirmation du compte utilisateur',
                 $htmlContent,

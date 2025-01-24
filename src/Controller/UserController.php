@@ -21,15 +21,12 @@ class UserController extends AbstractController
     private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
     private const USER_NOT_FOUND = 'User not found';
 
-    private EntityManagerInterface $entityManager;
-    private UserRepository $userRepository;
-    private MailService $mailService;
-
-    public function __construct(EntityManagerInterface $entityManager, UserRepository $userRepository, MailService $mailService)
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserRepository         $userRepository,
+        private readonly MailService            $mailService
+    )
     {
-        $this->entityManager = $entityManager;
-        $this->userRepository = $userRepository;
-        $this->mailService = $mailService;
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]
