@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\Conversation\CreateConversationDTO;
+use App\DTO\Conversation\MuteConversationDTO;
 use App\Entity\Conversation;
 use App\Entity\Profile;
 use App\Entity\User;
@@ -26,31 +28,30 @@ class ConversationController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly ProfileRepository      $profileRepository,
+        private readonly ProfileRepository $profileRepository,
         private readonly ConversationRepository $conversationRepository,
-        private readonly ConfRedisService       $confRedisService,
-    )
-    {
+        private readonly ConfRedisService $confRedisService,
+    ) {
     }
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
     public function createConversation(Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
+        $dto = new CreateConversationDTO($data);
 
-        if (!isset($data['participants']) || !isset($data['email']) || !is_array($data['participants'])) {
+        if (!isset($dto->participants) || !isset($dto->email)) {
             return new Response('Invalid input', Response::HTTP_BAD_REQUEST);
         }
 
-        $userEmail = $data['email'];
-        $createdBy = $this->profileRepository->findProfileByEmail($userEmail);
+        $createdBy = $this->profileRepository->findProfileByEmail($dto->email);
 
         if (!$createdBy) {
             return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
-            $participantsIds = $data['participants'];
+            $participantsIds = $dto->participants;
             if (!in_array($createdBy->getId(), $participantsIds)) {
                 $participantsIds[] = $createdBy->getId();
             }
@@ -216,7 +217,6 @@ class ConversationController extends AbstractController
         }
 
         try {
-
             $this->entityManager->remove($conversation);
             $this->entityManager->flush();
 
@@ -375,18 +375,20 @@ class ConversationController extends AbstractController
             return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
         }
 
+        $data = json_decode($request->getContent(), true);
+        $dto = new MuteConversationDTO($data);
+
+        if (!$data) {
+            return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $duration = $dto->duration;
+
+        if (!$duration) {
+            return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-            if (!$data) {
-                return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $duration = $data['duration'] ?? null;
-
-            if (!$duration) {
-                return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
-            }
-
             $muteUntil = null;
 
             if ('eternal' === $duration) {

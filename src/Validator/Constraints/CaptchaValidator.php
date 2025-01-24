@@ -7,10 +7,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class CaptchaValidator
 {
     public function __construct(
-        private readonly string     $googleRecaptchaSecret,
-        private HttpClientInterface $httpClient
-    )
-    {
+        private readonly string $googleRecaptchaSecret,
+        private HttpClientInterface $httpClient,
+    ) {
     }
 
     public function verifyCaptcha(string $captchaToken): bool

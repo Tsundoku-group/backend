@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\User\NewUserDTO;
+use App\DTO\User\UpdateUserDTO;
+use App\DTO\User\VerifyPasswordDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
@@ -24,11 +27,10 @@ class UserController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository         $userRepository,
-        private readonly MailService            $mailService,
-        private readonly CaptchaValidator       $captchaValidator
-    )
-    {
+        private readonly UserRepository $userRepository,
+        private readonly MailService $mailService,
+        private readonly CaptchaValidator $captchaValidator,
+    ) {
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]
@@ -60,9 +62,14 @@ class UserController extends AbstractController
         }
 
         try {
+            $dto = new NewUserDTO(
+                $data['email'] ?? '',
+                $data['password'] ?? ''
+            );
+
             $user = new User();
-            $user->setEmail($data['email']);
-            $user->setPassword($data['password']);
+            $user->setEmail($dto->email);
+            $user->setPassword($dto->password);
 
             $this->entityManager->persist($user);
             $this->entityManager->flush();
@@ -113,12 +120,25 @@ class UserController extends AbstractController
         }
 
         try {
-            $user->setEmail($data['email'] ?? $user->getEmail());
-            $user->setPassword($data['password'] ?? $user->getPassword());
+            $dto = new UpdateUserDTO(
+                $data['email'] ?? null,
+                $data['password'] ?? null
+            );
+
+            if ($dto->email) {
+                $user->setEmail($dto->email);
+            }
+
+            if ($dto->password) {
+                $user->setPassword($dto->password);
+            }
 
             $this->entityManager->flush();
 
-            return $this->json($user, 200);
+            return $this->json([
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+            ], 200);
         } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }
@@ -128,18 +148,25 @@ class UserController extends AbstractController
     public function verifyPassword(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return new JsonResponse(['error' => 'Invalid JSON'], 400);
+        }
+
         $user = $this->getUser();
 
         if (!$user) {
-            return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
+            return new JsonResponse(['error' => 'User not found'], 404);
         }
 
         try {
-            if (!$passwordHasher->isPasswordValid($user, $data['currentPassword'])) {
-                return new JsonResponse(['error' => 'Ancien mot de passe incorrect'], 400);
+            $dto = new VerifyPasswordDTO($data['currentPassword']);
+
+            if (!$passwordHasher->isPasswordValid($user, $dto->currentPassword)) {
+                return new JsonResponse(['error' => 'Incorrect password'], 400);
             }
 
-            return $this->json($user, 200);
+            return $this->json(['message' => 'Password verified'], 200);
         } catch (Exception $e) {
             return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
         }

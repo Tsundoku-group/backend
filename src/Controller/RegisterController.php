@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\Register\RegisterUserDTO;
+use App\DTO\Register\ResendConfirmationEmailDTO;
 use App\Entity\User;
 use App\Service\MailService;
 use DateInterval;
@@ -18,12 +20,11 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 class RegisterController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface      $entityManager,
+        private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly TokenGeneratorInterface     $tokenGenerator,
-        private readonly MailService                 $mailService
-    )
-    {
+        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly MailService $mailService,
+    ) {
     }
 
     #[Route('/register', name: 'app_register', methods: ['POST'])]
@@ -35,10 +36,15 @@ class RegisterController extends AbstractController
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $user = new User();
-        $user->setEmail($data['email']);
+        $dto = new RegisterUserDTO(
+            $data['email'],
+            $data['password']
+        );
 
-        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+        $user = new User();
+        $user->setEmail($dto->email);
+
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if ($existingUser) {
             return new JsonResponse(['error' => 'Email already in use'], JsonResponse::HTTP_CONFLICT);
         }
@@ -112,14 +118,18 @@ class RegisterController extends AbstractController
     }
 
     #[Route('/resend-confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
-    public function resendConfirmationEmail(Request                 $request): JsonResponse
+    public function resendConfirmationEmail(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        $dto = new ResendConfirmationEmailDTO(
+            $data['email'],
+        );
+
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
         }
