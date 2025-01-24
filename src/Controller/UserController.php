@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use App\Validator\CaptchaValidator;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -24,7 +25,8 @@ class UserController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository         $userRepository,
-        private readonly MailService            $mailService
+        private readonly MailService            $mailService,
+        private readonly CaptchaValidator       $captchaValidator
     )
     {
     }
@@ -162,7 +164,7 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'Le captcha est manquant'], 400);
         }
 
-        if (!$this->verifyCaptcha($captchaToken)) {
+        if (!$this->captchaValidator->verifyCaptcha($captchaToken)) {
             return $this->json(['message' => 'Captcha invalide.'], 400);
         }
 
@@ -222,16 +224,5 @@ class UserController extends AbstractController
         } catch (Exception $e) {
             error_log('Erreur lors de l\'envoi de l\'email de suppression : ' . $e->getMessage());
         }
-    }
-
-    private function verifyCaptcha(string $captchaToken): bool
-    {
-        $secretKey = $_ENV['GOOGLE_RECAPTCHA_SECRET'];
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
-
-        $response = file_get_contents($url . '?secret=' . $secretKey . '&response=' . $captchaToken);
-        $responseKeys = json_decode($response, true);
-
-        return $responseKeys['success'] ?? false;
     }
 }

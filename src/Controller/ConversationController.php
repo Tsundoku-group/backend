@@ -36,20 +36,20 @@ class ConversationController extends AbstractController
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
     public function createConversation(Request $request): Response
     {
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['participants']) || !isset($data['email']) || !is_array($data['participants'])) {
+            return new Response('Invalid input', Response::HTTP_BAD_REQUEST);
+        }
+
+        $userEmail = $data['email'];
+        $createdBy = $this->profileRepository->findProfileByEmail($userEmail);
+
+        if (!$createdBy) {
+            return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        }
+
         try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!isset($data['participants']) || !isset($data['email']) || !is_array($data['participants'])) {
-                return new Response('Invalid input', Response::HTTP_BAD_REQUEST);
-            }
-
-            $userEmail = $data['email'];
-            $createdBy = $this->profileRepository->findProfileByEmail($userEmail);
-
-            if (!$createdBy) {
-                return new JsonResponse(['message' => self::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
-
             $participantsIds = $data['participants'];
             if (!in_array($createdBy->getId(), $participantsIds)) {
                 $participantsIds[] = $createdBy->getId();

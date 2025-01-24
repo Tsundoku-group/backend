@@ -48,27 +48,27 @@ class MessageController extends AbstractController
             return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
         }
 
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
+
+        if (!$user) {
+            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
+        if (!$createdBy) {
+            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
+        if (!$conversation) {
+            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$this->conversationRepository->isUserParticipant($conversationId, $createdBy)) {
+            return new JsonResponse(['error' => 'User is not a participant in this conversation.'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
-            $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
-
-            if (!$user) {
-                return new Response('User not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
-            if (!$createdBy) {
-                return new Response('User not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-            if (!$conversation) {
-                return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            if (!$this->conversationRepository->isUserParticipant($conversationId, $createdBy)) {
-                return new JsonResponse(['error' => 'User is not a participant in this conversation.'], Response::HTTP_FORBIDDEN);
-            }
-
             $dateTime = new DateTime('now', new DateTimeZone('Europe/Paris'));
             $formattedDate = $dateTime->format('Y-m-d H:i:s');
 
