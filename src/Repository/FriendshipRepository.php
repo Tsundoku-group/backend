@@ -125,4 +125,37 @@ class FriendshipRepository extends ServiceEntityRepository
             return 0;
         }
     }
+
+    public function findLastTwoFriendsWithPhotos(int $profileId): array
+    {
+        $qb = $this->createQueryBuilder('f');
+
+        return $qb
+            ->select(
+                'CASE 
+                WHEN IDENTITY(f.requester) = :profileId THEN IDENTITY(f.receiver) 
+                ELSE IDENTITY(f.requester) 
+            END AS friendId',
+                'photo.url AS profilePhotoUrl'
+            )
+            ->leftJoin(
+                'App\Entity\ProfilePhoto',
+                'photo',
+                'WITH',
+                'photo.profile = CASE 
+                                WHEN IDENTITY(f.requester) = :profileId THEN IDENTITY(f.receiver) 
+                                ELSE IDENTITY(f.requester) 
+                            END 
+             AND photo.type = :type 
+             AND photo.isActive = true'
+            )
+            ->andWhere('f.status = :status')
+            ->setParameter('profileId', $profileId)
+            ->setParameter('status', 'accepted')
+            ->setParameter('type', 'profile')
+            ->orderBy('f.friendAt', 'DESC')
+            ->setMaxResults(2)
+            ->getQuery()
+            ->getResult();
+    }
 }
