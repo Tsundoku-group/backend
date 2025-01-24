@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\ResetPassword\ForgotPasswordRequestDTO;
 use App\DTO\ResetPassword\ResetPasswordRequestDTO;
 use App\Entity\User;
@@ -34,7 +35,7 @@ class ResetPasswordController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'])) {
-            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new ForgotPasswordRequestDTO(
@@ -43,7 +44,7 @@ class ResetPasswordController extends AbstractController
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
         if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $cooldownPeriod = new DateInterval('PT15M');
@@ -85,7 +86,7 @@ class ResetPasswordController extends AbstractController
 
             return $response;
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' =>  ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -96,7 +97,7 @@ class ResetPasswordController extends AbstractController
         $resetToken = $data['token'] ?? null;
 
         if (!$resetToken) {
-            return new JsonResponse(['error' => 'Token not found'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::TOKEN_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new ResetPasswordRequestDTO(
@@ -107,15 +108,15 @@ class ResetPasswordController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $dto->token]);
 
         if (!$user) {
-            return new JsonResponse(['error' => 'Invalid token'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_TOKEN], Response::HTTP_NOT_FOUND);
         }
 
         if (new DateTime() > $user->getResetPwdTokenLifetime()) {
-            return new JsonResponse(['error' => 'Token expired'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::TOKEN_EXPIRED], Response::HTTP_BAD_REQUEST);
         }
 
         if (!$data || !isset($data['password'])) {
-            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $hashedPassword = $this->passwordHasher->hashPassword($user, $dto->password);
@@ -135,7 +136,7 @@ class ResetPasswordController extends AbstractController
                 ['user' => $user->getEmail()]
             );
         } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' =>  ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return new JsonResponse(['success' => 'Password has been reset successfully']);

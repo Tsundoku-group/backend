@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
@@ -51,12 +52,12 @@ class MessageController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
 
         if (!$user) {
-            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
         if (!$createdBy) {
-            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
@@ -92,7 +93,7 @@ class MessageController extends AbstractController
 
             return new Response('Message sent to conversation.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -102,7 +103,7 @@ class MessageController extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
-            return new JsonResponse('User not authenticated.', Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
@@ -140,7 +141,7 @@ class MessageController extends AbstractController
 
             return new JsonResponse($formattedMessages, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -158,7 +159,7 @@ class MessageController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
 
         if (!$user) {
-            return new Response('User not found.', Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
@@ -177,7 +178,7 @@ class MessageController extends AbstractController
 
             return new Response('All messages marked as read.', Response::HTTP_OK);
         } catch (Exception $e) {
-            return new Response('An error occurred: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

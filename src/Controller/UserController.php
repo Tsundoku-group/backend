@@ -6,6 +6,7 @@ use App\DTO\User\NewUserDTO;
 use App\DTO\User\UpdateUserDTO;
 use App\DTO\User\VerifyPasswordDTO;
 use App\Entity\User;
+use App\Constant\ErrorMessagesConstant;
 use App\Repository\UserRepository;
 use App\Service\MailService;
 use App\Validator\Constraints\CaptchaValidator;
@@ -22,9 +23,6 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/users')]
 class UserController extends AbstractController
 {
-    private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
-    private const USER_NOT_FOUND = 'User not found';
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository,
@@ -48,7 +46,7 @@ class UserController extends AbstractController
 
             return $this->json($usernames);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -76,7 +74,7 @@ class UserController extends AbstractController
 
             return $this->json($user, 201);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -86,7 +84,7 @@ class UserController extends AbstractController
         $user = $this->userRepository->find($id);
 
         if (!$user) {
-            return $this->json(['error' => self::USER_NOT_FOUND], 404);
+            return $this->json(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
@@ -106,7 +104,7 @@ class UserController extends AbstractController
 
             return $this->json($profilesData);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -140,7 +138,7 @@ class UserController extends AbstractController
                 'email' => $user->getEmail(),
             ], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -168,7 +166,7 @@ class UserController extends AbstractController
 
             return $this->json(['message' => 'Password verified'], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -203,7 +201,7 @@ class UserController extends AbstractController
 
             return $this->json($user, 200);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -231,7 +229,7 @@ class UserController extends AbstractController
 
             return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 

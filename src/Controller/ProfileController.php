@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Profile\ProfileDTO;
 use App\DTO\Profile\SetActiveProfileDTO;
 use App\DTO\Profile\UpdateProfileStatusDTO;
@@ -23,10 +24,6 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/profile')]
 class ProfileController extends AbstractController
 {
-    private const INTERNAL_SERVER_ERROR = 'Internal Server Error';
-    private const PROFILE_NOT_FOUND = 'Profile not found';
-    private const USER_NOT_FOUND = 'User not found';
-
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProfileRepository $profileRepository,
@@ -42,7 +39,7 @@ class ProfileController extends AbstractController
         $profile = $this->profileRepository->findProfileById($profileId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -59,7 +56,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse($profileData);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -72,7 +69,7 @@ class ProfileController extends AbstractController
             $user = $this->userRepository->find($id);
 
             if (!$user) {
-                return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
+                return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
             }
 
             return new JsonResponse([
@@ -86,7 +83,7 @@ class ProfileController extends AbstractController
                 'profiles' => $profiles,
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -109,7 +106,7 @@ class ProfileController extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User is not authenticated or invalid'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_UNAUTHORIZED);
         }
 
         try {
@@ -140,7 +137,7 @@ class ProfileController extends AbstractController
                 'status' => 'offline',
             ], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -150,7 +147,7 @@ class ProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -175,7 +172,7 @@ class ProfileController extends AbstractController
 
             return $this->json($profile);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -185,7 +182,7 @@ class ProfileController extends AbstractController
         $profile = $this->profileRepository->findOneBy(['user' => $profileId]);
 
         if (!$profile) {
-            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -194,7 +191,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse(null, 204);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -203,7 +200,7 @@ class ProfileController extends AbstractController
     {
         $user = $this->userRepository->find($id);
         if (!$user) {
-            return new JsonResponse(['error' => 'Utilisateur introuvable'], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
@@ -219,7 +216,7 @@ class ProfileController extends AbstractController
                     $activeProfile->setActiveProfile(true);
                     $this->entityManager->flush();
                 } else {
-                    return new JsonResponse(['error' => 'Aucun profil trouvé pour cet utilisateur'], 404);
+                    return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
                 }
             }
 
@@ -230,7 +227,7 @@ class ProfileController extends AbstractController
                 ],
             ]);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -240,20 +237,20 @@ class ProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['id']) || !isset($data['profileId'])) {
-            return new JsonResponse(['error' => 'Invalid request data'], 400);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new SetActiveProfileDTO($data);
 
         $user = $this->userRepository->find($dto->userId);
         if (!$user) {
-            return new JsonResponse(['error' => self::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         $profile = $this->profileRepository->find($dto->profileId);
 
         if (!$profile || $user !== $profile->getUser()) {
-            return new JsonResponse(['error' => 'Profil invalide ou non associé à cet utilisateur'], 400);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 400);
         }
 
         if ($profile->getActiveProfile()) {
@@ -280,7 +277,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse($profileData, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -293,14 +290,14 @@ class ProfileController extends AbstractController
         $profile = $this->profileRepository->find($id);
 
         if (!$profile) {
-            return new JsonResponse(['error' => self::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' =>ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
             $profile->setStatus($dto->status);
             $this->entityManager->flush();
         } catch (Exception $e) {
-            return new JsonResponse(['error' => self::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
 
         return new JsonResponse(['success' => true, 'newStatus' => $profile->getStatus()]);

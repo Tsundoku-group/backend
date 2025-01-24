@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\Follower\FollowProfileDTO;
 use App\DTO\Follower\UnfollowProfileDTO;
 use App\Entity\Follower;
@@ -31,7 +32,7 @@ class FollowerController extends AbstractController
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -46,7 +47,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse($followers, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -56,7 +57,7 @@ class FollowerController extends AbstractController
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => 'Profile not found.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -71,7 +72,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse($followed, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -82,7 +83,7 @@ class FollowerController extends AbstractController
         $dto = new FollowProfileDTO($data, $profileId);
 
         if (!$dto->profileId || !$dto->followingId) {
-            return new JsonResponse('Invalid input.', Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' =>  ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -111,7 +112,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse(['message' => 'Successfully followed the profile.'], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -137,7 +138,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse(['message' => 'Successfully unfollowed the profile.'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'An error occurred.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }
