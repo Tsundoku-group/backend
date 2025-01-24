@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Profile;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,14 +33,34 @@ class ProfileRepository extends ServiceEntityRepository
         }
     }
 
-    public function findProfileById(int $profileId): ?Profile
+    public function findProfileById(int $profileId): ?array
     {
         $result = $this->createQueryBuilder('p')
             ->andWhere('p.id = :profileId')
             ->setParameter('profileId', $profileId);
 
         try {
-            return $result->getQuery()->getOneOrNullResult();
+            $profile = $result->getQuery()->getOneOrNullResult();
+
+            if (!$profile) {
+                return null;
+            }
+
+            return [
+                'id' => $profile->getId(),
+                'firstName' => $profile->getFirstName(),
+                'lastName' => $profile->getLastName(),
+                'username' => $profile->getUsername(),
+                'birthday' => $profile->getBirthday()?->format('Y-m-d'),
+                'gender' => $profile->getGender(),
+                'phoneNumber' => $profile->getPhoneNumber(),
+                'bio' => $profile->getBio(),
+                'facebook' => $profile->getFacebook(),
+                'instagram' => $profile->getInstagram(),
+                'x' => $profile->getX(),
+                'type' => $profile->getType(),
+                'createdAt' => $profile->getCreatedAt()?->format(DateTimeInterface::ATOM),
+            ];
         } catch (NonUniqueResultException $e) {
             return null;
         }
