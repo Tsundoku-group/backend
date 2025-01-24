@@ -17,6 +17,6 @@ readonly class FollowProfileDTO
     public function __construct(array $data, int $profileId)
     {
         $this->profileId = $profileId;
-        $this->followingId = (int)($data['followingId'] ?? 0);
+        $this->followingId = (int) ($data['followingId'] ?? 0);
     }
 }

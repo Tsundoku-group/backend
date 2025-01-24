@@ -21,9 +21,9 @@ class FriendshipController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly ProfileRepository      $profileRepository,
-        private readonly FriendshipRepository   $friendshipRepository,
-        private readonly FriendshipService      $friendshipService)
+        private readonly ProfileRepository $profileRepository,
+        private readonly FriendshipRepository $friendshipRepository,
+        private readonly FriendshipService $friendshipService)
     {
     }
 
@@ -177,8 +177,8 @@ class FriendshipController extends AbstractController
         }
 
         try {
-            $limit = max((int)$request->query->get('limit', 20), 1);
-            $offset = max((int)$request->query->get('offset', 0), 0);
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
 
@@ -236,8 +236,8 @@ class FriendshipController extends AbstractController
     #[Route('/{profileId}/suggestions', name: 'profile_suggestions', methods: ['GET'])]
     public function getProfileFriendsSuggestions(int $profileId, Request $request): JsonResponse
     {
-        $limit = max((int)$request->query->get('limit', '20'), 1);
-        $offset = max((int)$request->query->get('offset', '0'), 0);
+        $limit = max((int) $request->query->get('limit', '20'), 1);
+        $offset = max((int) $request->query->get('offset', '0'), 0);
 
         $friendsSuggestions = $this->friendshipService->getSuggestionsFriendsByProfile($profileId, $limit, $offset);
 

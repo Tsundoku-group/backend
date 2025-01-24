@@ -20,12 +20,11 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 class RegisterController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface      $entityManager,
+        private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly TokenGeneratorInterface     $tokenGenerator,
-        private readonly MailService                 $mailService
-    )
-    {
+        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly MailService $mailService,
+    ) {
     }
 
     #[Route('/register', name: 'app_register', methods: ['POST'])]
@@ -119,7 +118,7 @@ class RegisterController extends AbstractController
     }
 
     #[Route('/resend-confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
-    public function resendConfirmationEmail(Request                 $request): JsonResponse
+    public function resendConfirmationEmail(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {

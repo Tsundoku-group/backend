@@ -6,8 +6,7 @@ readonly class UpdatePasswordDTO
 {
     public function __construct(
         public string $newPassword,
-        public string $captchaToken
-    )
-    {
+        public string $captchaToken,
+    ) {
     }
 }

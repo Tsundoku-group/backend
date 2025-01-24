@@ -14,7 +14,7 @@ readonly class GetMessageDTO
 
     public function __construct(array $queryParams)
     {
-        $this->page = (int)($queryParams['page'] ?? 1);
-        $this->limit = (int)($queryParams['limit'] ?? 20);
+        $this->page = (int) ($queryParams['page'] ?? 1);
+        $this->limit = (int) ($queryParams['limit'] ?? 20);
     }
 }

@@ -16,7 +16,7 @@ readonly class RemoveFriendDTO
 
     public function __construct(array $data)
     {
-        $this->requesterId = (int)($data['requesterId'] ?? 0);
-        $this->receiverId = (int)($data['receiverId'] ?? 0);
+        $this->requesterId = (int) ($data['requesterId'] ?? 0);
+        $this->receiverId = (int) ($data['receiverId'] ?? 0);
     }
 }

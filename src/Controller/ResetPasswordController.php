@@ -21,12 +21,11 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 class ResetPasswordController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface      $entityManager,
-        private readonly MailService                 $mailService,
-        private readonly TokenGeneratorInterface     $tokenGenerator,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly MailService $mailService,
+        private readonly TokenGeneratorInterface $tokenGenerator,
         private readonly UserPasswordHasherInterface $passwordHasher,
-    )
-    {
+    ) {
     }
 
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['POST'])]

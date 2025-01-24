@@ -24,11 +24,10 @@ use Symfony\Component\Routing\Annotation\Route;
 class MessageController extends AbstractController
 {
     public function __construct(
-        private readonly ConfRedisService       $redisChatService,
+        private readonly ConfRedisService $redisChatService,
         private readonly EntityManagerInterface $entityManager,
-        private readonly ConversationRepository $conversationRepository
-    )
-    {
+        private readonly ConversationRepository $conversationRepository,
+    ) {
     }
 
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
@@ -115,7 +114,7 @@ class MessageController extends AbstractController
             $queryParams = $request->query->all();
             $dto = new GetMessageDTO($queryParams);
 
-            $conversationId = (string)$conversationId;
+            $conversationId = (string) $conversationId;
             $allMessages = $this->redisChatService->getMessagesFromConversation($conversationId);
 
             if (empty($allMessages)) {

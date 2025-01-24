@@ -19,11 +19,10 @@ use Symfony\Component\Routing\Annotation\Route;
 class FollowerController extends AbstractController
 {
     public function __construct(
-        private readonly ProfileRepository      $profileRepository,
+        private readonly ProfileRepository $profileRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly FollowerRepository     $followerRepository
-    )
-    {
+        private readonly FollowerRepository $followerRepository,
+    ) {
     }
 
     #[Route('/{profileId}/followers', name: 'get_followers_paginated', methods: ['GET'])]
@@ -36,8 +35,8 @@ class FollowerController extends AbstractController
         }
 
         try {
-            $limit = max((int)$request->query->get('limit', 20), 1);
-            $offset = max((int)$request->query->get('offset', 0), 0);
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
@@ -61,8 +60,8 @@ class FollowerController extends AbstractController
         }
 
         try {
-            $limit = max((int)$request->query->get('limit', 20), 1);
-            $offset = max((int)$request->query->get('offset', 0), 0);
+            $limit = max((int) $request->query->get('limit', 20), 1);
+            $offset = max((int) $request->query->get('offset', 0), 0);
 
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 

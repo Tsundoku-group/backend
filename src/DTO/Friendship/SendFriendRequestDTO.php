@@ -17,6 +17,6 @@ readonly class SendFriendRequestDTO
     public function __construct(array $data, int $profileId)
     {
         $this->profileId = $profileId;
-        $this->friendId = (int)($data['friendId'] ?? 0);
+        $this->friendId = (int) ($data['friendId'] ?? 0);
     }
 }

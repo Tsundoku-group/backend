@@ -27,8 +27,8 @@ readonly class ProfilePhotoDTO
 
     public function __construct(array $data)
     {
-        $this->profileId = (int)($data['profileId'] ?? 0);
-        $this->userId = (int)($data['id'] ?? 0);
+        $this->profileId = (int) ($data['profileId'] ?? 0);
+        $this->userId = (int) ($data['id'] ?? 0);
         $this->url = $data['url'] ?? '';
         $this->type = $data['type'] ?? '';
     }

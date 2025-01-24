@@ -28,11 +28,10 @@ class ConversationController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly ProfileRepository      $profileRepository,
+        private readonly ProfileRepository $profileRepository,
         private readonly ConversationRepository $conversationRepository,
-        private readonly ConfRedisService       $confRedisService,
-    )
-    {
+        private readonly ConfRedisService $confRedisService,
+    ) {
     }
 
     #[Route('/create', name: 'create_conversation', methods: 'POST')]
@@ -218,7 +217,6 @@ class ConversationController extends AbstractController
         }
 
         try {
-
             $this->entityManager->remove($conversation);
             $this->entityManager->flush();
 
@@ -377,18 +375,18 @@ class ConversationController extends AbstractController
             return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
         }
 
-            $data = json_decode($request->getContent(), true);
-            $dto = new MuteConversationDTO($data);
+        $data = json_decode($request->getContent(), true);
+        $dto = new MuteConversationDTO($data);
 
-            if (!$data) {
-                return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
-            }
+        if (!$data) {
+            return new JsonResponse(['message' => 'Requête invalide.'], Response::HTTP_BAD_REQUEST);
+        }
 
-            $duration = $dto->duration;
+        $duration = $dto->duration;
 
-            if (!$duration) {
-                return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
-            }
+        if (!$duration) {
+            return new JsonResponse(['message' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
+        }
 
         try {
             $muteUntil = null;

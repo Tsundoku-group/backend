@@ -27,11 +27,10 @@ class UserController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository         $userRepository,
-        private readonly MailService            $mailService,
-        private readonly CaptchaValidator       $captchaValidator
-    )
-    {
+        private readonly UserRepository $userRepository,
+        private readonly MailService $mailService,
+        private readonly CaptchaValidator $captchaValidator,
+    ) {
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]

@@ -15,8 +15,7 @@ readonly class ResetPasswordRequestDTO
             min: 8,
             minMessage: 'The password must be at least 8 characters long.'
         )]
-        public string $password
-    )
-    {
+        public string $password,
+    ) {
     }
 }

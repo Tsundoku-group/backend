@@ -9,8 +9,7 @@ readonly class ResendConfirmationEmailDTO
     #[Assert\NotBlank(message: 'The email is required.')]
     #[Assert\Email(message: 'The email is not valid.')]
     public function __construct(
-        public string $email
-    )
-    {
+        public string $email,
+    ) {
     }
 }

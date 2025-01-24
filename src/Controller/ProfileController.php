@@ -29,12 +29,11 @@ class ProfileController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly ProfileRepository      $profileRepository,
-        private readonly UserRepository         $userRepository,
-        private readonly FriendshipRepository   $friendshipRepository,
-        private readonly FollowerRepository     $followerRepository
-    )
-    {
+        private readonly ProfileRepository $profileRepository,
+        private readonly UserRepository $userRepository,
+        private readonly FriendshipRepository $friendshipRepository,
+        private readonly FollowerRepository $followerRepository,
+    ) {
     }
 
     #[Route('/{profileId}', name: 'profile_show', methods: ['GET'])]

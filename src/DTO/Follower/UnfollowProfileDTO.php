@@ -16,7 +16,7 @@ readonly class UnfollowProfileDTO
 
     public function __construct(array $data)
     {
-        $this->followerId = (int)($data['followerId'] ?? 0);
-        $this->followingId = (int)($data['followingId'] ?? 0);
+        $this->followerId = (int) ($data['followerId'] ?? 0);
+        $this->followingId = (int) ($data['followingId'] ?? 0);
     }
 }
