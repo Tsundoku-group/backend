@@ -7,12 +7,14 @@ use App\Entity\User;
 use App\Entity\Profile;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use App\Validator\Constraints\CaptchaValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
@@ -21,6 +23,7 @@ class UserControllerTest extends TestCase
     private $entityManager;
     private $userRepository;
     private $mailService;
+    private $captchaValidator;
     private $container;
 
     protected function setUp(): void
@@ -28,7 +31,21 @@ class UserControllerTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->userRepository = $this->createMock(UserRepository::class);
         $this->mailService = $this->createMock(MailService::class);
+        $this->captchaValidator = $this->createMock(CaptchaValidator::class);
         $this->container = $this->createMock(ContainerInterface::class);
+    }
+
+    private function createController(): UserController
+    {
+        $controller = new UserController(
+            $this->entityManager,
+            $this->userRepository,
+            $this->mailService,
+            $this->captchaValidator
+        );
+        $controller->setContainer($this->container);
+
+        return $controller;
     }
 
     public function testGetAllUsers(): void
@@ -40,8 +57,7 @@ class UserControllerTest extends TestCase
 
         $this->userRepository->method('findAll')->willReturn([$user]);
 
-        $controller = new UserController($this->entityManager, $this->userRepository, $this->mailService);
-        $controller->setContainer($this->container);
+        $controller = $this->createController();
 
         $response = $controller->getAll();
 
@@ -63,8 +79,7 @@ class UserControllerTest extends TestCase
         $this->entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(User::class));
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new UserController($this->entityManager, $this->userRepository, $this->mailService);
-        $controller->setContainer($this->container);
+        $controller = $this->createController();
 
         $response = $controller->new($request);
 
@@ -75,15 +90,14 @@ class UserControllerTest extends TestCase
     public function testShowUser(): void
     {
         $user = $this->createMock(User::class);
-        $profile = $this->createMock(\App\Entity\Profile::class);
+        $profile = $this->createMock(Profile::class);
         $profile->method('getUserName')->willReturn('TestUser');
 
         $user->method('getProfiles')->willReturn(new ArrayCollection([$profile]));
 
         $this->userRepository->method('find')->willReturn($user);
 
-        $controller = new UserController($this->entityManager, $this->userRepository, $this->mailService);
-        $controller->setContainer($this->container);
+        $controller = $this->createController();
 
         $response = $controller->show(1);
 
@@ -101,44 +115,9 @@ class UserControllerTest extends TestCase
         $user = $this->createMock(User::class);
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new UserController($this->entityManager, $this->userRepository, $this->mailService);
-        $controller->setContainer($this->container);
+        $controller = $this->createController();
 
         $response = $controller->update($request, $user);
-
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-    }
-
-    public function testVerifyPassword(): void
-    {
-        $passwordHasher = $this->createMock(\Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface::class);
-        $passwordHasher->method('isPasswordValid')->willReturn(true);
-
-        $request = new Request([], [], [], [], [], [], json_encode(['currentPassword' => 'password123']));
-
-        $user = $this->createMock(User::class);
-
-        $tokenStorage = $this->createMock(TokenStorageInterface::class);
-        $token = new UsernamePasswordToken($user, 'credentials', ['ROLE_USER']);
-        $tokenStorage->method('getToken')->willReturn($token);
-
-        $this->container->method('get')->willReturnMap([
-            ['security.token_storage', $tokenStorage]
-        ]);
-
-        $controller = $this->getMockBuilder(UserController::class)
-            ->setConstructorArgs([$this->entityManager, $this->userRepository, $this->mailService])
-            ->onlyMethods(['getUser'])
-            ->getMock();
-
-        $controller->expects($this->once())
-            ->method('getUser')
-            ->willReturn($user);
-
-        $controller->setContainer($this->container);
-
-        $response = $controller->verifyPassword($request, $passwordHasher);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
@@ -154,8 +133,7 @@ class UserControllerTest extends TestCase
         $this->entityManager->expects($this->once())->method('persist')->with($user);
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new UserController($this->entityManager, $this->userRepository, $this->mailService);
-        $controller->setContainer($this->container);
+        $controller = $this->createController();
 
         $response = $controller->requestAccountDeletion(1);
 

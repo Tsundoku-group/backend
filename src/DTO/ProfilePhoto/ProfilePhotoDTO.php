@@ -15,7 +15,10 @@ readonly class ProfilePhotoDTO
     public int $userId;
 
     #[Assert\NotBlank(message: 'The photo URL is required.')]
-    #[Assert\Url(message: 'The photo URL is not valid.')]
+    #[Assert\Url(
+        requireTld: true,
+        message: 'The photo URL is not valid.'
+    )]
     public string $url;
 
     #[Assert\NotBlank(message: 'The photo type is required.')]

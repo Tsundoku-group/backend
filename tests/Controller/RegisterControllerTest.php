@@ -35,10 +35,18 @@ class RegisterControllerTest extends TestCase
         $this->entityManager->method('getRepository')->willReturn($this->userRepository);
     }
 
+    private function createController(): RegisterController
+    {
+        return new RegisterController(
+            $this->entityManager,
+            $this->passwordHasher,
+            $this->tokenGenerator,
+            $this->mailService
+        );
+    }
+
     public function testRegisterSuccess(): void
     {
-        $user = $this->createMock(User::class);
-
         $this->userRepository->method('findOneBy')->willReturn(null);
 
         $this->tokenGenerator->method('generateToken')->willReturn('sample-token');
@@ -48,21 +56,15 @@ class RegisterControllerTest extends TestCase
         $this->entityManager->expects($this->once())->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
-        $controller = new RegisterController();
+        $controller = $this->createController();
         $controller->setContainer($this->container);
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'email' => 'test@example.com',
-            'password' => 'password123'
+            'password' => 'password123',
         ]));
 
-        $response = $controller->register(
-            $request,
-            $this->entityManager,
-            $this->passwordHasher,
-            $this->mailService,
-            $this->tokenGenerator
-        );
+        $response = $controller->register($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
@@ -74,42 +76,29 @@ class RegisterControllerTest extends TestCase
 
         $this->userRepository->method('findOneBy')->willReturn($existingUser);
 
-        $controller = new RegisterController();
+        $controller = $this->createController();
         $controller->setContainer($this->container);
 
         $request = new Request([], [], [], [], [], [], json_encode([
             'email' => 'test@example.com',
-            'password' => 'password123'
+            'password' => 'password123',
         ]));
 
-        $response = $controller->register(
-            $request,
-            $this->entityManager,
-            $this->passwordHasher,
-            $this->mailService,
-            $this->tokenGenerator
-        );
+        $response = $controller->register($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(409, $response->getStatusCode());
         $this->assertEquals(['error' => 'Email already in use'], json_decode($response->getContent(), true));
     }
 
-
     public function testRegisterInvalidData(): void
     {
-        $controller = new RegisterController();
+        $controller = $this->createController();
         $controller->setContainer($this->container);
 
         $request = new Request([], [], [], [], [], [], json_encode([]));
 
-        $response = $controller->register(
-            $request,
-            $this->entityManager,
-            $this->passwordHasher,
-            $this->mailService,
-            $this->tokenGenerator
-        );
+        $response = $controller->register($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(400, $response->getStatusCode());
