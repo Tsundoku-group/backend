@@ -1,0 +1,28 @@
+name: Generate .env.local
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  generate-env:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Inject secrets into .env.local
+        run: |
+          echo "APP_URL=${{ secrets.APP_URL }}" > .env.local
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env.local
+          echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env.local
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env.local
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.local
+          echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env.local
+          echo "POSTGRES_URL=${{ secrets.POSTGRES_URL }}" >> .env.local
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env.local
+          echo "JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}" >> .env.local
+          echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" >> .env.local
+          echo "CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}" >> .env.local
