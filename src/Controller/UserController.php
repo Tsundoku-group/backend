@@ -25,26 +25,24 @@ class UserController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository $userRepository,
-        private readonly MailService $mailService,
-        private readonly CaptchaValidator $captchaValidator,
-    ) {
+        private readonly UserRepository         $userRepository,
+        private readonly MailService            $mailService,
+        private readonly CaptchaValidator       $captchaValidator,
+    )
+    {
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]
     public function getAll(): Response
     {
+        $users = $this->userRepository->findAllUsersByUsername();
+
+        if (empty($users)) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+        }
+
         try {
-            $users = $this->userRepository->findAll();
-            $usernames = [];
-
-            foreach ($users as $user) {
-                foreach ($user->getProfiles() as $profile) {
-                    $usernames[] = $profile->getUsername();
-                }
-            }
-
-            return $this->json($usernames);
+            return $this->json($users);
         } catch (Exception $e) {
             return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
@@ -56,7 +54,7 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return $this->json(['error' => 'Invalid JSON'], 400);
+            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -81,28 +79,14 @@ class UserController extends AbstractController
     #[Route('/{id}', name: 'user_show', methods: ['GET'])]
     public function show(int $id): Response
     {
-        $user = $this->userRepository->find($id);
+        $user = $this->userRepository->findUserProfileById($id);
 
-        if (!$user) {
+        if (empty($user)) {
             return $this->json(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
-            $profilesData = [];
-
-            foreach ($user->getProfiles() as $profile) {
-                $profilesData[] = [
-                    'id' => $user->getId(),
-                    'username' => $profile->getUserName(),
-                    'firstName' => $profile->getFirstName(),
-                    'lastName' => $profile->getLastName(),
-                    'birthDay' => $profile->getBirthday()?->format('Y-m-d'),
-                    'email' => $user->getEmail(),
-                    'biographie' => $profile->getBio(),
-                ];
-            }
-
-            return $this->json($profilesData);
+            return $this->json($user);
         } catch (Exception $e) {
             return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
@@ -114,7 +98,7 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return $this->json(['error' => 'Invalid JSON'], 400);
+            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -148,13 +132,13 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return new JsonResponse(['error' => 'Invalid JSON'], 400);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $user = $this->getUser();
 
         if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
@@ -208,24 +192,28 @@ class UserController extends AbstractController
     #[Route('/delete-account-request/{id}', name: 'user_delete', methods: ['DELETE'])]
     public function requestAccountDeletion(int $id): JsonResponse
     {
-        $user = $this->userRepository->find($id);
+        $user = $this->userRepository->findOneUserById($id);
 
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], 404);
+        if (empty($user)) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
-        if (null !== $user->getAccountDeletionDate()) {
+        if (null !== $user['accountDeletionDate']) {
             return new JsonResponse(['error' => 'Deletion already requested'], 400);
         }
 
         try {
             $deletionDate = new DateTime('+30 days');
-            $user->setAccountDeletionDate($deletionDate);
+            $this->entityManager->createQueryBuilder()
+                ->update(User::class, 'u')
+                ->set('u.accountDeletionDate', ':deletionDate')
+                ->where('u.id = :id')
+                ->setParameter('deletionDate', $deletionDate)
+                ->setParameter('id', $id)
+                ->getQuery()
+                ->execute();
 
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-
-            $this->sendAccountDeletionEmail($user->getEmail());
+            $this->sendAccountDeletionEmail($user['email']);
 
             return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
         } catch (Exception $e) {
