@@ -14,14 +14,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
-class ResetPasswordService
+readonly class ResetPasswordService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly TokenGeneratorInterface $tokenGenerator,
-        private readonly UserRepository $userRepository,
-        private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly MailService $mailService
+        private EntityManagerInterface      $entityManager,
+        private TokenGeneratorInterface     $tokenGenerator,
+        private UserRepository              $userRepository,
+        private UserPasswordHasherInterface $passwordHasher,
+        private MailService                 $mailService
     ) {}
 
     public function requestPasswordReset(string $email): ?array

@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Constant\ErrorMessagesConstant;
 use App\Repository\UserRepository;
 use App\Service\MailService;
+use App\Service\UserService;
 use App\Validator\Constraints\CaptchaValidator;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,6 +29,7 @@ class UserController extends AbstractController
         private readonly UserRepository         $userRepository,
         private readonly MailService            $mailService,
         private readonly CaptchaValidator       $captchaValidator,
+        private readonly UserService            $userService,
     )
     {
     }
@@ -203,15 +205,11 @@ class UserController extends AbstractController
         }
 
         try {
-            $deletionDate = new DateTime('+30 days');
-            $this->entityManager->createQueryBuilder()
-                ->update(User::class, 'u')
-                ->set('u.accountDeletionDate', ':deletionDate')
-                ->where('u.id = :id')
-                ->setParameter('deletionDate', $deletionDate)
-                ->setParameter('id', $id)
-                ->getQuery()
-                ->execute();
+            $deletionDate = $this->userService->scheduleAccountDeletion($id);
+
+            if (!$deletionDate) {
+                return new JsonResponse(['error' => 'Account deletion could not be scheduled.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             $this->sendAccountDeletionEmail($user['email']);
 

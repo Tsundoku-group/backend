@@ -17,7 +17,7 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    public function findAllUsersByUsername(): array
+    public function findAllUsersByUsername(): ?array
     {
         $findAllUsers = $this->createQueryBuilder('u')
             ->select('p.username')
@@ -44,7 +44,7 @@ class UserRepository extends ServiceEntityRepository
         }
     }
 
-    public function findUserProfileById(int $id): array
+    public function findUserProfileById(int $id): ?array
     {
         $findUserProfile = $this->createQueryBuilder('u')
             ->select('u.id, u.email, p.username, p.firstName, p.lastName, p.birthday, p.bio')
@@ -58,5 +58,31 @@ class UserRepository extends ServiceEntityRepository
             return [];
         }
     }
-}
 
+    public function findOneUserByEmail(string $email): ?array
+    {
+        $findUserByEmail = $this->createQueryBuilder('u')
+            ->select('u.id, u.email, u.lastPasswordResetRequest, u.resetPwdToken, u.resetPwdTokenLifetime')
+            ->where('u.email = :email')
+            ->setParameter('email', $email);
+
+        try {
+            return $findUserByEmail->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return [];
+        }
+    }
+
+    public function findOneByResetPwdToken(string $resetToken): ?User
+    {
+        $findUserByResetPwdToken = $this->createQueryBuilder('u')
+            ->where('u.resetPwdToken = :resetToken')
+            ->setParameter('resetToken', $resetToken);
+
+        try {
+            return $findUserByResetPwdToken->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
+}
