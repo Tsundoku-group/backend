@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/profile/photo')]
+#[Route('/api/v1/profile/photo')]
 class ProfilePhotoController extends AbstractController
 {
     public function __construct(

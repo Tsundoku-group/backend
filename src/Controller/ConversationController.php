@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/conversation')]
+#[Route('/api/v1/conversation')]
 class ConversationController extends AbstractController
 {
     public function __construct(

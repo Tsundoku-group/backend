@@ -18,7 +18,7 @@ class BookController extends AbstractController
         $this->googleBooksService = $googleBooksService;
     }
 
-    #[Route('/api/latest-releases', name: 'latest_releases', methods: ['GET'])]
+    #[Route('/api/v1/latest-releases', name: 'latest_releases', methods: ['GET'])]
     public function getLatestReleases(Request $request): JsonResponse
     {
         $limit = $request->query->getInt('limit', 40);

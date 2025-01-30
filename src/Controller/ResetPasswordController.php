@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/reset/password')]
+#[Route('/api/v1/reset/password')]
 class ResetPasswordController extends AbstractController
 {
     public function __construct(
