@@ -4,15 +4,11 @@ namespace App\Tests\Controller;
 
 use App\Controller\MessageController;
 use App\Entity\Conversation;
-use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\ConversationRepository;
-use App\Repository\ProfileRepository;
-use App\Repository\UserRepository;
-use App\Service\ConfRedisService;
+use App\Service\MessageService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,130 +16,144 @@ use Symfony\Component\HttpFoundation\Response;
 class MessageControllerTest extends TestCase
 {
     private $entityManager;
-    private $profileRepository;
     private $conversationRepository;
-    private $userRepository;
-    private $redisChatService;
-    private $container;
+    private $messageService;
 
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->profileRepository = $this->createMock(ProfileRepository::class);
         $this->conversationRepository = $this->createMock(ConversationRepository::class);
-        $this->userRepository = $this->createMock(UserRepository::class);
-        $this->redisChatService = $this->createMock(ConfRedisService::class);
-        $this->container = $this->createMock(ContainerInterface::class);
-
-        $this->entityManager->method('getRepository')->willReturnMap([
-            [Profile::class, $this->profileRepository],
-            [Conversation::class, $this->conversationRepository],
-            [User::class, $this->userRepository],
-        ]);
+        $this->messageService = $this->createMock(MessageService::class);
     }
 
     public function testSendMessageSuccess(): void
     {
-        $user = $this->createMock(User::class);
-        $user->method('getEmail')->willReturn('user@example.com');
-
-        $profile = $this->createMock(Profile::class);
-        $profile->method('getId')->willReturn(1);
-        $profile->method('getUser')->willReturn($user);
-        $profile->method('getUsername')->willReturn('username');
-
-        $conversation = $this->createMock(Conversation::class);
-        $conversation->method('getId')->willReturn(1);
-
-        $this->profileRepository->method('findOneBy')->willReturn($profile);
-        $this->userRepository->method('findOneBy')->willReturn($user);
-        $this->conversationRepository->method('find')->willReturn($conversation);
-        $this->conversationRepository->method('isUserParticipant')->willReturn(true);
-
-        $this->redisChatService
-            ->expects($this->once())
-            ->method('addMessageToConversation')
-            ->with(
-                $this->equalTo(1),
-                $this->callback(function ($messageData) {
-                    return isset($messageData['sender_id']) && $messageData['sender_id'] === 1;
-                })
-            );
-
+        $conversationId = 1;
         $request = new Request([], [], [], [], [], [], json_encode([
             'userEmail' => 'user@example.com',
-            'message' => 'Test message',
-            'id' => 1
+            'message' => 'Hello world',
         ]));
 
-        $controller = new MessageController(
-            $this->redisChatService,
-            $this->entityManager,
-            $this->conversationRepository
-        );
-        $controller->setContainer($this->container);
+        $this->messageService->method('sendMessage')->willReturn([
+            'message' => 'Message sent successfully'
+        ]);
 
-        $response = $controller->sendMessage(1, $request);
+        $controller = new MessageController($this->messageService);
 
-        $this->assertInstanceOf(Response::class, $response);
+        $response = $controller->sendMessage($conversationId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEquals('Message sent successfully', $responseData['message']);
     }
+
 
     public function testSendMessageBadRequest(): void
     {
-        $request = new Request([], [], [], [], [], [], json_encode([
-            'message' => 'Test message'
-        ]));
+        $conversationId = 1;
+        $request = new Request([], [], [], [], [], [], json_encode([]));
 
-        $controller = new MessageController(
-            $this->redisChatService,
-            $this->entityManager,
-            $this->conversationRepository
-        );
+        $this->messageService->method('sendMessage')->willReturn([
+            'error' => 'Invalid request',
+            'status' => Response::HTTP_BAD_REQUEST
+        ]);
 
-        $response = $controller->sendMessage(1, $request);
+        $controller = new MessageController($this->messageService);
 
+        $response = $controller->sendMessage($conversationId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(400, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('error', $responseData);
+        $this->assertEquals('Invalid request', $responseData['error']);
     }
 
     public function testGetMessagesSuccess(): void
     {
+        $conversationId = 1;
         $user = $this->createMock(User::class);
         $user->method('getEmail')->willReturn('user@example.com');
 
         $controller = $this->getMockBuilder(MessageController::class)
-            ->setConstructorArgs([$this->redisChatService, $this->entityManager, $this->conversationRepository])
+            ->setConstructorArgs([$this->messageService])
             ->onlyMethods(['getUser'])
             ->getMock();
 
         $controller->method('getUser')->willReturn($user);
 
-        $conversation = $this->createMock(Conversation::class);
-
-        $this->redisChatService->method('getMessagesFromConversation')->willReturn([
-            ['id' => 1, 'content' => 'Test message', 'sender_id' => 1, 'sender_email' => 'user@example.com', 'sent_by' => 'username', 'sent_at' => '2023-12-01 12:00:00', 'isRead' => false]
+        $this->messageService->method('getMessages')->willReturn([
+            'messages' => [
+                [
+                    'id' => 1,
+                    'content' => 'Hello world',
+                    'sent_at' => '2024-02-01 12:00:00',
+                ],
+            ],
+            'status' => Response::HTTP_OK
         ]);
-
-        $this->conversationRepository->method('find')->willReturn($conversation);
 
         $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'page=1&limit=20']);
 
-        $response = $controller->getMessages(1, $request);
+        $response = $controller->getMessages($conversationId, $request);
 
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    public function testGetMessagesUserNotFound(): void
+    {
+        $conversationId = 1;
+
+        $controller = $this->getMockBuilder(MessageController::class)
+            ->setConstructorArgs([$this->messageService])
+            ->onlyMethods(['getUser'])
+            ->getMock();
+
+        $controller->method('getUser')->willReturn(null);
+
+        $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'page=1&limit=20']);
+
+        $response = $controller->getMessages($conversationId, $request);
+
+        $this->assertEquals(404, $response->getStatusCode());
+    }
+
+
+    public function testMarkMessagesReadSuccess(): void
+    {
+        $conversationId = 1;
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'userEmail' => 'user@example.com',
+        ]));
+
+        $this->messageService->method('markMessagesRead')->willReturn([
+            'message' => 'Messages marked as read'
+        ]);
+
+        $controller = new MessageController($this->messageService);
+
+        $response = $controller->markMessagesRead($conversationId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEquals('Messages marked as read', $responseData['message']);
+    }
+
     public function testMarkMessagesReadBadRequest(): void
     {
+        $conversationId = 1;
         $request = new Request([], [], [], [], [], [], json_encode([]));
 
-        $controller = new MessageController(
-            $this->redisChatService,
-            $this->entityManager,
-            $this->conversationRepository
-        );
+        $controller = new MessageController($this->messageService);
 
-        $response = $controller->markMessagesRead(1, $request);
+        $response = $controller->markMessagesRead($conversationId, $request);
 
         $this->assertEquals(400, $response->getStatusCode());
     }
