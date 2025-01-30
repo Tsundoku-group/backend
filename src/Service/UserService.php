@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -11,8 +10,7 @@ class UserService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-    )
-    {
+    ) {
     }
 
     public function scheduleAccountDeletion(int $id): ?DateTime

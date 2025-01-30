@@ -2,9 +2,9 @@
 
 namespace App\Service;
 
+use App\Constant\ErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Constant\ErrorMessagesConstant;
 use DateInterval;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,12 +17,13 @@ use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 readonly class ResetPasswordService
 {
     public function __construct(
-        private EntityManagerInterface      $entityManager,
-        private TokenGeneratorInterface     $tokenGenerator,
-        private UserRepository              $userRepository,
+        private EntityManagerInterface $entityManager,
+        private TokenGeneratorInterface $tokenGenerator,
+        private UserRepository $userRepository,
         private UserPasswordHasherInterface $passwordHasher,
-        private MailService                 $mailService
-    ) {}
+        private MailService $mailService,
+    ) {
+    }
 
     public function requestPasswordReset(string $email): ?array
     {

@@ -2,11 +2,11 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessagesConstant;
 use App\DTO\User\NewUserDTO;
 use App\DTO\User\UpdateUserDTO;
 use App\DTO\User\VerifyPasswordDTO;
 use App\Entity\User;
-use App\Constant\ErrorMessagesConstant;
 use App\Repository\UserRepository;
 use App\Service\MailService;
 use App\Service\UserService;
@@ -26,12 +26,11 @@ class UserController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository         $userRepository,
-        private readonly MailService            $mailService,
-        private readonly CaptchaValidator       $captchaValidator,
-        private readonly UserService            $userService,
-    )
-    {
+        private readonly UserRepository $userRepository,
+        private readonly MailService $mailService,
+        private readonly CaptchaValidator $captchaValidator,
+        private readonly UserService $userService,
+    ) {
     }
 
     #[Route('/all', name: 'user_list', methods: ['GET'])]

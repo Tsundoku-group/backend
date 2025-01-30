@@ -73,6 +73,20 @@ class UserRepository extends ServiceEntityRepository
         }
     }
 
+    public function findOneUserByEmailAndIsVerified(string $email): ?User
+    {
+        $findUserByEmailAndIsVerified = $this->createQueryBuilder('u')
+            ->select('u.email, u.isVerified')
+            ->where('u.email = :email')
+            ->setParameter('email', $email);
+
+        try {
+            return $findUserByEmailAndIsVerified->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
+
     public function findOneByResetPwdToken(string $resetToken): ?User
     {
         $findUserByResetPwdToken = $this->createQueryBuilder('u')
@@ -81,6 +95,18 @@ class UserRepository extends ServiceEntityRepository
 
         try {
             return $findUserByResetPwdToken->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
+
+    public function findOneByRegistrationToken(string $token): ?User
+    {
+        $findUserByRegistrationToken = $this->createQueryBuilder('u')
+            ->where('u.tokenRegistration = :token')
+            ->setParameter('token', $token);
+        try {
+            return $findUserByRegistrationToken->getQuery()->getOneOrNullResult();
         } catch (NonUniqueResultException $e) {
             return null;
         }

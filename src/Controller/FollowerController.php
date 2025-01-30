@@ -83,7 +83,7 @@ class FollowerController extends AbstractController
         $dto = new FollowProfileDTO($data, $profileId);
 
         if (!$dto->profileId || !$dto->followingId) {
-            return new JsonResponse(['error' =>  ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         try {

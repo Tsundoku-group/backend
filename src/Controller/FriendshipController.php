@@ -35,7 +35,7 @@ class FriendshipController extends AbstractController
         $dto = new SendFriendRequestDTO($data, $profileId);
 
         if (!$dto->profileId || !$dto->friendId) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA , Response::HTTP_BAD_REQUEST]);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA, Response::HTTP_BAD_REQUEST]);
         }
 
         try {
