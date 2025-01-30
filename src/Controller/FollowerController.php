@@ -76,7 +76,7 @@ class FollowerController extends AbstractController
         }
     }
 
-    #[Route('/follow/{profileId}', name: 'follow_profile', methods: ['POST'])]
+    #[Route('/{profileId}/follow', name: 'follow_profile', methods: ['POST'])]
     public function followProfile(int $profileId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -116,7 +116,7 @@ class FollowerController extends AbstractController
         }
     }
 
-    #[Route('/unfollow/{id}', name: 'unfollow_profile', methods: ['DELETE'])]
+    #[Route('/{id}/unfollow', name: 'unfollow_profile', methods: ['DELETE'])]
     public function unfollowProfile(int $id, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

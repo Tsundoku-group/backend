@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/profile-photo')]
+#[Route('/api/profile/photo')]
 class ProfilePhotoController extends AbstractController
 {
     public function __construct(
@@ -27,7 +27,7 @@ class ProfilePhotoController extends AbstractController
     ) {
     }
 
-    #[Route('/add-photo', name: 'add_profile_photo', methods: 'POST')]
+    #[Route('/upload', name: 'add_profile_photo', methods: 'POST')]
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -71,7 +71,7 @@ class ProfilePhotoController extends AbstractController
         }
     }
 
-    #[Route('/remove-photo', name: 'delete_profile_photo', methods: 'DELETE')]
+    #[Route('/remove', name: 'delete_profile_photo', methods: 'DELETE')]
     public function removeProfilePhoto(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -100,7 +100,7 @@ class ProfilePhotoController extends AbstractController
         }
     }
 
-    #[Route('/get-active-photo/{profileId}', name: 'get_active_photo', methods: ['GET'])]
+    #[Route('/{profileId}/active', name: 'get_active_photo', methods: ['GET'])]
     public function getProfileWithPhoto(int $profileId): JsonResponse
     {
         $user = $this->getUser();
@@ -148,7 +148,7 @@ class ProfilePhotoController extends AbstractController
         }
     }
 
-    #[Route('/set-active-photo', name: 'set_active_photo', methods: 'PUT')]
+    #[Route('/active', name: 'set_active_photo', methods: 'PUT')]
     public function setActivePhotoProfile(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

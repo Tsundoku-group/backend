@@ -28,7 +28,7 @@ class FriendshipController extends AbstractController
     {
     }
 
-    #[Route('/request/{profileId}', name: 'send_friend_request', methods: ['POST'])]
+    #[Route('/{profileId}/request', name: 'send_friend_request', methods: ['POST'])]
     public function sendFriendRequest(int $profileId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -104,7 +104,7 @@ class FriendshipController extends AbstractController
         }
     }
 
-    #[Route('/accept/{id}', name: 'accept_friend_request', methods: ['POST'])]
+    #[Route('/{id}/accept', name: 'accept_friend_request', methods: ['POST'])]
     public function acceptFriendRequest(int $id): Response
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
@@ -123,7 +123,7 @@ class FriendshipController extends AbstractController
         }
     }
 
-    #[Route('/reject/{id}', name: 'reject_friend_request', methods: ['POST'])]
+    #[Route('/{id}/reject', name: 'reject_friend_request', methods: ['POST'])]
     public function rejectFriendRequest(int $id): Response
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($id);
@@ -142,7 +142,7 @@ class FriendshipController extends AbstractController
         }
     }
 
-    #[Route('/remove/{id}', name: 'remove_friend', methods: ['DELETE'])]
+    #[Route('/{id}/remove', name: 'remove_friend', methods: ['DELETE'])]
     public function removeFriend(int $id, Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
@@ -168,7 +168,7 @@ class FriendshipController extends AbstractController
         }
     }
 
-    #[Route('/list/{profileId}', name: 'list_friends', methods: ['GET'])]
+    #[Route('/{profileId}/list', name: 'list_friends', methods: ['GET'])]
     public function listFriends(int $profileId, Request $request): JsonResponse
     {
         $profile = $this->profileRepository->find($profileId);
@@ -193,7 +193,7 @@ class FriendshipController extends AbstractController
         }
     }
 
-    #[Route('/list-requests/{profileId}', name: 'list_friend_requests', methods: ['GET'])]
+    #[Route('/{profileId}/list/requests', name: 'list_friend_requests', methods: ['GET'])]
     public function listFriendRequests(int $profileId): JsonResponse
     {
         $profile = $this->profileRepository->find($profileId);

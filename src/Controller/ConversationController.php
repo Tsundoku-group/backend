@@ -45,7 +45,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/get-all/{id}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
+    #[Route('/{id}/all', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
     public function getAllConversationsWithLastMessages(int $id, Request $request): JsonResponse
     {
         try {
@@ -68,7 +68,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/get-one/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
+    #[Route('/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
     public function getConversationById(int $id): JsonResponse
     {
         try {
@@ -83,7 +83,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/delete/{id}', name: 'delete_conversation', methods: ['DELETE'])]
+    #[Route('/{id}/delete', name: 'delete_conversation', methods: ['DELETE'])]
     public function deleteConversationById(int $id): JsonResponse
     {
         try {
@@ -98,7 +98,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/archived/{userId}', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
+    #[Route('/{userId}/archived', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
     public function getArchivedConversationsByUserId(int $userId): JsonResponse
     {
         try {
@@ -113,7 +113,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/archive/{conversationId}', name: 'archive_conversation', methods: ['POST'])]
+    #[Route('/{conversationId}/archive', name: 'archive_conversation', methods: ['POST'])]
     public function archiveConversation(int $conversationId): JsonResponse
     {
         try {
@@ -131,7 +131,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/unarchive/{conversationId}', name: 'unarchive_conversation', methods: ['POST'])]
+    #[Route('/{conversationId}/unarchive', name: 'unarchive_conversation', methods: ['POST'])]
     public function unarchiveConversation(int $conversationId): JsonResponse
     {
         try {
@@ -149,7 +149,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/unarchive-all/{id}', name: 'unarchive_all_conversations', methods: ['POST'])]
+    #[Route('/{id}/unarchive/all', name: 'unarchive_all_conversations', methods: ['POST'])]
     public function unarchiveAllConversations(int $id): JsonResponse
     {
         try {
@@ -167,7 +167,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
+    #[Route('/{conversationId}/mute', name: 'mute_conversation', methods: ['POST'])]
     public function muteConversation(int $conversationId, Request $request): JsonResponse
     {
         try {
@@ -191,7 +191,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/unmute/{conversationId}', name: 'unmute_conversation', methods: ['POST'])]
+    #[Route('/{conversationId}/unmute', name: 'unmute_conversation', methods: ['POST'])]
     public function unmuteConversation(int $conversationId): JsonResponse
     {
         try {
