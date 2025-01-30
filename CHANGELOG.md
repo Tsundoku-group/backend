@@ -51,3 +51,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-45] Ajout du dossier constante [#45](https://trello.com/c/L9gx9JSk/45-t-45-ajout-du-dossier-constante)
 - [t-46] Ajout des tests unitaires [#46](https://trello.com/c/ITBxcxjt/46-t-46-ajout-des-tests-unitaires)
 - [t-47] Ajout du workflows dans github pour les secrets [#47](https://trello.com/c/2RcrGCk0/47-t-47-ajout-du-workflows-dans-github-pour-les-secrets)
+- [t-48] Changer les requêtes préparées par des requêtes personnalisées dans le repo [#48](https://trello.com/c/kTKVwPh8/48-t-48-changer-les-requ%C3%AAtes-pr%C3%A9par%C3%A9es-par-des-requ%C3%AAtes-personnalis%C3%A9es-dans-le-repo)

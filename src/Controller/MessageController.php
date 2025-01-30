@@ -6,14 +6,8 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
-use App\Entity\Conversation;
-use App\Entity\Profile;
 use App\Entity\User;
-use App\Repository\ConversationRepository;
-use App\Service\ConfRedisService;
-use DateTime;
-use DateTimeZone;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\MessageService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,75 +19,25 @@ use Symfony\Component\Routing\Annotation\Route;
 class MessageController extends AbstractController
 {
     public function __construct(
-        private readonly ConfRedisService $redisChatService,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly ConversationRepository $conversationRepository,
+        private readonly MessageService $messageService,
     ) {
     }
 
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
-    public function sendMessage(int $conversationId, Request $request): Response
+    public function sendMessage(int $conversationId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $dto = new SendMessageDTO($data);
-
-        if (empty($dto->userEmail)) {
-            return new JsonResponse(['error' => 'User email is required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (empty($dto->message)) {
-            return new JsonResponse(['error' => 'Message content is required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (!$conversationId) {
-            return new Response('Missing conversation Id', Response::HTTP_BAD_REQUEST);
-        }
-
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
-
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
-        }
-
-        $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
-        if (!$createdBy) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
-        }
-
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-        if (!$conversation) {
-            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        if (!$this->conversationRepository->isUserParticipant($conversationId, $createdBy)) {
-            return new JsonResponse(['error' => 'User is not a participant in this conversation.'], Response::HTTP_FORBIDDEN);
-        }
-
         try {
-            $dateTime = new DateTime('now', new DateTimeZone('Europe/Paris'));
-            $formattedDate = $dateTime->format('Y-m-d H:i:s');
+            $response = $this->messageService->sendMessage($conversationId, (array) $dto);
 
-            $messageData = [
-                'id' => $dto->id,
-                'content' => $dto->message,
-                'sender_id' => $createdBy->getId(),
-                'sender_email' => $dto->userEmail,
-                'sent_by' => $createdBy->getUsername(),
-                'sent_at' => $formattedDate,
-                'isRead' => false,
-                'isReadAt' => null,
-            ];
+            if (isset($response['error'])) {
+                return new JsonResponse(['error' => $response['error']], $response['status']);
+            }
 
-            $this->redisChatService->addMessageToConversation($conversationId, $messageData);
-
-            $conversation->setLastMessageAt($dateTime);
-
-            $this->entityManager->persist($conversation);
-            $this->entityManager->flush();
-
-            return new Response('Message sent to conversation.', Response::HTTP_OK);
+            return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -101,84 +45,34 @@ class MessageController extends AbstractController
     public function getMessages(int $conversationId, Request $request): JsonResponse
     {
         $user = $this->getUser();
-
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-        if (!$conversation) {
-            return new JsonResponse('Conversation not found.', Response::HTTP_NOT_FOUND);
+        $queryParams = $request->query->all();
+        $dto = new GetMessageDTO($queryParams);
+        $response = $this->messageService->getMessages($conversationId, (array) $dto, $user);
+
+        if (isset($response['error'])) {
+            return new JsonResponse(['error' => $response['error']], $response['status']);
         }
 
-        try {
-            $queryParams = $request->query->all();
-            $dto = new GetMessageDTO($queryParams);
-
-            $conversationId = (string) $conversationId;
-            $allMessages = $this->redisChatService->getMessagesFromConversation($conversationId);
-
-            if (empty($allMessages)) {
-                return new JsonResponse([], Response::HTTP_OK);
-            }
-
-            $totalMessages = count($allMessages);
-            $startIndex = max($totalMessages - $dto->page * $dto->limit, 0);
-            $pagedMessages = array_slice($allMessages, $startIndex, $dto->limit);
-
-            $formattedMessages = array_map(function ($message) use ($user) {
-                return [
-                    'id' => $message['id'],
-                    'content' => $message['content'],
-                    'sender_id' => $message['sender_id'],
-                    'sent_by' => $message['sent_by'],
-                    'sent_at' => $message['sent_at'],
-                    'isRead' => $message['isRead'],
-                    'sender_email' => $message['sender_email'],
-                    'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
-                ];
-            }, $pagedMessages);
-
-            return new JsonResponse($formattedMessages, Response::HTTP_OK);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
+        return new JsonResponse($response, Response::HTTP_OK);
     }
 
     #[Route('/mark-messages-read/{conversationId}', name: 'mark_messages_read', methods: ['POST'])]
-    public function markMessagesRead(int $conversationId, Request $request): Response
+    public function markMessagesRead(int $conversationId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
+        if (!isset($data['userEmail'])) {
+            return new JsonResponse(['error' => 'User email is required.'], Response::HTTP_BAD_REQUEST);
+        }
+
         $dto = new MarkMessageReadDTO($data);
 
-        if (!$dto->userEmail) {
-            return new Response('User email is required.', Response::HTTP_BAD_REQUEST);
-        }
+        $response = $this->messageService->markMessagesRead($conversationId, $dto->userEmail);
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->userEmail]);
-
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
-        }
-
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-        if (!$conversation) {
-            return new Response('Conversation not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        try {
-            $this->redisChatService->markMessagesRead($conversationId, $dto->userEmail);
-
-            return new Response('All messages marked as read.', Response::HTTP_OK);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
+        return new JsonResponse($response, $response['status'] ?? Response::HTTP_OK);
     }
 }

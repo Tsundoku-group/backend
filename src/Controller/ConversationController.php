@@ -5,16 +5,8 @@ namespace App\Controller;
 use App\Constant\ErrorMessagesConstant;
 use App\DTO\Conversation\CreateConversationDTO;
 use App\DTO\Conversation\MuteConversationDTO;
-use App\Entity\Conversation;
-use App\Entity\Profile;
-use App\Entity\User;
-use App\Repository\ConversationRepository;
-use App\Repository\ProfileRepository;
-use App\Service\ConfRedisService;
-use DateTime;
-use DateTimeImmutable;
-use DateTimeZone;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\UserRepository;
+use App\Service\ConversationService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,412 +18,194 @@ use Symfony\Component\Routing\Annotation\Route;
 class ConversationController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly ProfileRepository $profileRepository,
-        private readonly ConversationRepository $conversationRepository,
-        private readonly ConfRedisService $confRedisService,
+        private readonly ConversationService $conversationService,
+        private readonly UserRepository $userRepository,
     ) {
     }
 
-    #[Route('/create', name: 'create_conversation', methods: 'POST')]
+    #[Route('/create', name: 'create_conversation', methods: ['POST'])]
     public function createConversation(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $dto = new CreateConversationDTO($data);
-
-        if (!isset($dto->participants) || !isset($dto->email)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
-        }
-
-        $createdBy = $this->profileRepository->findProfileByEmail($dto->email);
-
-        if (!$createdBy) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $participantsIds = $dto->participants;
-            if (!in_array($createdBy->getId(), $participantsIds)) {
-                $participantsIds[] = $createdBy->getId();
+            $data = json_decode($request->getContent(), true);
+            $dto = new CreateConversationDTO($data);
+
+            if (!isset($dto->participants) || !isset($dto->email)) {
+                return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
             }
 
-            $participants = [];
-            foreach ($participantsIds as $participantId) {
-                $participant = $this->entityManager->getRepository(Profile::class)->find($participantId);
-                if ($participant) {
-                    $participants[] = $participant;
-                }
-            }
+            $response = $this->conversationService->createConversation($dto);
 
-            $existingConversation = $this->conversationRepository->findOneByParticipants($participants);
-
-            if ($existingConversation) {
-                return new JsonResponse(['error' => 'La conversation existe déjà'], Response::HTTP_CONFLICT);
-            }
-
-            $conversation = new Conversation();
-            $conversation->setCreatedBy($createdBy);
-            $conversation->setCreatedAt(new DateTimeImmutable());
-
-            foreach ($participants as $participant) {
-                $conversation->addParticipant($participant);
-            }
-
-            $this->entityManager->persist($conversation);
-            $this->entityManager->flush();
-
-            return new JsonResponse(['message' => 'Conversation created', 'conversationId' => $conversation->getId()], Response::HTTP_CREATED);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/get-all/{id}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
     public function getAllConversationsWithLastMessages(int $id, Request $request): JsonResponse
     {
-        $user = $this->entityManager->getRepository(User::class)->find($id);
-
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-        }
-
         try {
+            $user = $this->userRepository->findOneUserById($id);
+            if (!$user) {
+                return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            }
+
             $page = $request->query->getInt('page', 1);
             $limit = $request->query->getInt('limit', 20);
 
-            $conversations = $this->conversationRepository->findConversationsByUserOrderedByLastMessage($user, $page, $limit);
-            if (!$conversations) {
-                return new JsonResponse(['conversations' => []], Response::HTTP_OK);
-            }
+            $response = $this->conversationService->getAllConversationsWithLastMessages($user, $page, $limit);
 
-            $lastMessages = [];
-            foreach ($conversations as $conversation) {
-                $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
-                if ($messages) {
-                    $lastMessages[$conversation->getId()] = end($messages);
-                } else {
-                    $lastMessages[$conversation->getId()] = null;
-                }
-            }
-
-            usort($conversations, function ($a, $b) use ($lastMessages) {
-                $lastMessageA = $lastMessages[$a->getId()] ?? null;
-                $lastMessageB = $lastMessages[$b->getId()] ?? null;
-
-                $dateA = $lastMessageA ? $lastMessageA['sent_at'] : '1970-01-01';
-                $dateB = $lastMessageB ? $lastMessageB['sent_at'] : '1970-01-01';
-
-                return strtotime($dateB) - strtotime($dateA);
-            });
-
-            $offset = ($page - 1) * $limit;
-            $limitedConversations = array_slice($conversations, $offset, $limit);
-
-            $conversationData = array_filter(array_map(function ($conversation) use ($lastMessages) {
-                $createdBy = $conversation->getCreatedBy();
-                $createdByUser = $createdBy->getUser();
-
-                return !$conversation->getIsArchived() ? [
-                    'id' => $conversation->getId(),
-                    'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
-                    'lastMessageAt' => $lastMessages[$conversation->getId()]['sent_at'] ?? null,
-                    'lastMessage' => $lastMessages[$conversation->getId()],
-                    'createdBy' => [
-                        'id' => $createdBy->getId(),
-                        'email' => $createdByUser ? $createdByUser->getEmail() : null,
-                        'username' => $createdBy->getUsername(),
-                    ],
-                    'participants' => array_map(function ($participant) {
-                        $participantUser = $participant->getUser();
-
-                        return [
-                            'id' => $participant->getId(),
-                            'email' => $participantUser ? $participantUser->getEmail() : null,
-                            'username' => $participant->getUsername(),
-                        ];
-                    }, $conversation->getParticipants() ? $conversation->getParticipants()->toArray() : []),
-                    'isArchived' => $conversation->getIsArchived(),
-                    'isMutedUntil' => $conversation->getMutedUntil(),
-                ] : null;
-            }, $limitedConversations));
-
-            return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
+            return new JsonResponse(
+                ['conversations' => $response['conversations'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/get-one/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
     public function getConversationById(int $id): JsonResponse
     {
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
-
-        if (!$conversation) {
-            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $createdBy = $conversation->getCreatedBy();
-            if (!$createdBy || !$createdBy->getUser()) {
-                return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-            }
+            $response = $this->conversationService->getOneConversationById($id);
 
-            $conversationData = [
-                'id' => $conversation->getId(),
-                'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
-                'lastMessageAt' => $conversation->getLastMessageAt(),
-                'createdBy' => [
-                    'id' => $createdBy->getId(),
-                    'email' => $createdBy->getUser()->getEmail(),
-                    'username' => $createdBy->getUsername(),
-                ],
-                'participants' => array_map(function ($participant) {
-                    if (!$participant->getUser()) {
-                        return [];
-                    }
-
-                    return [
-                        'id' => $participant->getId(),
-                        'email' => $participant->getUser()->getEmail(),
-                        'username' => $participant->getUsername(),
-                    ];
-                }, $conversation->getParticipants()->toArray()),
-                'isArchived' => $conversation->getIsArchived(),
-                'isMutedUntil' => $conversation->getMutedUntil(),
-            ];
-
-            return new JsonResponse($conversationData, Response::HTTP_OK);
+            return new JsonResponse(
+                ['conversation' => $response['conversation'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/delete/{id}', name: 'delete_conversation', methods: ['DELETE'])]
     public function deleteConversationById(int $id): JsonResponse
     {
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($id);
-
-        if (!$conversation) {
-            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $this->entityManager->remove($conversation);
-            $this->entityManager->flush();
+            $response = $this->conversationService->deleteOneConversationById($id);
 
-            return new JsonResponse('Conversation deleted', Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/archived/{userId}', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
     public function getArchivedConversationsByUserId(int $userId): JsonResponse
     {
-        $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
-
-        if (empty($conversations)) {
-            return new JsonResponse(['error' => 'No archived conversations found for this user'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $lastMessages = [];
-            foreach ($conversations as $conversation) {
-                $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
-                $lastMessages[$conversation->getId()] = $messages ? end($messages) : null;
-            }
+            $response = $this->conversationService->getArchivedConversationsByUserId($userId);
 
-            usort($conversations, function ($a, $b) use ($lastMessages) {
-                $lastMessageA = $lastMessages[$a->getId()] ?? null;
-                $lastMessageB = $lastMessages[$b->getId()] ?? null;
-
-                $dateA = $lastMessageA ? $lastMessageA['sent_at'] : '1970-01-01';
-                $dateB = $lastMessageB ? $lastMessageB['sent_at'] : '1970-01-01';
-
-                return strtotime($dateB) - strtotime($dateA);
-            });
-
-            $conversationData = array_map(function ($conversation) use ($lastMessages) {
-                $createdBy = $conversation->getCreatedBy();
-                if (!$createdBy || !$createdBy->getUser()) {
-                    return [];
-                }
-
-                return [
-                    'id' => $conversation->getId(),
-                    'createdAt' => $conversation->getCreatedAt()->format('Y-m-d H:i:s'),
-                    'lastMessageAt' => $lastMessages[$conversation->getId()]['sent_at'] ?? null,
-                    'lastMessage' => $lastMessages[$conversation->getId()],
-                    'createdBy' => [
-                        'id' => $createdBy->getId(),
-                        'email' => $createdBy->getUser()->getEmail(),
-                        'username' => $createdBy->getUsername(),
-                    ],
-                    'participants' => array_map(function ($participant) {
-                        if (!$participant || !$participant->getUser()) {
-                            return [];
-                        }
-
-                        return [
-                            'id' => $participant->getId(),
-                            'email' => $participant->getUser()->getEmail(),
-                            'username' => $participant->getUsername(),
-                        ];
-                    }, $conversation->getParticipants()->toArray()),
-                    'isArchived' => $conversation->getIsArchived(),
-                ];
-            }, $conversations);
-
-            return new JsonResponse(['conversations' => $conversationData], Response::HTTP_OK);
+            return new JsonResponse(
+                ['conversations' => $response['conversations'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/archive/{conversationId}', name: 'archive_conversation', methods: ['POST'])]
-    public function archiveConversation(int $conversationId): Response
+    public function archiveConversation(int $conversationId): JsonResponse
     {
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            if ($conversation->getIsArchived()) {
-                return new JsonResponse(['error' => 'Conversation is already archived'], Response::HTTP_FORBIDDEN);
-            }
+            $response = $this->conversationService->archiveConversation($conversationId);
 
-            $conversation->setIsArchived(true);
-            $this->entityManager->flush();
-
-            return new JsonResponse(['message' => 'Conversation archived'], Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(
+                ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     #[Route('/unarchive/{conversationId}', name: 'unarchive_conversation', methods: ['POST'])]
-    public function unarchiveConversation(int $conversationId): Response
+    public function unarchiveConversation(int $conversationId): JsonResponse
     {
-        $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return new JsonResponse(['error' => 'Conversation not found'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            if (!$conversation->getIsArchived()) {
-                return new JsonResponse(['error' => 'Conversation déjà unarchived'], Response::HTTP_CONFLICT);
-            }
+            $response = $this->conversationService->unarchiveConversation($conversationId);
 
-            $conversation->setIsArchived(false);
-            $this->entityManager->flush();
-
-            return new Response('Conversation unarchived', Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(
+                ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     #[Route('/unarchive-all/{id}', name: 'unarchive_all_conversations', methods: ['POST'])]
-    public function unarchiveAllConversations(int $id, EntityManagerInterface $entityManager): JsonResponse
+    public function unarchiveAllConversations(int $id): JsonResponse
     {
-        $user = $this->entityManager->getRepository(User::class)->find($id);
-
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $conversations = $entityManager->getRepository(Conversation::class)->findBy([
-                'isArchived' => true,
-            ]);
+            $response = $this->conversationService->unarchiveAllConversations($id);
 
-            if (empty($conversations)) {
-                return new JsonResponse(['error' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
-            }
-
-            foreach ($conversations as $conversation) {
-                $conversation->setIsArchived(false);
-                $entityManager->persist($conversation);
-            }
-
-            $entityManager->flush();
-
-            return new JsonResponse(['message' => 'Toutes les conversations ont été désarchivées avec succès.'], Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(
+                ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     #[Route('/mute/{conversationId}', name: 'mute_conversation', methods: ['POST'])]
-    public function muteConversation(int $conversationId, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function muteConversation(int $conversationId, Request $request): JsonResponse
     {
-        $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return new JsonResponse(['error' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
-        }
-
-        $data = json_decode($request->getContent(), true);
-        $dto = new MuteConversationDTO($data);
-
-        if (!$data) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
-        }
-
-        $duration = $dto->duration;
-
-        if (!$duration) {
-            return new JsonResponse(['error' => 'Durée de sourdine non spécifiée.'], Response::HTTP_BAD_REQUEST);
-        }
-
         try {
-            $muteUntil = null;
-
-            if ('eternal' === $duration) {
-                $conversation->setMutedUntil(new DateTime('9999-12-31 23:59:59'));
-            } else {
-                $timezone = new DateTimeZone('Europe/Paris');
-                $muteUntil = (new DateTime('now', $timezone))->modify("+{$duration} hours");
-
-                if (!$muteUntil) {
-                    return new JsonResponse(['message' => 'Durée invalide.'], Response::HTTP_BAD_REQUEST);
-                }
-
-                $conversation->setIsMuted(true);
-                $conversation->setMutedUntil($muteUntil);
+            $data = json_decode($request->getContent(), true);
+            if (!$data) {
+                return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
             }
 
-            $entityManager->persist($conversation);
-            $entityManager->flush();
+            $dto = new MuteConversationDTO($data);
+            $response = $this->conversationService->muteConversation($conversationId, $dto);
 
-            return new JsonResponse(['duration' => $muteUntil->format('Y-m-d H:i:s')], Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? '', 'duration' => $response['duration'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(
+                ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     #[Route('/unmute/{conversationId}', name: 'unmute_conversation', methods: ['POST'])]
-    public function unmuteConversation(int $conversationId, EntityManagerInterface $entityManager): JsonResponse
+    public function unmuteConversation(int $conversationId): JsonResponse
     {
-        $conversation = $entityManager->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return new JsonResponse(['message' => 'Aucune conversation trouvée.'], Response::HTTP_NOT_FOUND);
-        }
-
         try {
-            $conversation->setIsMuted(false);
-            $conversation->setMutedUntil(null);
+            $response = $this->conversationService->unmuteConversation($conversationId);
 
-            $entityManager->persist($conversation);
-            $entityManager->flush();
-
-            return new JsonResponse(['message' => 'La sourdine de la conversation a été annulée avec succès.'], Response::HTTP_OK);
+            return new JsonResponse(
+                ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
+                $response['status']
+            );
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(
+                ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 }

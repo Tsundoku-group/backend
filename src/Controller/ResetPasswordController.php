@@ -5,32 +5,22 @@ namespace App\Controller;
 use App\Constant\ErrorMessagesConstant;
 use App\DTO\ResetPassword\ForgotPasswordRequestDTO;
 use App\DTO\ResetPassword\ResetPasswordRequestDTO;
-use App\Entity\User;
-use App\Service\MailService;
-use DateInterval;
-use DateTime;
-use Doctrine\ORM\EntityManagerInterface;
-use RuntimeException;
+use App\Service\ResetPasswordService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 
 class ResetPasswordController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly MailService $mailService,
-        private readonly TokenGeneratorInterface $tokenGenerator,
-        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly ResetPasswordService $resetPasswordService,
     ) {
     }
 
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['POST'])]
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(Request $request, ResetPasswordService $passwordResetService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -42,52 +32,16 @@ class ResetPasswordController extends AbstractController
             $data['email'],
         );
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $dto->email]);
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        $response = $passwordResetService->requestPasswordReset($dto->email);
+
+        if (isset($response['error'])) {
+            return new JsonResponse(['error' => $response['error']], $response['status']);
         }
 
-        $cooldownPeriod = new DateInterval('PT15M');
-        $now = new DateTime('now');
+        $jsonResponse = new JsonResponse(['success' => true]);
+        $jsonResponse->headers->set('X-Reset-Token', $response['resetToken']);
 
-        $lastRequest = $user->getLastPasswordResetRequest();
-
-        if ($lastRequest instanceof DateTime) {
-            $nextAllowedRequestTime = (clone $lastRequest)->add($cooldownPeriod);
-        } else {
-            $nextAllowedRequestTime = null;
-        }
-
-        if ($nextAllowedRequestTime && $now < $nextAllowedRequestTime) {
-            return new JsonResponse(['error' => 'You can only request a password reset once every 15 minutes.'], JsonResponse::HTTP_TOO_MANY_REQUESTS);
-        }
-
-        $user->setLastPasswordResetRequest($now);
-
-        $resetToken = $this->tokenGenerator->generateToken();
-        $user->setResetPwdToken($resetToken);
-        $user->setResetPwdTokenLifetime((new DateTime())->modify('+1 hour'));
-        $this->entityManager->flush();
-
-        $resetUrl = $_ENV['FRONT_URL'] . '/(auth)/reset-password?token=';
-        $htmlContent = file_get_contents(__DIR__ . '/../Emails/reset_password_mail.html');
-        $htmlContent = str_replace('{{ reset_url }}', $resetUrl, $htmlContent);
-
-        try {
-            $this->mailService->sendMail(
-                $user->getEmail(),
-                'Réinitialisation du mot de passe',
-                $htmlContent,
-                ['user' => $user->getEmail(), 'reset_url' => $resetUrl]
-            );
-
-            $response = new JsonResponse(['success' => true]);
-            $response->headers->set('X-Reset-Token', $resetToken);
-
-            return $response;
-        } catch (RuntimeException $e) {
-            return new JsonResponse(['error' =>  ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return $jsonResponse;
     }
 
     #[Route('/reset-password', name: 'app_reset_password', methods: ['POST'])]
@@ -95,50 +49,19 @@ class ResetPasswordController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $resetToken = $data['token'] ?? null;
-
-        if (!$resetToken) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::TOKEN_NOT_FOUND], Response::HTTP_BAD_REQUEST);
-        }
+        $password = $data['password'] ?? null;
 
         $dto = new ResetPasswordRequestDTO(
             $data['token'],
             $data['password']
         );
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetPwdToken' => $dto->token]);
-
-        if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_TOKEN], Response::HTTP_NOT_FOUND);
-        }
-
-        if (new DateTime() > $user->getResetPwdTokenLifetime()) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::TOKEN_EXPIRED], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (!$data || !isset($data['password'])) {
+        if (!$dto->token || !$dto->password) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $dto->password);
-        $user->setPassword($hashedPassword);
+        $result = $this->resetPasswordService->resetPassword($resetToken, $password);
 
-        $user->setResetPwdToken(null);
-        $user->setResetPwdTokenLifetime(null);
-
-        $this->entityManager->flush();
-
-        $htmlContent = file_get_contents(__DIR__ . '/../Emails/reset_password_confirmation_mail.html');
-        try {
-            $this->mailService->sendMail(
-                $user->getEmail(),
-                'Confirmation de réinitialisation du mot de passe',
-                $htmlContent,
-                ['user' => $user->getEmail()]
-            );
-        } catch (RuntimeException $e) {
-            return new JsonResponse(['error' =>  ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        return new JsonResponse(['success' => 'Password has been reset successfully']);
+        return new JsonResponse($result, $result['status'] ?? Response::HTTP_OK);
     }
 }

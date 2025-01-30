@@ -116,4 +116,18 @@ class ProfileRepository extends ServiceEntityRepository
             return null;
         }
     }
+
+    public function findProfileByUsername(string $username): ?array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->select('p.id, p.username, p.firstName, p.lastName, p.bio, p.birthday, p.phoneNumber, p.type')
+            ->where('p.username = :username')
+            ->setParameter('username', $username);
+
+        try {
+            return $qb->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
 }
