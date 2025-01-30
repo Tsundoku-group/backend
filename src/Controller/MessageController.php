@@ -23,7 +23,7 @@ class MessageController extends AbstractController
     ) {
     }
 
-    #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
+    #[Route('/{conversationId}/send', name: 'send_message', methods: ['POST'])]
     public function sendMessage(int $conversationId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -41,7 +41,7 @@ class MessageController extends AbstractController
         }
     }
 
-    #[Route('/get/{conversationId}', name: 'get_messages', methods: ['GET'])]
+    #[Route('/{conversationId}', name: 'get_messages', methods: ['GET'])]
     public function getMessages(int $conversationId, Request $request): JsonResponse
     {
         $user = $this->getUser();
@@ -60,7 +60,7 @@ class MessageController extends AbstractController
         return new JsonResponse($response, Response::HTTP_OK);
     }
 
-    #[Route('/mark-messages-read/{conversationId}', name: 'mark_messages_read', methods: ['POST'])]
+    #[Route('/{conversationId}/mark/read', name: 'mark_messages_read', methods: ['POST'])]
     public function markMessagesRead(int $conversationId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

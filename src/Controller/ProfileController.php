@@ -39,7 +39,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/all/{id}', name: 'get_profiles', methods: ['GET'])]
+    #[Route('/{id}/all', name: 'get_profiles', methods: ['GET'])]
     public function getAllUserProfiles(int $id): JsonResponse
     {
         try {
@@ -120,7 +120,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/get-active/{id}', name: 'get_active_profile', methods: ['GET'])]
+    #[Route('/{id}/active', name: 'get_active_profile', methods: ['GET'])]
     public function getActiveUserProfile(int $id): JsonResponse
     {
         try {
@@ -135,7 +135,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/set-active', name: 'set_active_profile', methods: ['POST'])]
+    #[Route('/active', name: 'set_active_profile', methods: ['POST'])]
     public function setActiveUserProfile(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -157,7 +157,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/update-status/{id}', name: 'update_status', methods: ['PUT'])]
+    #[Route('/{id}/update', name: 'update_status', methods: ['PUT'])]
     public function updateUserProfileStatus(Request $request, int $id): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

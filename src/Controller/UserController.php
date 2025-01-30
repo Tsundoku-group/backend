@@ -127,7 +127,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/verify-password', methods: ['POST'])]
+    #[Route('/password/verify', methods: ['POST'])]
     public function verifyPassword(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -155,7 +155,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/update-password', methods: ['POST'])]
+    #[Route('/password/update', methods: ['POST'])]
     public function updatePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -190,7 +190,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/delete-account-request/{id}', name: 'user_delete', methods: ['DELETE'])]
+    #[Route('/{id}/deletion-request', name: 'user_delete', methods: ['DELETE'])]
     public function requestAccountDeletion(int $id): JsonResponse
     {
         $user = $this->userRepository->findOneUserById($id);

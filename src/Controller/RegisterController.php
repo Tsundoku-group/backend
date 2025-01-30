@@ -57,7 +57,7 @@ class RegisterController extends AbstractController
         }
     }
 
-    #[Route('/resend-confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
+    #[Route('/resend/confirmation', name: 'app_resend_confirmation', methods: ['POST'])]
     public function resendConfirmationEmail(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
