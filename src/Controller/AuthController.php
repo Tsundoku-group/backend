@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class AuthController extends AbstractController
 {
-    #[Route('/api/login', name: 'api_login', methods: ['POST'])]
+    #[Route('/api/v1/login', name: 'api_login', methods: ['POST'])]
     public function login(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, JWTTokenManagerInterface $jwtManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
