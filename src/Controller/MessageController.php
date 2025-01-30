@@ -6,15 +6,8 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
-use App\Entity\Conversation;
-use App\Entity\Profile;
 use App\Entity\User;
-use App\Repository\ConversationRepository;
-use App\Service\ConfRedisService;
 use App\Service\MessageService;
-use DateTime;
-use DateTimeZone;
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,8 +20,7 @@ class MessageController extends AbstractController
 {
     public function __construct(
         private readonly MessageService $messageService,
-    )
-    {
+    ) {
     }
 
     #[Route('/send/{conversationId}', name: 'send_message', methods: ['POST'])]
@@ -37,7 +29,7 @@ class MessageController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $dto = new SendMessageDTO($data);
         try {
-            $response = $this->messageService->sendMessage($conversationId, (array)$dto);
+            $response = $this->messageService->sendMessage($conversationId, (array) $dto);
 
             if (isset($response['error'])) {
                 return new JsonResponse(['error' => $response['error']], $response['status']);
@@ -59,7 +51,7 @@ class MessageController extends AbstractController
 
         $queryParams = $request->query->all();
         $dto = new GetMessageDTO($queryParams);
-        $response = $this->messageService->getMessages($conversationId, (array)$dto, $user);
+        $response = $this->messageService->getMessages($conversationId, (array) $dto, $user);
 
         if (isset($response['error'])) {
             return new JsonResponse(['error' => $response['error']], $response['status']);
@@ -67,7 +59,6 @@ class MessageController extends AbstractController
 
         return new JsonResponse($response, Response::HTTP_OK);
     }
-
 
     #[Route('/mark-messages-read/{conversationId}', name: 'mark_messages_read', methods: ['POST'])]
     public function markMessagesRead(int $conversationId, Request $request): JsonResponse

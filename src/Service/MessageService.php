@@ -12,17 +12,16 @@ use DateTime;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 readonly class MessageService
 {
     public function __construct(
-        private ConfRedisService       $redisChatService,
+        private ConfRedisService $redisChatService,
         private EntityManagerInterface $entityManager,
         private ConversationRepository $conversationRepository,
-        private UserRepository         $userRepository,
-    ) {}
+        private UserRepository $userRepository,
+    ) {
+    }
 
     public function sendMessage(int $conversationId, array $data): array
     {
@@ -87,7 +86,7 @@ readonly class MessageService
         }
 
         try {
-            $allMessages = $this->redisChatService->getMessagesFromConversation((string)$conversationId);
+            $allMessages = $this->redisChatService->getMessagesFromConversation((string) $conversationId);
             if (empty($allMessages)) {
                 return [];
             }
@@ -96,7 +95,7 @@ readonly class MessageService
             $startIndex = max($totalMessages - ($queryParams['page'] ?? 1) * ($queryParams['limit'] ?? 10), 0);
             $pagedMessages = array_slice($allMessages, $startIndex, $queryParams['limit'] ?? 10);
 
-            return array_map(fn($message) => [
+            return array_map(fn ($message) => [
                 'id' => $message['id'],
                 'content' => $message['content'],
                 'sender_id' => $message['sender_id'],
@@ -133,7 +132,6 @@ readonly class MessageService
             $this->redisChatService->markMessagesRead($conversationId, $userEmail);
 
             return ['success' => 'All messages marked as read.'];
-
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }

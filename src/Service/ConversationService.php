@@ -21,11 +21,10 @@ class ConversationService
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository,
-        private readonly ProfileRepository      $profileRepository,
+        private readonly ProfileRepository $profileRepository,
         private readonly ConversationRepository $conversationRepository,
-        private readonly ConfRedisService       $confRedisService,
-    )
-    {
+        private readonly ConfRedisService $confRedisService,
+    ) {
     }
 
     public function createConversation(CreateConversationDTO $dto): array
@@ -130,7 +129,6 @@ class ConversationService
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
-
 
     public function getOneConversationById(int $id): array
     {
