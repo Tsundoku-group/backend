@@ -3,10 +3,8 @@
 namespace App\Tests\Controller;
 
 use App\Controller\FollowerController;
-use App\Entity\Follower;
-use App\Entity\Profile;
-use App\Repository\FollowerRepository;
-use App\Repository\ProfileRepository;
+use App\Constant\ErrorMessagesConstant;
+use App\Service\FollowerService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,118 +12,110 @@ use Symfony\Component\HttpFoundation\Request;
 
 class FollowerControllerTest extends TestCase
 {
-    private $entityManager;
-    private $profileRepository;
+    private $followerService;
+    private $controller;
 
     protected function setUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->profileRepository = $this->createMock(ProfileRepository::class);
+        $this->followerService = $this->createMock(FollowerService::class);
+        $this->controller = new FollowerController($this->followerService);
     }
 
     public function testGetFollowersPaginatedSuccess(): void
     {
         $profileId = 1;
-
-        $profile = $this->createMock(Profile::class);
-        $this->profileRepository->method('find')->with($profileId)->willReturn($profile);
+        $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'limit=10&offset=0']);
 
         $followers = [
-            ['id' => 1, 'username' => 'follower1', 'firstName' => 'John', 'lastName' => 'Doe'],
-            ['id' => 2, 'username' => 'follower2', 'firstName' => 'Jane', 'lastName' => 'Doe'],
+            ['id' => 1, 'username' => 'user1', 'firstName' => 'John', 'lastName' => 'Doe'],
+            ['id' => 2, 'username' => 'user2', 'firstName' => 'Jane', 'lastName' => 'Doe'],
         ];
 
-        $followerRepository = $this->createMock(FollowerRepository::class);
-        $followerRepository->method('findFollowersWithPagination')->willReturn($followers);
+        $this->followerService->method('getFollowersPaginated')
+            ->with($profileId, $request)
+            ->willReturn(['followers' => $followers, 'status' => 200]);
 
-        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
-        $request = new Request([], ['page' => 1, 'limit' => 10]);
-
-        $response = $controller->getFollowersPaginated($profileId, $request);
-
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
+        $response = $this->controller->getFollowersPaginated($profileId, $request);
 
         $responseData = json_decode($response->getContent(), true);
-        $this->assertIsArray($responseData);
-        $this->assertCount(2, $responseData);
-        $this->assertEquals('follower1', $responseData[0]['username']);
-        $this->assertEquals('John', $responseData[0]['firstName']);
-        $this->assertEquals('Doe', $responseData[0]['lastName']);
+
+        $this->assertArrayHasKey('followers', $responseData);
+        $this->assertEquals($followers, $responseData['followers']);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testGetFollowersPaginatedNotFound(): void
+    {
+        $profileId = 1;
+        $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'limit=10&offset=0']);
+
+        $this->followerService->method('getFollowersPaginated')
+            ->with($profileId, $request)
+            ->willReturn(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+
+        $response = $this->controller->getFollowersPaginated($profileId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
     }
 
     public function testFollowProfileSuccess(): void
     {
         $profileId = 1;
-        $request = new Request([], [], [], [], [], [], json_encode([
-            'followingId' => 2,
-        ]));
+        $request = new Request([], [], [], [], [], [], json_encode(['followingId' => 2]));
 
-        $follower = $this->createMock(Profile::class);
-        $following = $this->createMock(Profile::class);
+        $this->followerService->method('followProfile')
+            ->with($profileId, $request)
+            ->willReturn(['message' => 'Successfully followed', 'status' => 201]);
 
-        $this->profileRepository->method('findOneBy')->willReturnMap([
-            [['id' => $profileId], null, $follower],
-            [['id' => 2], null, $following],
-        ]);
-
-        $followerRepository = $this->createMock(FollowerRepository::class);
-
-        $this->entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(Follower::class));
-        $this->entityManager->expects($this->once())->method('flush');
-
-
-        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
-
-        $response = $controller->followProfile($profileId, $request);
+        $response = $this->controller->followProfile($profileId, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(201, $response->getStatusCode());
     }
 
+    public function testFollowProfileError(): void
+    {
+        $profileId = 1;
+        $request = new Request([], [], [], [], [], [], json_encode(['followingId' => 2]));
+
+        $this->followerService->method('followProfile')
+            ->with($profileId, $request)
+            ->willReturn(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+
+        $response = $this->controller->followProfile($profileId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(404, $response->getStatusCode());
+    }
+
     public function testUnfollowProfileSuccess(): void
     {
         $profileId = 1;
-        $followingId = 2;
+        $request = new Request([], [], [], [], [], [], json_encode(['followingId' => 2]));
 
-        $request = new Request([], [], [], [], [], [], json_encode([
-            'followerId' => $profileId,
-            'followingId' => $followingId,
-        ]));
+        $this->followerService->method('unfollowProfile')
+            ->with($profileId, $request)
+            ->willReturn(['message' => 'Successfully unfollowed', 'status' => 200]);
 
-        $follower = $this->createMock(Profile::class);
-        $follower->method('getId')->willReturn($profileId);
-
-        $following = $this->createMock(Profile::class);
-        $following->method('getId')->willReturn($followingId);
-
-        $followerEntity = $this->createMock(Follower::class);
-        $followerEntity->method('getFollower')->willReturn($follower);
-        $followerEntity->method('getFollowing')->willReturn($following);
-
-        $this->profileRepository->method('findOneBy')->willReturnMap([
-            [['id' => $profileId], null, $follower],
-            [['id' => $followingId], null, $following],
-        ]);
-
-        $followerRepository = $this->createMock(FollowerRepository::class);
-        $followerRepository->method('find')->willReturn($followerEntity);
-
-        $this->entityManager->method('getRepository')->willReturnCallback(function ($class) use ($followerRepository) {
-            if ($class === Follower::class) {
-                return $followerRepository;
-            }
-            return null;
-        });
-
-        $this->entityManager->expects($this->once())->method('remove')->with($followerEntity);
-        $this->entityManager->expects($this->once())->method('flush');
-
-        $controller = new FollowerController($this->profileRepository, $this->entityManager, $followerRepository);
-
-        $response = $controller->unfollowProfile(1, $request);
+        $response = $this->controller->unfollowProfile($profileId, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testUnfollowProfileError(): void
+    {
+        $profileId = 1;
+        $request = new Request([], [], [], [], [], [], json_encode(['followingId' => 2]));
+
+        $this->followerService->method('unfollowProfile')
+            ->with($profileId, $request)
+            ->willReturn(['error' => 'Unfollow failed', 'status' => 400]);
+
+        $response = $this->controller->unfollowProfile($profileId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(400, $response->getStatusCode());
     }
 }

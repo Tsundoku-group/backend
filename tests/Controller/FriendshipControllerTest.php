@@ -3,29 +3,21 @@
 namespace App\Tests\Controller;
 
 use App\Controller\FriendshipController;
-use App\Entity\Friendship;
-use App\Entity\Profile;
-use App\Repository\FriendshipRepository;
-use App\Repository\ProfileRepository;
 use App\Service\FriendshipService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Constant\ErrorMessagesConstant;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class FriendshipControllerTest extends TestCase
 {
-    private $entityManager;
-    private $profileRepository;
-    private $friendshipRepository;
-    private $friendshipService;
+    private FriendshipService $friendshipService;
+    private FriendshipController $controller;
 
     protected function setUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->profileRepository = $this->createMock(ProfileRepository::class);
-        $this->friendshipRepository = $this->createMock(FriendshipRepository::class);
         $this->friendshipService = $this->createMock(FriendshipService::class);
+        $this->controller = new FriendshipController($this->friendshipService);
     }
 
     public function testSendFriendRequestSuccess(): void
@@ -37,64 +29,88 @@ class FriendshipControllerTest extends TestCase
             'friendId' => $friendIdToRequest,
         ]));
 
-        $requesterProfile = $this->createMock(Profile::class);
-        $receiverProfile = $this->createMock(Profile::class);
-
-        $this->profileRepository->method('findOneBy')->willReturnMap([
-            [['id' => $profileId], null, $requesterProfile],
-            [['id' => $friendIdToRequest], null, $receiverProfile],
+        $this->friendshipService->method('sendFriendRequest')->willReturn([
+            'message' => 'Friend request sent',
+            'status' => 201
         ]);
 
-        $this->friendshipRepository->method('findOneBy')->willReturn(null);
-
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($this->isInstanceOf(Friendship::class));
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-
-        $controller = new FriendshipController(
-            $this->entityManager,
-            $this->profileRepository,
-            $this->friendshipRepository,
-            $this->friendshipService
-        );
-
-        $response = $controller->sendFriendRequest($profileId, $request);
+        $response = $this->controller->sendFriendRequest($profileId, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(201, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Friend request sent']),
-            $response->getContent()
-        );
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertEquals([
+            'message' => 'Friend request sent',
+            'status' => 201
+        ], $responseData);
     }
 
-    public function testSendFriendRequestProfileNotFound(): void
+    public function testAcceptFriendRequestSuccess(): void
     {
-        $profileId = 1;
-        $friendIdToRequest = 2;
+        $requestId = 1;
 
-        $request = new Request([], [], [], [], [], [], json_encode([
-            'friendId' => $friendIdToRequest,
-        ]));
+        $this->friendshipService->method('acceptFriendRequest')->willReturn([
+            'message' => 'Friend request accepted',
+            'status' => 200
+        ]);
 
-        $this->profileRepository->method('findOneBy')->willReturn(null);
-
-        $controller = new FriendshipController(
-            $this->entityManager,
-            $this->profileRepository,
-            $this->friendshipRepository,
-            $this->friendshipService
-        );
-
-        $response = $controller->sendFriendRequest($profileId, $request);
+        $response = $this->controller->acceptFriendRequest($requestId);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode('Requester or receiver not found.'),
-            $response->getContent()
-        );
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertEquals([
+            'message' => 'Friend request accepted',
+            'status' => 200
+        ], $responseData);
+    }
+
+    public function testRejectFriendRequestSuccess(): void
+    {
+        $requestId = 3;
+
+        $this->friendshipService->method('rejectFriendRequest')->willReturn([
+            'message' => 'Friend request rejected',
+            'status' => 200
+        ]);
+
+        $response = $this->controller->rejectFriendRequest($requestId);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertEquals([
+            'message' => 'Friend request rejected',
+            'status' => 200
+        ], $responseData);
+    }
+
+    public function testRemoveFriendSuccess(): void
+    {
+        $friendshipId = 4;
+
+        $request = new Request([], [], [], [], [], [], json_encode([
+            'requesterId' => 1,
+            'receiverId' => 2
+        ]));
+
+        $this->friendshipService->method('removeFriend')->willReturn([
+            'message' => 'Friend removed',
+            'status' => 200
+        ]);
+
+        $response = $this->controller->removeFriend($friendshipId, $request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertEquals([
+            'message' => 'Friend removed',
+            'status' => 200
+        ], $responseData);
     }
 }
