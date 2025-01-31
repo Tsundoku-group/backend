@@ -157,7 +157,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/{id}/update', name: 'update_status', methods: ['PUT'])]
+    #[Route('/{id}/update/status', name: 'update_status', methods: ['PUT'])]
     public function updateUserProfileStatus(Request $request, int $id): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

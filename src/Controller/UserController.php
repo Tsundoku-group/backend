@@ -190,7 +190,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/{id}/deletion-request', name: 'user_delete', methods: ['DELETE'])]
+    #[Route('/{id}/delete/request', name: 'user_delete', methods: ['DELETE'])]
     public function requestAccountDeletion(int $id): JsonResponse
     {
         $user = $this->userRepository->findOneUserById($id);
