@@ -57,3 +57,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-51] Changement friendship et follower controllers dans service [#51](https://trello.com/c/dQYKxhcf/51-t-51-changement-friendship-et-follower-controllers-dans-service)
 - [t-52] Ajout + corrections des tests [#52](https://trello.com/c/gQWWNHj2/52-t-52-ajout-corrections-des-tests)
 - [t-53] Correction routages [#53](https://trello.com/c/a2fXY7BZ/53-t-53-correction-routages)
+- [t-54] Ajout de l'enum groupVisibility + doctrine/type [#54](https://trello.com/c/ziycx2Gn/54-t-54-ajout-de-lenum-groupvisibility-doctrine-type)
