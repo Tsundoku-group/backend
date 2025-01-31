@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\GroupVisibility;
 use App\Repository\GroupRepository;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -29,8 +30,9 @@ class Group
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(length: 255)]
-    private string $visibility = 'public';
+
+    #[ORM\Column(type: "group_visibility", enumType: GroupVisibility::class)]
+    private GroupVisibility $visibility;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
@@ -41,11 +43,12 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTimeInterface $updatedAt = null;
 
-    public function __construct()
+    public function __construct(GroupVisibility $visibility)
     {
         $this->profiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTimeImmutable();
+        $this->visibility = $visibility;
     }
 
     public function getId(): ?int
@@ -106,16 +109,9 @@ class Group
         return $this;
     }
 
-    public function getVisibility(): ?string
+    public function getVisibility(): GroupVisibility
     {
         return $this->visibility;
-    }
-
-    public function setVisibility(string $visibility): self
-    {
-        $this->visibility = $visibility;
-
-        return $this;
     }
 
     public function getSlug(): ?string
