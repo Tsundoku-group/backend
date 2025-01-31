@@ -20,8 +20,8 @@ class Profile
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToMany(targetEntity: Group::class, mappedBy: 'profiles', fetch: 'LAZY')]
-    private Collection $groups;
+    #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'profile', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $groupProfiles;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
     #[ORM\JoinColumn(nullable: false)]
@@ -91,7 +91,7 @@ class Profile
 
     public function __construct()
     {
-        $this->groups = new ArrayCollection();
+        $this->groupProfiles = new ArrayCollection();
         $this->profilePhotos = new ArrayCollection();
         $this->role = 'ROLE_USER';
         $this->activeProfile = false;
@@ -158,13 +158,13 @@ class Profile
 
     public function getGroups(): Collection
     {
-        return $this->groups;
+        return $this->groupProfiles;
     }
 
     public function addGroup(Group $group): self
     {
-        if (!$this->groups->contains($group)) {
-            $this->groups[] = $group;
+        if (!$this->groupProfiles->contains($group)) {
+            $this->groupProfiles[] = $group;
         }
 
         return $this;
@@ -172,7 +172,7 @@ class Profile
 
     public function removeGroup(Group $group): self
     {
-        $this->groups->removeElement($group);
+        $this->groupProfiles->removeElement($group);
 
         return $this;
     }

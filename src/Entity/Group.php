@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Enum\GroupVisibility;
+use App\Enum\GroupVisibilityEnum;
 use App\Repository\GroupRepository;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -20,9 +20,8 @@ class Group
     #[ORM\Column]
     private int $id;
 
-    #[ORM\ManyToMany(targetEntity: Profile::class, inversedBy: 'groups')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ArrayCollection $profiles;
+    #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $groupProfiles;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -30,9 +29,8 @@ class Group
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-
-    #[ORM\Column(type: "group_visibility", enumType: GroupVisibility::class)]
-    private GroupVisibility $visibility;
+    #[ORM\Column(type: "group_visibility", enumType: GroupVisibilityEnum::class)]
+    private GroupVisibilityEnum $visibility;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
@@ -43,9 +41,9 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTimeInterface $updatedAt = null;
 
-    public function __construct(GroupVisibility $visibility)
+    public function __construct(GroupVisibilityEnum $visibility)
     {
-        $this->profiles = new ArrayCollection();
+        $this->groupProfiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTimeImmutable();
         $this->visibility = $visibility;
@@ -62,26 +60,24 @@ class Group
     }
 
     /**
-     * @return Collection|Profile[]
+     * @return Collection|GroupProfile[]
      */
-    public function getProfiles(): Collection
+    public function getGroupProfiles(): Collection
     {
-        return $this->profiles;
+        return $this->groupProfiles;
     }
 
-    public function addProfile(Profile $profile): self
+    public function addGroupProfile(GroupProfile $groupProfile): self
     {
-        if (!$this->profiles->contains($profile)) {
-            $this->profiles[] = $profile;
+        if (!$this->groupProfiles->contains($groupProfile)) {
+            $this->groupProfiles[] = $groupProfile;
         }
-
         return $this;
     }
 
-    public function removeProfile(Profile $profile): self
+    public function removeGroupProfile(GroupProfile $groupProfile): self
     {
-        $this->profiles->removeElement($profile);
-
+        $this->groupProfiles->removeElement($groupProfile);
         return $this;
     }
 
@@ -109,7 +105,7 @@ class Group
         return $this;
     }
 
-    public function getVisibility(): GroupVisibility
+    public function getVisibility(): GroupVisibilityEnum
     {
         return $this->visibility;
     }
