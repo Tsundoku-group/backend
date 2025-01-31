@@ -56,3 +56,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-50] Ajout du versionning sur les routes API RestFul [#50](https://trello.com/c/8llRnyXD/50-t-50-ajout-du-versionning-sur-les-routes-api-restful)
 - [t-51] Changement friendship et follower controllers dans service [#51](https://trello.com/c/dQYKxhcf/51-t-51-changement-friendship-et-follower-controllers-dans-service)
 - [t-52] Ajout + corrections des tests [#52](https://trello.com/c/gQWWNHj2/52-t-52-ajout-corrections-des-tests)
+- [t-53] Correction routages [#53](https://trello.com/c/a2fXY7BZ/53-t-53-correction-routages)
