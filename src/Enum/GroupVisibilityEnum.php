@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum GroupVisibility: string
+enum GroupVisibilityEnum: string
 {
     case PUBLIC = 'public';
     case PRIVATE = 'private';
