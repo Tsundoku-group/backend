@@ -3,6 +3,9 @@
 namespace App\Controller;
 
 use App\Constant\ErrorMessagesConstant;
+use App\DTO\Group\CreateGroupDTO;
+use App\DTO\Group\DeleteGroupDTO;
+use App\DTO\Group\UpdateGroupDTO;
 use App\Repository\ProfileRepository;
 use App\Service\GroupService;
 use App\Repository\GroupRepository;
@@ -25,21 +28,23 @@ class GroupController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['name'], $data['profileId'])) {
+        $dto = new CreateGroupDTO($data['name'], $data['description'] ?? null, $data['visibility'], $data['profileId']);
+
+        if (!isset($dto->name, $dto->description)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
-        $creator = $this->profileRepository->find($data['profileId']);
+        $creator = $this->profileRepository->find($dto->profileId);
         if (!$creator) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
             $group = $this->groupService->createGroup(
-                $data['name'],
-                $data['description'] ?? null,
+                $dto->name,
+                $dto->description,
                 $creator,
-                $data['visibility']
+                $dto->visibility
             );
 
             return new JsonResponse([
@@ -52,8 +57,10 @@ class GroupController extends AbstractController
                     'createdAt' => $group->getCreatedAt()->format('Y-m-d H:i:s')
                 ]
             ], 201);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -66,17 +73,18 @@ class GroupController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        if (!isset($data['name'], $data['visibility'], $data['profileId'])) {
+        $dto = new UpdateGroupDTO($data['name'], $data['visibility'], $data['profileId'], $data['description'], $group->getId());
+        if (!isset($dto->name, $dto->description)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
             $this->groupService->updateGroup(
                 $group,
-                $data['profileId'],
-                $data['name'],
-                $data['description'] ?? null,
-                $data['visibility']
+                $dto->profileId,
+                $dto->name,
+                $dto->description,
+                $dto->visibility
             );
 
             return new JsonResponse(['message' => 'Groupe mis à jour avec succès']);
@@ -95,12 +103,13 @@ class GroupController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        if (!isset($data['profileId'])) {
+        $dto = new DeleteGroupDTO($data['profileId'], $group->getId());
+        if (!isset($dto->profileId, $dto->groupId)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
-            $this->groupService->deleteGroup($group, $data['profileId']);
+            $this->groupService->deleteGroup($group, $dto->profileId);
 
             return new JsonResponse(['message' => 'Groupe supprimé avec succès']);
         } catch (\RuntimeException $e) {
