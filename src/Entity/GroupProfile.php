@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Enum\GroupRoleEnum;
+use App\ValueObject\GroupRole;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -12,17 +12,17 @@ use Doctrine\ORM\Mapping as ORM;
 class GroupProfile
 {
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: Group::class)]
+    #[ORM\ManyToOne(targetEntity: Group::class, inversedBy: 'groupProfiles')]
     #[ORM\JoinColumn(nullable: false)]
     private Group $group;
 
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: Profile::class)]
+    #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'groupProfiles')]
     #[ORM\JoinColumn(nullable: false)]
     private Profile $profile;
 
-    #[ORM\Column(type: "group_role", enumType: GroupRoleEnum::class)]
-    private GroupRoleEnum $role;
+    #[ORM\Column(type: "string", length: 10, nullable: false)]
+    private string $role;
 
     #[ORM\Column(type: "datetime_immutable")]
     private DateTimeImmutable $joinAt;
@@ -33,7 +33,7 @@ class GroupProfile
     #[ORM\Column(type: "datetime_immutable")]
     private DateTimeImmutable $updatedAt;
 
-    public function __construct(Group $group, Profile $profile, GroupRoleEnum $role = GroupRoleEnum::MEMBER)
+    public function __construct(Group $group, Profile $profile, GroupRole $role)
     {
         $this->group = $group;
         $this->profile = $profile;
@@ -52,14 +52,14 @@ class GroupProfile
         return $this->profile;
     }
 
-    public function getRole(): GroupRoleEnum
+    public function getRole(): GroupRole
     {
-        return $this->role;
+        return GroupRole::fromString($this->role);
     }
 
-    public function setRole(GroupRoleEnum $role): void
+    public function setRole(GroupRole $role): void
     {
-        $this->role = $role;
+        $this->role = $role->getValue();
         $this->markAsUpdated();
     }
 
@@ -88,6 +88,11 @@ class GroupProfile
     public function getUpdatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role->isAdmin();
     }
 
     #[ORM\PreUpdate]

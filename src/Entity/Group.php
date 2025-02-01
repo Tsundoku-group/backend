@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Enum\GroupVisibilityEnum;
+use App\ValueObject\GroupVisibility;
 use App\Repository\GroupRepository;
+use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -23,30 +24,35 @@ class Group
     #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $groupProfiles;
 
+    #[ORM\ManyToOne(targetEntity: Profile::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private Profile $createdBy;
+
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: "group_visibility", enumType: GroupVisibilityEnum::class)]
-    private GroupVisibilityEnum $visibility;
+    #[ORM\Column(type: "string", length: 10, nullable: false)]
+    private ?string $visibility;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $updatedAt = null;
+    private ?\DateTime $updatedAt = null;
 
-    public function __construct(GroupVisibilityEnum $visibility)
+    public function __construct(Profile $createdBy, GroupVisibility $visibility)
     {
         $this->groupProfiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
-        $this->updatedAt = new DateTimeImmutable();
-        $this->visibility = $visibility;
+        $this->updatedAt = new DateTime();
+        $this->createdBy = $createdBy;
+        $this->visibility = $visibility->getValue();
     }
 
     public function getId(): ?int
@@ -81,6 +87,11 @@ class Group
         return $this;
     }
 
+    public function getCreatedBy(): Profile
+    {
+        return $this->createdBy;
+    }
+
     public function getName(): ?string
     {
         return $this->name;
@@ -105,9 +116,15 @@ class Group
         return $this;
     }
 
-    public function getVisibility(): GroupVisibilityEnum
+    public function getVisibility(): GroupVisibility
     {
-        return $this->visibility;
+        return GroupVisibility::fromString($this->visibility);
+    }
+
+    public function setVisibility(GroupVisibility $visibility): self
+    {
+        $this->visibility = $visibility->getValue();
+        return $this;
     }
 
     public function getSlug(): ?string
@@ -127,7 +144,7 @@ class Group
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -139,7 +156,7 @@ class Group
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(DateTimeInterface $updatedAt): self
+    public function setUpdatedAt(DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
 
