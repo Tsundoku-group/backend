@@ -60,3 +60,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-54] Ajout de l'enum groupVisibility + doctrine/type [#54](https://trello.com/c/ziycx2Gn/54-t-54-ajout-de-lenum-groupvisibility-doctrine-type)
 - [t-55] Ajout de la table group_profile + enum [#55](https://trello.com/c/gOkNEnp9/55-t-55-ajout-de-la-table-groupprofil-enum)
 - [t-56] Ajout du GroupController, GroupService, et GroupRepository [#56](https://trello.com/c/833UEtnu/56-t-56-ajout-du-groupcontroller-groupservice-et-grouprepository)
+- [t-57] Ajout des DTO pour group [#57](https://trello.com/c/ejepxQ7i/57-t-57-ajout-des-dto-pour-group)
