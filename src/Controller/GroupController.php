@@ -6,9 +6,9 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Group\CreateGroupDTO;
 use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
-use App\Repository\ProfileRepository;
 use App\Service\GroupService;
 use App\Repository\GroupRepository;
+use App\Validator\Constraints\ProfileValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,8 +19,8 @@ class GroupController extends AbstractController
 {
     public function __construct(
         private readonly GroupService $groupService,
-        private readonly ProfileRepository $profileRepository,
-        private readonly GroupRepository $groupRepository
+        private readonly GroupRepository $groupRepository,
+        private readonly ProfileValidator $profileValidator,
     ) {}
 
     #[Route('/create', methods: ['POST'])]
@@ -34,10 +34,7 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
-        $creator = $this->profileRepository->find($dto->profileId);
-        if (!$creator) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
-        }
+        $creator = $this->profileValidator->validateProfile($dto->profileId);
 
         try {
             $group = $this->groupService->createGroup(
@@ -74,14 +71,15 @@ class GroupController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $dto = new UpdateGroupDTO($data['name'], $data['visibility'], $data['profileId'], $data['description'], $group->getId());
-        if (!isset($dto->name, $dto->description)) {
+        if (!isset($dto->name, $dto->description, $dto->profileId)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
+        $creator = $this->profileValidator->validateProfile($dto->profileId);
 
         try {
             $this->groupService->updateGroup(
                 $group,
-                $dto->profileId,
+                $creator->getId(),
                 $dto->name,
                 $dto->description,
                 $dto->visibility
@@ -108,8 +106,9 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
+        $creator = $this->profileValidator->validateProfile($dto->profileId);
         try {
-            $this->groupService->deleteGroup($group, $dto->profileId);
+            $this->groupService->deleteGroup($group, $creator->getId());
 
             return new JsonResponse(['message' => 'Groupe supprimé avec succès']);
         } catch (\RuntimeException $e) {
