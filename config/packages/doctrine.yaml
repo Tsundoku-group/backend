@@ -2,9 +2,6 @@ doctrine:
     dbal:
         driver: 'pdo_pgsql'
         url: '%env(resolve:POSTGRES_URL)%'
-        types:
-            group_visibility: App\Doctrine\Type\GroupVisibilityType
-            group_role: App\Doctrine\Type\GroupRoleType
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
