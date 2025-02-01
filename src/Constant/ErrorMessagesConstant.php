@@ -15,4 +15,8 @@ class ErrorMessagesConstant
     public const EMAIL_ALREADY_IN_USE = 'Email already in use';
     public const UNAUTHORIZED_ACCESS = 'Unauthorized access';
     public const FORBIDDEN = 'Access denied';
+    public const USER_ALREADY_ADMIN = 'User already admin';
+    public const ACCESS_DENIED = 'Access denied';
+    public const USER_NOT_IN_GROUP = 'User not in group';
+    public const ONLY_ONE_PUBLIC_GROUP_ALLOWED = 'Only one public group allowed';
 }
