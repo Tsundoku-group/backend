@@ -29,5 +29,7 @@ services:
         arguments:
             $googleRecaptchaSecret: '%env(GOOGLE_RECAPTCHA_SECRET)%'
 
+    App\Validator\ProfileValidator: ~
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
