@@ -163,9 +163,19 @@ class Group
         return $this;
     }
 
+    public function isPublic(): bool
+    {
+        return $this->visibility === GroupVisibility::PUBLIC;
+    }
+
     public function isPrivate(): bool
     {
         return $this->visibility === GroupVisibility::PRIVATE;
+    }
+
+    public function isFeedGroup(): bool
+    {
+        return $this->name === 'Fil d’actualité';
     }
 
     public function isMember(Profile $profile): bool

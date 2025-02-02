@@ -5,7 +5,7 @@ namespace App\ValueObject\Group;
 final class GroupVisibility
 {
     public const PRIVATE = 'private';
-    private const PUBLIC = 'public';
+    public const PUBLIC = 'public';
     private const UNIQUE_PUBLIC_GROUP = 'fil-d-actualite';
 
     private string $value;
