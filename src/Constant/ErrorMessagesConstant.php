@@ -19,4 +19,7 @@ class ErrorMessagesConstant
     public const ACCESS_DENIED = 'Access denied';
     public const USER_NOT_IN_GROUP = 'User not in group';
     public const ONLY_ONE_PUBLIC_GROUP_ALLOWED = 'Only one public group allowed';
+    public const GROUP_NOT_FOUND = 'Group not found';
+    public const USER_ALREADY_IN_GROUP = 'User already in group';
+    public const USER_ALREADY_HAS_ROLE = 'User already has role';
 }
