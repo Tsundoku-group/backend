@@ -6,10 +6,10 @@ use App\Constant\ErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
-use App\Repository\GroupRepository;
-use App\ValueObject\GroupRole;
 use App\Repository\GroupProfileRepository;
-use App\ValueObject\GroupVisibility;
+use App\Repository\GroupRepository;
+use App\ValueObject\Group\GroupRole;
+use App\ValueObject\Group\GroupVisibility;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
