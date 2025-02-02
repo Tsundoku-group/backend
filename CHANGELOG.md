@@ -62,3 +62,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-56] Ajout du GroupController, GroupService, et GroupRepository [#56](https://trello.com/c/833UEtnu/56-t-56-ajout-du-groupcontroller-groupservice-et-grouprepository)
 - [t-57] Ajout des DTO pour group [#57](https://trello.com/c/ejepxQ7i/57-t-57-ajout-des-dto-pour-group)
 - [t-58] Ajout d'un profileValidator [#58](https://trello.com/c/1aerDLE9/58-t-58-ajout-dun-profilevalidator)
+- [t-59] Ajout des GroupeProfileController, GroupProfileService [#59](https://trello.com/c/UEkUF0J6/59-t-59-ajout-des-groupeprofilecontroller-groupprofileservice)
