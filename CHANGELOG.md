@@ -65,3 +65,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-59] Ajout des GroupeProfileController, GroupProfileService [#59](https://trello.com/c/UEkUF0J6/59-t-59-ajout-des-groupeprofilecontroller-groupprofileservice)
 - [t-60] Ajout de la table post [#60](https://trello.com/c/TPqPsVIO/60-t-60-ajout-de-la-table-post)
 - [t-61] Ajout de PostController, PostService, PostDTO [#61](https://trello.com/c/0lDM07D7/61-t-61-ajout-de-postcontroller-postservice-postdto)
+- [t-62] Ajout logique pour poster sur fil d'actu [#62](https://trello.com/c/NtKbY9Lz/62-t-62-ajout-logique-pour-poster-sur-fil-dactu)
