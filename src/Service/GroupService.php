@@ -63,27 +63,38 @@ readonly class GroupService
 
     public function updateGroup(Group $group, int $profileId, string $name, ?string $description, string $visibility): void
     {
-        $visibility = GroupVisibility::fromString($visibility);
+        $visibilityObject = GroupVisibility::fromString($visibility);
+
         $this->ensureUserIsAdminOfGroup($group, $profileId);
 
-        try {
-            $group->setName($name);
-            $group->setDescription($description);
-            $group->setVisibility($visibility);
-            $group->setUpdatedAt(new \DateTime());
+        $hasChanges = false;
 
-            $this->entityManager->persist($group);
-            $this->entityManager->flush();
-        } catch (\Exception $e) {
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+        if ($group->getName() !== $name) {
+            $group->setName($name);
+            $hasChanges = true;
         }
+
+        if ($group->getDescription() !== $description) {
+            $group->setDescription($description);
+            $hasChanges = true;
+        }
+
+        if ($group->getVisibility()->getValue() !== $visibilityObject->getValue()) {
+            $group->setVisibility($visibilityObject);
+            $hasChanges = true;
+        }
+
+        if ($hasChanges) {
+            $group->setUpdatedAt(new \DateTime());
+        }
+
+        $this->entityManager->persist($group);
+        $this->entityManager->flush();
     }
 
     public function deleteGroup(Group $group, int $profileId): void
     {
-        if (!$this->groupProfileRepository->isAdminOfPrivateGroup($group, $profileId)) {
-            throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
-        }
+        $this->ensureUserIsAdminOfGroup($group, $profileId);
 
         try {
             $this->entityManager->remove($group);

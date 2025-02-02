@@ -33,7 +33,15 @@ readonly class GroupProfileService
 
         $profile = $this->profileValidator->validateProfile($profileId);
 
+        $existingGroupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
+
+        if ($existingGroupProfile) {
+            throw new \RuntimeException(ErrorMessagesConstant::USER_ALREADY_IN_GROUP);
+        }
+
         $groupProfile = new GroupProfile($group, $profile, GroupRole::fromString($role));
+        $groupProfile->markAsUpdated();
+
         $this->entityManager->persist($groupProfile);
         $this->entityManager->flush();
 
@@ -50,7 +58,14 @@ readonly class GroupProfileService
 
         $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
 
-        $groupProfile->setRole(GroupRole::fromString($role));
+        $newRole = GroupRole::fromString($role);
+
+        if ($groupProfile->getRole()->equals($newRole)) {
+            throw new \RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
+        }
+
+        $groupProfile->setRole($newRole);
+        $groupProfile->markAsUpdated();
         $this->entityManager->flush();
     }
 
