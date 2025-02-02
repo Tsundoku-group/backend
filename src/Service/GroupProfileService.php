@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Service;
+
+use App\Constant\ErrorMessagesConstant;
+use App\Entity\Group;
+use App\Entity\GroupProfile;
+use App\Repository\GroupProfileRepository;
+use App\Repository\GroupRepository;
+use App\Repository\ProfileRepository;
+use App\Validator\Constraints\ProfileValidator;
+use App\ValueObject\GroupRole;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+readonly class GroupProfileService
+{
+    public function __construct(
+        private GroupRepository $groupRepository,
+        private GroupProfileRepository $groupProfileRepository,
+        private EntityManagerInterface $entityManager,
+        private ProfileValidator $profileValidator,
+    ) {}
+
+    public function joinGroup(int $groupId, int $profileId, string $role): GroupProfile
+    {
+        $group = $this->groupRepository->find($groupId);
+
+        if (!$group) {
+            throw new NotFoundHttpException(ErrorMessagesConstant::GROUP_NOT_FOUND);
+        }
+
+        $profile = $this->profileValidator->validateProfile($profileId);
+
+        $groupProfile = new GroupProfile($group, $profile, GroupRole::fromString($role));
+        $this->entityManager->persist($groupProfile);
+        $this->entityManager->flush();
+
+        return $groupProfile;
+    }
+
+    public function updateMemberRole(int $groupId, int $profileId, string $role, int $adminId): void
+    {
+        $groupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
+
+        if (!$groupProfile) {
+            throw new NotFoundHttpException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+        }
+
+        $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
+
+        $groupProfile->setRole(GroupRole::fromString($role));
+        $this->entityManager->flush();
+    }
+
+    public function removeMember(int $groupId, int $profileId, int $adminId): void
+    {
+        $groupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
+
+        if (!$groupProfile) {
+            throw new NotFoundHttpException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+        }
+
+        $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
+
+        $this->entityManager->remove($groupProfile);
+        $this->entityManager->flush();
+    }
+
+    private function ensureUserIsAdminOfGroup(Group $group, int $profileId): void
+    {
+        $groupProfile = $this->groupProfileRepository->findOneGroupProfile($group->getId(), $profileId);
+
+        if (!$groupProfile || !$groupProfile->isAdmin()) {
+            throw new AccessDeniedHttpException(ErrorMessagesConstant::ACCESS_DENIED);
+        }
+    }
+}
