@@ -27,9 +27,6 @@ class GroupProfile
     #[ORM\Column(type: "datetime_immutable")]
     private DateTimeImmutable $joinAt;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $isBanned = false;
-
     #[ORM\Column(type: "datetime_immutable")]
     private DateTimeImmutable $updatedAt;
 
@@ -71,17 +68,6 @@ class GroupProfile
     public function setJoinAt(DateTimeImmutable $joinAt): void
     {
         $this->joinAt = $joinAt;
-        $this->markAsUpdated();
-    }
-
-    public function isBanned(): bool
-    {
-        return $this->isBanned;
-    }
-
-    public function setBanned(bool $banned): void
-    {
-        $this->isBanned = $banned;
         $this->markAsUpdated();
     }
 
