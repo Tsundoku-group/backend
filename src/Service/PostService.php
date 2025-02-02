@@ -8,9 +8,11 @@ use App\Entity\Post;
 use App\Entity\Profile;
 use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
+use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Validator\Constraints\ProfileValidator;
 use App\ValueObject\Post\PostVisibility;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -22,6 +24,7 @@ readonly class PostService
         private GroupRepository        $groupRepository,
         private EntityManagerInterface $entityManager,
         private GroupProfileRepository $groupProfileRepository,
+        private PostRepository         $postRepository,
         private SluggerInterface       $slugger
     )
     {
@@ -68,7 +71,7 @@ readonly class PostService
             return $post;
         } catch (\Exception $e) {
             $this->entityManager->rollback();
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -100,13 +103,22 @@ readonly class PostService
             return;
         }
 
-        $post->setUpdatedAt(new \DateTimeImmutable());
+        $post->setUpdatedAt(new DateTime());
 
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->flush();
+        } catch (\Exception $e) {
+            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
+        }
     }
 
-    public function deletePost(Post $post, Profile $editor): void
+    public function deletePost(int $postId, Profile $editor): void
     {
+        $post = $this->postRepository->findPostWithGroupById($postId);
+        if (!$post) {
+            throw new \RuntimeException(ErrorMessagesConstant::POST_NOT_FOUND);
+        }
+
         if ($post->getAuthor() === $editor) {
             $this->removePost($post);
             return;
@@ -120,6 +132,10 @@ readonly class PostService
 
             if (!$groupProfile) {
                 throw new \RuntimeException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+            }
+
+            if (!$groupProfile->getRole()->isAdmin()) {
+                throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
             }
 
             $this->removePost($post);

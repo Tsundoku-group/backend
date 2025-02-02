@@ -36,7 +36,6 @@ class GroupProfile
         $this->profile = $profile;
         $this->role = $role;
         $this->joinAt = new DateTimeImmutable();
-        $this->updatedAt = new DateTimeImmutable();
     }
 
     public function getGroup(): Group
@@ -76,6 +75,13 @@ class GroupProfile
         return $this->updatedAt;
     }
 
+    public function setUpdatedAt(DateTimeImmutable $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
     public function isAdmin(): bool
     {
         return $this->role->isAdmin();
@@ -84,6 +90,8 @@ class GroupProfile
     #[ORM\PreUpdate]
     public function markAsUpdated(): void
     {
-        $this->updatedAt = new DateTimeImmutable();
+        if ($this->updatedAt !== null) {
+            $this->updatedAt = new DateTimeImmutable();
+        }
     }
 }

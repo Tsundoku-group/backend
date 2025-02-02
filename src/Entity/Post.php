@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PostRepository;
 use App\ValueObject\Post\PostStatus;
 use App\ValueObject\Post\PostVisibility;
+use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
@@ -124,7 +125,7 @@ class Post
 
     public function setVisibility(PostVisibility $visibility): void
     {
-        $this->visibility = (string) $visibility;
+        $this->visibility = $visibility->getValue();
         $this->markAsUpdated();
     }
 
@@ -135,7 +136,7 @@ class Post
 
     public function setStatus(PostStatus $status): void
     {
-        $this->status = (string) $status;
+        $this->status = $status->getValue();
         $this->markAsUpdated();
     }
 
@@ -165,6 +166,8 @@ class Post
 
     private function markAsUpdated(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        if ($this->updatedAt !== null) {
+            $this->updatedAt = new \DateTime();
+        }
     }
 }

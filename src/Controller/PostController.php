@@ -43,15 +43,17 @@ class PostController extends AbstractController
         try {
             $post = $this->postService->createPost($dto->authorId, $dto->groupId, $dto->visibility, $dto->title, $dto->content);
             return new JsonResponse(['message' => 'Post créé avec succès', 'postId' => $post->getId()], 201);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/{id}/edit', methods: ['PUT'])]
-    public function updatePost(int $id, Request $request): JsonResponse
+    #[Route('/{postId}/edit', methods: ['PUT'])]
+    public function updatePost(int $postId, Request $request): JsonResponse
     {
-        $post = $this->postRepository->find($id);
+        $post = $this->postRepository->find($postId);
         if (!$post) {
             return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
@@ -72,32 +74,34 @@ class PostController extends AbstractController
         try {
             $this->postService->updatePost($post, $author, $dto);
             return new JsonResponse(['message' => 'Post mis à jour avec succès']);
+        }  catch (\RuntimeException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/{id}/delete', methods: ['DELETE'])]
-    public function deletePost(int $id, Request $request): JsonResponse
+    #[Route('/{postId}/delete', methods: ['DELETE'])]
+    public function deletePost(int $postId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['editorId'])) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
-        $post = $this->postRepository->find($id);
-        if (!$post) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
-        }
+        $dto = new DeletePostDTO($data['editorId'], $postId);
 
-        $editor = $this->profileRepository->find($data['editorId']);
+        $editor = $this->profileRepository->find($dto->editorId);
         if (!$editor) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
+
         try {
-            $this->postService->deletePost($post, $editor);
+            $this->postService->deletePost($dto->postId, $editor);
             return new JsonResponse(['message' => 'Post supprimé avec succès.']);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
