@@ -162,4 +162,19 @@ class Group
 
         return $this;
     }
+
+    public function isPrivate(): bool
+    {
+        return $this->visibility === GroupVisibility::PRIVATE;
+    }
+
+    public function isMember(Profile $profile): bool
+    {
+        foreach ($this->groupProfiles as $groupProfile) {
+            if ($groupProfile->getProfile()->getId() === $profile->getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
