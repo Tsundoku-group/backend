@@ -45,6 +45,10 @@ readonly class PostService
             throw new \RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
+        if ($visibilityObject->isPublic() && !$group->getVisibility()->isUniquePublicGroup($group->getSlug())) {
+            throw new \RuntimeException("Les posts publics ne peuvent être créés que dans le Fil d'actualité.");
+        }
+
         if ($group->isPrivate() && !$group->isMember($author)) {
             throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
