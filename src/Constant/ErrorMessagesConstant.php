@@ -22,4 +22,6 @@ class ErrorMessagesConstant
     public const GROUP_NOT_FOUND = 'Group not found';
     public const USER_ALREADY_IN_GROUP = 'User already in group';
     public const USER_ALREADY_HAS_ROLE = 'User already has role';
+    public const POST_NOT_FOUND = 'Post not found';
+    public const CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP = 'Cannot post public in a private group';
 }

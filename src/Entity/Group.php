@@ -162,4 +162,9 @@ class Group
 
         return $this;
     }
+
+    public function isPrivate(): bool
+    {
+        return $this->visibility === GroupVisibility::PRIVATE;
+    }
 }

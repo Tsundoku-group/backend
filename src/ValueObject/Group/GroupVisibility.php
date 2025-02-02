@@ -4,7 +4,7 @@ namespace App\ValueObject\Group;
 
 final class GroupVisibility
 {
-    private const PRIVATE = 'private';
+    public const PRIVATE = 'private';
     private const PUBLIC = 'public';
     private const UNIQUE_PUBLIC_GROUP = 'fil-d-actualite';
 

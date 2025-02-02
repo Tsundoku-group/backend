@@ -6,6 +6,7 @@ use App\Repository\PostRepository;
 use App\ValueObject\Post\PostStatus;
 use App\ValueObject\Post\PostVisibility;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -34,7 +35,7 @@ class Post
     #[ORM\Column(length: 255, unique: true)]
     private string $slug;
 
-    #[ORM\Column(length: 20)]
+    #[ORM\Column(type: "string", length: 10, nullable: false)]
     private string $visibility;
 
     #[ORM\Column(length: 20)]
@@ -44,17 +45,11 @@ class Post
     private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $updatedAt = null;
+    private ?DateTimeInterface $updatedAt = null;
 
-    public function __construct(Profile $author, string $title, string $content, PostVisibility $visibility, ?Group $group = null)
+    public function __construct()
     {
-        $this->author = $author;
-        $this->title = $title;
-        $this->content = $content;
-        $this->slug = strtolower(str_replace(' ', '-', $title));
-        $this->visibility = (string) $visibility;
         $this->status = PostStatus::ACTIVE;
-        $this->group = $group;
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -68,9 +63,23 @@ class Post
         return $this->author;
     }
 
+    public function setAuthor(Profile $author): self
+    {
+        $this->author = $author;
+
+        return $this;
+    }
+
     public function getGroup(): ?Group
     {
         return $this->group;
+    }
+
+    public function setGroup(?Group $group): self
+    {
+        $this->group = $group;
+
+        return $this;
     }
 
     public function getTitle(): string
@@ -101,6 +110,13 @@ class Post
         return $this->slug;
     }
 
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
     public function getVisibility(): PostVisibility
     {
         return PostVisibility::fromString($this->visibility);
@@ -128,9 +144,23 @@ class Post
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?DateTimeInterface
     {
         return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
     }
 
     private function markAsUpdated(): void
