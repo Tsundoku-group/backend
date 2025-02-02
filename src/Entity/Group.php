@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
-use App\ValueObject\GroupVisibility;
 use App\Repository\GroupRepository;
+use App\ValueObject\Group\GroupVisibility;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;

@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\ValueObject\GroupRole;
+use App\ValueObject\Group\GroupRole;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
