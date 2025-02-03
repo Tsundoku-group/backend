@@ -5,6 +5,8 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     google_books_api_key: 'AIzaSyBGTl4sgBI9hZegCbqO69hsNHPlcxvqSZY'
+    env(MONGODB_URL): ''
+    env(MONGODB_DB): ''
 
 services:
     # default configuration for services in *this* file
@@ -30,6 +32,16 @@ services:
             $googleRecaptchaSecret: '%env(GOOGLE_RECAPTCHA_SECRET)%'
 
     App\Validator\ProfileValidator: ~
+
+    App\Service\CommentService:
+        arguments:
+            $commentRepository: '@App\Repository\CommentRepository'
+
+
+    App\Repository\CommentRepository:
+        factory: [ '@doctrine_mongodb.odm.document_manager', getRepository ]
+        arguments:
+            - 'App\Document\Comment'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
