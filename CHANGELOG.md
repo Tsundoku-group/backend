@@ -68,3 +68,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-62] Ajout logique pour poster sur fil d'actu [#62](https://trello.com/c/NtKbY9Lz/62-t-62-ajout-logique-pour-poster-sur-fil-dactu)
 - [t-63] Ajout de la config MongoDB [#63](https://trello.com/c/FXZVewho/63-t-63-ajout-de-la-config-mongodb)
 - [t-64] Ajout du Document mongodb Comment.php + logique crud [#64](https://trello.com/c/AaoOPWi6/64-t-64-ajout-du-document-mongodb-commentphp-logique-crud)
+- [t-65] Ajout des DTO pour Comment [#65](https://trello.com/c/vaOXRG0r/65-t-65-ajout-des-dto-pour-comment)
