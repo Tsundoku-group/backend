@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Constant\ErrorMessagesConstant;
+use App\DTO\Comment\CreateCommentDTO;
+use App\DTO\Comment\GetCommentDTO;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\CommentService;
@@ -41,12 +43,14 @@ class CommentController extends AbstractController
     public function getCommentsForPost(string $postId): JsonResponse
     {
         try {
-            $post = $this->postRepository->findPostWithGroupById($postId);
+            $dto = new GetCommentDTO($postId);
+
+            $post = $this->postRepository->findPostWithGroupById($dto->postId);
             if (!$post) {
                 return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
-            return $this->commentService->getCommentsForPost($postId);
+            return $this->commentService->getCommentsForPost($dto->postId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
@@ -55,7 +59,7 @@ class CommentController extends AbstractController
     }
 
     #[Route('/{commentId}/children', methods: ['GET'])]
-    public function getCommentWithChildren(string $commentId, CommentService $commentService): JsonResponse
+    public function getCommentWithChildren(string $commentId): JsonResponse
     {
         try {
             return $this->commentService->getCommentWithChildren($commentId);
@@ -71,16 +75,23 @@ class CommentController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['postId'], $data['authorId'], $data['content'])) {
+        $dto = new CreateCommentDTO(
+            $data['postId'] ?? '',
+            $data['authorId'] ?? '',
+            $data['content'] ?? '',
+            $data['parentId'] ?? null
+        );
+
+        if (!isset($dto->post, $dto->authorId, $dto->content)) {
             return $this->json(['error' => 'Missing parameters'], 400);
         }
 
-        $post = $this->postRepository->findPostWithGroupById($data['postId']);
+        $post = $this->postRepository->findPostWithGroupById($dto->postId);
         if (!$post) {
             return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
-        $findAuthor = $this->profileRepository->findOneBy($data['authorId']);
+        $findAuthor = $this->profileRepository->findOneBy((array)$dto->authorId);
         if (!$findAuthor) {
             return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
@@ -91,8 +102,8 @@ class CommentController extends AbstractController
             $comment = $this->commentService->addComment(
                 $postId,
                 $findAuthor->getId(),
-                $data['content'],
-                isset($data['parentId']) ? (string)$data['parentId'] : null,
+                $dto->content,
+                isset($dto->parentId) ? (string)$dto->parentId : null,
             );
 
             return new JsonResponse($comment);
