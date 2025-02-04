@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Service;
+
+use App\Repository\CommentRepository;
+use App\Document\Comment;
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Exception;
+
+readonly class CommentService
+{
+    public function __construct(
+        private CommentRepository $commentRepository,
+        private DocumentManager   $dm,
+    ) {}
+
+
+    public function getCommentById(string $commentId): JsonResponse
+    {
+        try {
+            $comment = $this->commentRepository->findCommentById($commentId);
+
+            if (!$comment) {
+                return new JsonResponse(['error' => 'Comment not found'], 404);
+            }
+
+            return new JsonResponse([
+                'id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
+                'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
+                'content' => $comment->getContent(),
+                'authorId' => $comment->getAuthorId(),
+                'createdAt' => $comment->getCreatedAt()
+            ], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getCommentWithChildren(string $commentId): JsonResponse
+    {
+        try {
+            $comments = $this->commentRepository->findCommentWithChildren($commentId);
+
+            if (!$comments) {
+                return new JsonResponse(['error' => 'Comment not found'], 404);
+            }
+
+            $commentMap = [];
+
+            foreach ($comments as $comment) {
+                $commentId = (string)$comment->getId();
+                $parentId = $comment->getParentId() ? (string)$comment->getParentId() : null;
+
+                $commentMap[$commentId] = [
+                    '_id' => $commentId,
+                    'postId' => (string)$comment->getPostId(),
+                    'parentId' => $parentId,
+                    'content' => $comment->getContent(),
+                    'authorId' => $comment->getAuthorId(),
+                    'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+                    'children' => []
+                ];
+            }
+
+            $rootComment = null;
+            foreach ($comments as $comment) {
+                $commentId = (string)$comment->getId();
+                $parentId = $comment->getParentId() ? (string)$comment->getParentId() : null;
+
+                if ($parentId && isset($commentMap[$parentId])) {
+                    $commentMap[$parentId]['children'][] = &$commentMap[$commentId];
+                } else {
+                    $rootComment = &$commentMap[$commentId];
+                }
+            }
+
+            return new JsonResponse($rootComment, 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getCommentsForPost(string $postId, int $limit = 20): JsonResponse
+    {
+        try {
+            if (!$postId) {
+                return new JsonResponse(['error' => 'Post ID is required'], 400);
+            }
+
+            $comments = $this->commentRepository->getMainComments($postId, $limit);
+
+            if (empty($comments)) {
+                return new JsonResponse(['message' => 'No comments found'], 200);
+            }
+
+            $formattedComments = array_map(fn($comment) => [
+                'id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
+                'parentId' => null,
+                'content' => $comment->getContent(),
+                'authorId' => $comment->getAuthorId(),
+                'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z')
+            ], $comments);
+
+            return new JsonResponse(['comments' => $formattedComments], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    public function addComment(string $postId, string $authorId, string $content, ?string $parentId = null): JsonResponse
+    {
+        try {
+            if (empty($postId) || empty($authorId) || empty($content)) {
+                return new JsonResponse(['error' => 'Missing parameters: postId, authorId, and content are required'], 400);
+            }
+
+            $comment = new Comment($postId, $authorId, $content, $parentId);
+            $this->dm->persist($comment);
+            $this->dm->flush();
+
+            if ($parentId) {
+                $parentComment = $this->dm->getRepository(Comment::class)->find($parentId);
+                if ($parentComment) {
+                    $parentComment->addChild($comment->getId());
+                    $this->dm->persist($parentComment);
+                    $this->dm->flush();
+                }
+            }
+
+            return new JsonResponse([
+                'message' => 'Comment successfully added',
+                'comment' => [
+                    'id' => $comment->getId(),
+                    'content' => $comment->getContent(),
+                    'postId' => $comment->getPostId(),
+                    'parent' => $comment->getParentId() ? (string) $comment->getParentId() : null,
+                    'createdAt' => $comment->getCreatedAt()
+                ]
+            ], 201);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+        }
+    }
+}

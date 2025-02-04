@@ -28,7 +28,8 @@
         "symfony/security-bundle": "7.1.*",
         "symfony/security-core": "7.1.*",
         "symfony/validator": "7.1.*",
-        "symfony/yaml": "7.1.*"
+        "symfony/yaml": "7.1.*",
+        "ext-mongodb": "*"
     },
     "config": {
         "allow-plugins": {

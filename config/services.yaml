@@ -37,7 +37,6 @@ services:
         arguments:
             $commentRepository: '@App\Repository\CommentRepository'
 
-
     App\Repository\CommentRepository:
         factory: [ '@doctrine_mongodb.odm.document_manager', getRepository ]
         arguments:
