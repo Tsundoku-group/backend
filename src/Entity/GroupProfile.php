@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\ValueObject\Group\GroupRole;
+use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -27,8 +28,8 @@ class GroupProfile
     #[ORM\Column(type: "datetime_immutable")]
     private DateTimeImmutable $joinAt;
 
-    #[ORM\Column(type: "datetime_immutable")]
-    private DateTimeImmutable $updatedAt;
+    #[ORM\Column(type: "datetime", nullable: true)]
+    private ?DateTime $updatedAt = null;
 
     public function __construct(Group $group, Profile $profile, GroupRole $role)
     {
@@ -70,12 +71,12 @@ class GroupProfile
         $this->markAsUpdated();
     }
 
-    public function getUpdatedAt(): DateTimeImmutable
+    public function getUpdatedAt(): DateTime
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(DateTimeImmutable $updatedAt): self
+    public function setUpdatedAt(?DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
 
@@ -90,8 +91,6 @@ class GroupProfile
     #[ORM\PreUpdate]
     public function markAsUpdated(): void
     {
-        if ($this->updatedAt !== null) {
-            $this->updatedAt = new DateTimeImmutable();
-        }
+        $this->updatedAt = new DateTime();
     }
 }

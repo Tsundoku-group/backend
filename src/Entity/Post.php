@@ -164,10 +164,9 @@ class Post
         return $this;
     }
 
-    private function markAsUpdated(): void
+    #[ORM\PreUpdate]
+    public function markAsUpdated(): void
     {
-        if ($this->updatedAt !== null) {
-            $this->updatedAt = new \DateTime();
-        }
+        $this->updatedAt = new DateTime();
     }
 }
