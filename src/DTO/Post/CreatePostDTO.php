@@ -6,18 +6,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class CreatePostDTO
 {
-    #[Assert\NotBlank(message: "Le titre est obligatoire.")]
-    #[Assert\Length(max: 255, maxMessage: "Le titre ne doit pas dépasser 255 caractères.")]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(max: 255, maxMessage: 'Le titre ne doit pas dépasser 255 caractères.')]
     public string $title;
 
-    #[Assert\NotBlank(message: "Le contenu est obligatoire.")]
+    #[Assert\NotBlank(message: 'Le contenu est obligatoire.')]
     public string $content;
 
     #[Assert\NotBlank(message: "L'auteur du post est obligatoire.")]
     #[Assert\Positive(message: "L'ID de l'auteur doit être valide.")]
     public int $authorId;
 
-    #[Assert\NotBlank(message: "Le groupe est obligatoire.")]
+    #[Assert\NotBlank(message: 'Le groupe est obligatoire.')]
     #[Assert\Positive(message: "L'ID du groupe doit être valide.")]
     public int $groupId;
 

@@ -8,7 +8,6 @@ use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Doctrine\ODM\MongoDB\Repository\DocumentRepository;
 use Doctrine\ODM\MongoDB\UnitOfWork;
 use Exception;
-use MongoDB\BSON\ObjectId;
 
 class CommentRepository extends DocumentRepository
 {
@@ -48,8 +47,8 @@ class CommentRepository extends DocumentRepository
         $comments = $this->dm->getRepository(Comment::class)
             ->createQueryBuilder()
             ->field('$or')->equals([
-                ['_id' =>$commentId],
-                ['parentId' => $commentId]
+                ['_id' => $commentId],
+                ['parentId' => $commentId],
             ])
             ->sort('createdAt', 'asc');
 

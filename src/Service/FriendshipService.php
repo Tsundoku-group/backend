@@ -11,13 +11,11 @@ use Exception;
 
 readonly class FriendshipService
 {
-
     public function __construct(
         private FriendshipRepository $friendshipRepository,
         private EntityManagerInterface $entityManager,
         private ProfileRepository $profileRepository,
-    )
-    {
+    ) {
     }
 
     public function sendFriendRequest(int $profileId, int $friendId): array
@@ -62,7 +60,6 @@ readonly class FriendshipService
         }
     }
 
-
     public function acceptFriendRequest(int $friendshipId): array
     {
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($friendshipId);
@@ -71,7 +68,7 @@ readonly class FriendshipService
             return ['error' => 'Friend request not found.', 'status' => 404];
         }
 
-        if ($friendship->getStatus() !== Friendship::STATUS_PENDING) {
+        if (Friendship::STATUS_PENDING !== $friendship->getStatus()) {
             return ['error' => 'Friend request already processed.', 'status' => 409];
         }
 
@@ -93,7 +90,7 @@ readonly class FriendshipService
             return ['error' => 'Friend request not found.', 'status' => 404];
         }
 
-        if ($friendship->getStatus() !== Friendship::STATUS_PENDING) {
+        if (Friendship::STATUS_PENDING !== $friendship->getStatus()) {
             return ['error' => 'Friend request already processed.', 'status' => 409];
         }
 
@@ -115,13 +112,13 @@ readonly class FriendshipService
             return ['error' => 'Friendship not found.', 'status' => 404];
         }
 
-        if ($friendship->getStatus() !== Friendship::STATUS_ACCEPTED) {
+        if (Friendship::STATUS_ACCEPTED !== $friendship->getStatus()) {
             return ['error' => 'Friendship not accepted.', 'status' => 409];
         }
 
         if (
-            ($friendship->getRequester()->getId() !== $dto->requesterId && $friendship->getReceiver()->getId() !== $dto->requesterId) ||
-            ($friendship->getRequester()->getId() !== $dto->receiverId && $friendship->getReceiver()->getId() !== $dto->receiverId)
+            ($friendship->getRequester()->getId() !== $dto->requesterId && $friendship->getReceiver()->getId() !== $dto->requesterId)
+            || ($friendship->getRequester()->getId() !== $dto->receiverId && $friendship->getReceiver()->getId() !== $dto->receiverId)
         ) {
             return ['error' => 'You are not authorized to remove this friendship.', 'status' => 403];
         }
@@ -200,21 +197,21 @@ readonly class FriendshipService
 
     private function handleExistingFriendship(Friendship $friendship, bool $isInverse = false): array
     {
-        $statusMessage = $isInverse ? " (inverse)" : "";
+        $statusMessage = $isInverse ? ' (inverse)' : '';
 
         if (Friendship::STATUS_PENDING === $friendship->getStatus()) {
-            return ['error' => "Request already sent. Status: pending" . $statusMessage, 'status' => 409];
+            return ['error' => 'Request already sent. Status: pending' . $statusMessage, 'status' => 409];
         }
 
         if (Friendship::STATUS_REJECTED === $friendship->getStatus()) {
             $friendship->setStatus(Friendship::STATUS_PENDING);
             $this->entityManager->flush();
 
-            return ['message' => "Friend request resent after rejection" . $statusMessage];
+            return ['message' => 'Friend request resent after rejection' . $statusMessage];
         }
 
         if (Friendship::STATUS_ACCEPTED === $friendship->getStatus()) {
-            return ['error' => "Friendship already exists" . $statusMessage, 'status' => 409];
+            return ['error' => 'Friendship already exists' . $statusMessage, 'status' => 409];
         }
 
         return ['error' => 'Unexpected status', 'status' => 500];

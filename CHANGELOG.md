@@ -70,3 +70,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-64] Ajout du Document mongodb Comment.php + logique crud [#64](https://trello.com/c/AaoOPWi6/64-t-64-ajout-du-document-mongodb-commentphp-logique-crud)
 - [t-65] Ajout des DTO pour Comment [#65](https://trello.com/c/vaOXRG0r/65-t-65-ajout-des-dto-pour-comment)
 - [t-66] Ajout du ReadMe [#66](https://trello.com/c/U7j5HiZy/66-t-66-ajout-du-readme)
+- [t-67] Ajout des méthodes pour récupérer les nouveaux Posts et les anciens Posts [#67](https://trello.com/c/cMOgp3CM/67-t-67-ajout-des-m%C3%A9thodes-pour-r%C3%A9cup%C3%A9rer-les-nouveaux-posts-et-les-anciens-posts)

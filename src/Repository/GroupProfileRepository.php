@@ -42,7 +42,7 @@ class GroupProfileRepository extends ServiceEntityRepository
             ->setParameter('profileId', $profileId);
 
         try {
-            return (bool) $isProfileBanned->getQuery()->getOneOrNullResult() !== null;
+            return null !== (bool) $isProfileBanned->getQuery()->getOneOrNullResult();
         } catch (NoResultException $e) {
             return false;
         }

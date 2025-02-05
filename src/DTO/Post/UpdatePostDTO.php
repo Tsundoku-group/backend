@@ -6,11 +6,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class UpdatePostDTO
 {
-    #[Assert\NotBlank(message: "Le titre est obligatoire.")]
-    #[Assert\Length(max: 255, maxMessage: "Le titre ne doit pas dépasser 255 caractères.")]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(max: 255, maxMessage: 'Le titre ne doit pas dépasser 255 caractères.')]
     public string $title;
 
-    #[Assert\NotBlank(message: "Le contenu est obligatoire.")]
+    #[Assert\NotBlank(message: 'Le contenu est obligatoire.')]
     public string $content;
 
     #[Assert\Choice(choices: ['public', 'private'], message: "La visibilité doit être 'public' ou 'private'.")]

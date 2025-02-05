@@ -2,19 +2,19 @@
 
 namespace App\Service;
 
-use App\Repository\CommentRepository;
 use App\Document\Comment;
+use App\Repository\CommentRepository;
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Exception;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 readonly class CommentService
 {
     public function __construct(
         private CommentRepository $commentRepository,
-        private DocumentManager   $dm,
-    ) {}
-
+        private DocumentManager $dm,
+    ) {
+    }
 
     public function getCommentById(string $commentId): JsonResponse
     {
@@ -31,7 +31,7 @@ readonly class CommentService
                 'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
-                'createdAt' => $comment->getCreatedAt()
+                'createdAt' => $comment->getCreatedAt(),
             ], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
@@ -50,24 +50,24 @@ readonly class CommentService
             $commentMap = [];
 
             foreach ($comments as $comment) {
-                $commentId = (string)$comment->getId();
-                $parentId = $comment->getParentId() ? (string)$comment->getParentId() : null;
+                $commentId = (string) $comment->getId();
+                $parentId = $comment->getParentId() ? (string) $comment->getParentId() : null;
 
                 $commentMap[$commentId] = [
                     '_id' => $commentId,
-                    'postId' => (string)$comment->getPostId(),
+                    'postId' => (string) $comment->getPostId(),
                     'parentId' => $parentId,
                     'content' => $comment->getContent(),
                     'authorId' => $comment->getAuthorId(),
                     'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
-                    'children' => []
+                    'children' => [],
                 ];
             }
 
             $rootComment = null;
             foreach ($comments as $comment) {
-                $commentId = (string)$comment->getId();
-                $parentId = $comment->getParentId() ? (string)$comment->getParentId() : null;
+                $commentId = (string) $comment->getId();
+                $parentId = $comment->getParentId() ? (string) $comment->getParentId() : null;
 
                 if ($parentId && isset($commentMap[$parentId])) {
                     $commentMap[$parentId]['children'][] = &$commentMap[$commentId];
@@ -95,13 +95,13 @@ readonly class CommentService
                 return new JsonResponse(['message' => 'No comments found'], 200);
             }
 
-            $formattedComments = array_map(fn($comment) => [
+            $formattedComments = array_map(fn ($comment) => [
                 'id' => (string) $comment->getId(),
                 'postId' => (string) $comment->getPostId(),
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
-                'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z')
+                'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
             ], $comments);
 
             return new JsonResponse(['comments' => $formattedComments], 200);
@@ -137,8 +137,8 @@ readonly class CommentService
                     'content' => $comment->getContent(),
                     'postId' => $comment->getPostId(),
                     'parent' => $comment->getParentId() ? (string) $comment->getParentId() : null,
-                    'createdAt' => $comment->getCreatedAt()
-                ]
+                    'createdAt' => $comment->getCreatedAt(),
+                ],
             ], 201);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);

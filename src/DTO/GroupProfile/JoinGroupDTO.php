@@ -7,14 +7,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 class JoinGroupDTO
 {
     #[Assert\NotBlank(message: "L'ID du groupe est requis.")]
-    #[Assert\Type(type: "integer", message: "L'ID du groupe doit être un entier.")]
+    #[Assert\Type(type: 'integer', message: "L'ID du groupe doit être un entier.")]
     public int $groupId;
 
     #[Assert\NotBlank(message: "L'ID du profil est requis.")]
-    #[Assert\Type(type: "integer", message: "L'ID du profil doit être un entier.")]
+    #[Assert\Type(type: 'integer', message: "L'ID du profil doit être un entier.")]
     public int $profileId;
 
-    #[Assert\NotBlank(message: "Le rôle est requis.")]
+    #[Assert\NotBlank(message: 'Le rôle est requis.')]
     #[Assert\Choice(choices: ['admin', 'member'], message: "Le rôle doit être 'admin' ou 'member'.")]
     public string $role;
 

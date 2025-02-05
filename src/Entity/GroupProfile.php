@@ -22,13 +22,13 @@ class GroupProfile
     #[ORM\JoinColumn(nullable: false)]
     private Profile $profile;
 
-    #[ORM\Column(type: "string", length: 10, nullable: false)]
+    #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private string $role;
 
-    #[ORM\Column(type: "datetime_immutable")]
+    #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $joinAt;
 
-    #[ORM\Column(type: "datetime", nullable: true)]
+    #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $updatedAt = null;
 
     public function __construct(Group $group, Profile $profile, GroupRole $role)

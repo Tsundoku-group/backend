@@ -10,18 +10,21 @@ use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\ValueObject\Group\GroupRole;
 use App\ValueObject\Group\GroupVisibility;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use RuntimeException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 readonly class GroupService
 {
     public function __construct(
-        private GroupProfileRepository  $groupProfileRepository,
+        private GroupProfileRepository $groupProfileRepository,
         private GroupRepository $groupRepository,
         private EntityManagerInterface $entityManager,
-        private SluggerInterface       $slugger
-    )
-    {
+        private SluggerInterface $slugger,
+    ) {
     }
 
     public function createGroup(string $name, ?string $description, Profile $creator, string $visibility): Group
@@ -31,11 +34,11 @@ readonly class GroupService
         $visibilityObject = $visibility ? GroupVisibility::fromString($visibility) : GroupVisibility::private();
 
         if ($visibilityObject->isPublic() && !$visibilityObject->isUniquePublicGroup($slug)) {
-            throw new \RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
+            throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
         }
 
         if ($visibilityObject->isPublic() && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
-            throw new \RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
+            throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
         }
 
         $this->entityManager->beginTransaction();
@@ -44,7 +47,7 @@ readonly class GroupService
             $group->setName($name);
             $group->setDescription($description);
             $group->setSlug($this->slugger->slug($name)->lower());
-            $group->setCreatedAt(new \DateTimeImmutable());
+            $group->setCreatedAt(new DateTimeImmutable());
 
             $this->entityManager->persist($group);
             $this->entityManager->flush();
@@ -54,10 +57,11 @@ readonly class GroupService
             $this->entityManager->flush();
 
             $this->entityManager->commit();
+
             return $group;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->entityManager->rollback();
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 
@@ -85,7 +89,7 @@ readonly class GroupService
         }
 
         if ($hasChanges) {
-            $group->setUpdatedAt(new \DateTime());
+            $group->setUpdatedAt(new DateTime());
         }
 
         $this->entityManager->persist($group);
@@ -99,8 +103,8 @@ readonly class GroupService
         try {
             $this->entityManager->remove($group);
             $this->entityManager->flush();
-        } catch (\Exception $e) {
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+        } catch (Exception $e) {
+            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 
@@ -109,11 +113,11 @@ readonly class GroupService
         $groupProfile = $this->groupProfileRepository->findOneBy(['group' => $group, 'profile' => $profileId]);
 
         if (!$groupProfile) {
-            throw new \RuntimeException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+            throw new RuntimeException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
         }
 
         if (!$groupProfile->getRole()->isAdmin()) {
-            throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
     }
 }
