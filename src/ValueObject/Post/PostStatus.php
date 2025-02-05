@@ -2,6 +2,8 @@
 
 namespace App\ValueObject\Post;
 
+use InvalidArgumentException;
+
 final class PostStatus
 {
     public const ACTIVE = 'active';
@@ -13,20 +15,45 @@ final class PostStatus
     private function __construct(string $value)
     {
         if (!in_array($value, self::allStatuses(), true)) {
-            throw new \InvalidArgumentException("Statut de post invalide: $value");
+            throw new InvalidArgumentException("Statut de post invalide: $value");
         }
         $this->value = $value;
     }
 
-    public static function active(): self { return new self(self::ACTIVE); }
-    public static function archived(): self { return new self(self::ARCHIVED); }
-    public static function deleted(): self { return new self(self::DELETED); }
+    public static function active(): self
+    {
+        return new self(self::ACTIVE);
+    }
 
-    public function getValue(): string { return $this->value; }
+    public static function archived(): self
+    {
+        return new self(self::ARCHIVED);
+    }
 
-    public function isActive(): bool { return $this->value === self::ACTIVE; }
-    public function isArchived(): bool { return $this->value === self::ARCHIVED; }
-    public function isDeleted(): bool { return $this->value === self::DELETED; }
+    public static function deleted(): self
+    {
+        return new self(self::DELETED);
+    }
+
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    public function isActive(): bool
+    {
+        return self::ACTIVE === $this->value;
+    }
+
+    public function isArchived(): bool
+    {
+        return self::ARCHIVED === $this->value;
+    }
+
+    public function isDeleted(): bool
+    {
+        return self::DELETED === $this->value;
+    }
 
     public function canBeEdited(): bool
     {

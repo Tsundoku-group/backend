@@ -20,11 +20,11 @@ class Post
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Group::class)]
-    #[ORM\JoinColumn(nullable: true, onDelete: "SET NULL")]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Group $group = null;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $author;
 
     #[ORM\Column(length: 255)]
@@ -36,7 +36,7 @@ class Post
     #[ORM\Column(length: 255, unique: true)]
     private string $slug;
 
-    #[ORM\Column(type: "string", length: 10, nullable: false)]
+    #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private string $visibility;
 
     #[ORM\Column(length: 20)]

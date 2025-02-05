@@ -6,9 +6,11 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
-use App\Service\PostService;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
+use App\Service\PostService;
+use Exception;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,16 +22,18 @@ class PostController extends AbstractController
     public function __construct(
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
-        private readonly ProfileRepository $profileRepository
-    ) {}
+        private readonly ProfileRepository $profileRepository,
+    ) {
+    }
 
     #[Route('/recent', methods: ['GET'])]
     public function getRecentPosts(): JsonResponse
     {
         try {
             $posts = $this->postService->getRecentPosts(10);
+
             return new JsonResponse(['posts' => $posts], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -48,9 +52,9 @@ class PostController extends AbstractController
 
             return new JsonResponse([
                 'posts' => $posts,
-                'nextPage' => $nextPage
+                'nextPage' => $nextPage,
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -74,10 +78,11 @@ class PostController extends AbstractController
 
         try {
             $post = $this->postService->createPost($dto->authorId, $dto->groupId, $dto->visibility, $dto->title, $dto->content);
+
             return new JsonResponse(['message' => 'Post créé avec succès', 'postId' => $post->getId()], 201);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -105,10 +110,11 @@ class PostController extends AbstractController
 
         try {
             $this->postService->updatePost($post, $author, $dto);
+
             return new JsonResponse(['message' => 'Post mis à jour avec succès']);
-        }  catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -128,13 +134,13 @@ class PostController extends AbstractController
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
-
         try {
             $this->postService->deletePost($dto->postId, $editor);
+
             return new JsonResponse(['message' => 'Post supprimé avec succès.']);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }

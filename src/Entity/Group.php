@@ -34,17 +34,17 @@ class Group
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: "string", length: 10, nullable: false)]
+    #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private ?string $visibility;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTime $updatedAt = null;
+    private ?DateTime $updatedAt = null;
 
     public function __construct(Profile $createdBy, GroupVisibility $visibility)
     {
@@ -78,12 +78,14 @@ class Group
         if (!$this->groupProfiles->contains($groupProfile)) {
             $this->groupProfiles[] = $groupProfile;
         }
+
         return $this;
     }
 
     public function removeGroupProfile(GroupProfile $groupProfile): self
     {
         $this->groupProfiles->removeElement($groupProfile);
+
         return $this;
     }
 
@@ -124,6 +126,7 @@ class Group
     public function setVisibility(GroupVisibility $visibility): self
     {
         $this->visibility = $visibility->getValue();
+
         return $this;
     }
 
@@ -165,17 +168,17 @@ class Group
 
     public function isPublic(): bool
     {
-        return $this->visibility === GroupVisibility::PUBLIC;
+        return GroupVisibility::PUBLIC === $this->visibility;
     }
 
     public function isPrivate(): bool
     {
-        return $this->visibility === GroupVisibility::PRIVATE;
+        return GroupVisibility::PRIVATE === $this->visibility;
     }
 
     public function isFeedGroup(): bool
     {
-        return $this->name === 'Fil d’actualité';
+        return 'Fil d’actualité' === $this->name;
     }
 
     public function isMember(Profile $profile): bool
@@ -185,6 +188,7 @@ class Group
                 return true;
             }
         }
+
         return false;
     }
 }

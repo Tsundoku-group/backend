@@ -7,6 +7,7 @@ use App\DTO\GroupProfile\JoinGroupDTO;
 use App\DTO\GroupProfile\RemoveMemberDTO;
 use App\DTO\GroupProfile\UpdateMemberRoleDTO;
 use App\Service\GroupProfileService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,8 +17,9 @@ use Symfony\Component\Routing\Annotation\Route;
 class GroupProfileController extends AbstractController
 {
     public function __construct(
-        private readonly GroupProfileService $groupProfileService
-    ) {}
+        private readonly GroupProfileService $groupProfileService,
+    ) {
+    }
 
     #[Route('/join', methods: ['POST'])]
     public function joinGroup(Request $request): JsonResponse
@@ -39,9 +41,9 @@ class GroupProfileController extends AbstractController
                     'groupId' => $groupProfile->getGroup()->getId(),
                     'profileId' => $groupProfile->getProfile()->getId(),
                     'role' => $groupProfile->getRole()->getValue(),
-                ]
+                ],
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -59,8 +61,9 @@ class GroupProfileController extends AbstractController
 
         try {
             $this->groupProfileService->updateMemberRole($dto->groupId, $dto->memberId, $dto->newRole, $dto->adminId);
+
             return new JsonResponse(['message' => 'Rôle mis à jour avec succès.']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -78,8 +81,9 @@ class GroupProfileController extends AbstractController
 
         try {
             $this->groupProfileService->removeMember($dto->groupId, $dto->profileId, $dto->adminId);
+
             return new JsonResponse(['message' => 'Membre supprimé du groupe avec succès.']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }

@@ -6,28 +6,28 @@ use App\Repository\CommentRepository;
 use DateTime;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 
-#[ODM\Document(collection: "comments", repositoryClass: CommentRepository::class)]
+#[ODM\Document(collection: 'comments', repositoryClass: CommentRepository::class)]
 class Comment
 {
     #[ODM\Id]
     private string $id;
 
-    #[ODM\Field(type: "string")]
+    #[ODM\Field(type: 'string')]
     private string $postId;
 
-    #[ODM\Field(type: "string")]
+    #[ODM\Field(type: 'string')]
     private string $authorId;
 
-    #[ODM\Field(type: "string")]
+    #[ODM\Field(type: 'string')]
     private string $content;
 
-    #[ODM\Field(type: "date")]
+    #[ODM\Field(type: 'date')]
     private DateTime $createdAt;
 
-    #[ODM\Field(type: "string")]
+    #[ODM\Field(type: 'string')]
     private ?string $parentId = null;
 
-    #[ODM\Field(type: "collection")]
+    #[ODM\Field(type: 'collection')]
     private array $children = [];
 
     public function __construct(string $postId, string $authorId, string $content, ?string $parentId = null)

@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 readonly class FollowerService
 {
     public function __construct(
-        private ProfileRepository  $profileRepository,
+        private ProfileRepository $profileRepository,
         private FollowerRepository $followerRepository,
         private EntityManagerInterface $entityManager,
     ) {

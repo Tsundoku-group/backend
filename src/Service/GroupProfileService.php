@@ -10,6 +10,7 @@ use App\Repository\GroupRepository;
 use App\Validator\Constraints\ProfileValidator;
 use App\ValueObject\Group\GroupRole;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -20,7 +21,8 @@ readonly class GroupProfileService
         private GroupProfileRepository $groupProfileRepository,
         private EntityManagerInterface $entityManager,
         private ProfileValidator $profileValidator,
-    ) {}
+    ) {
+    }
 
     public function joinGroup(int $groupId, int $profileId, string $role): GroupProfile
     {
@@ -35,7 +37,7 @@ readonly class GroupProfileService
         $existingGroupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
 
         if ($existingGroupProfile) {
-            throw new \RuntimeException(ErrorMessagesConstant::USER_ALREADY_IN_GROUP);
+            throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_IN_GROUP);
         }
 
         $groupProfile = new GroupProfile($group, $profile, GroupRole::fromString($role));
@@ -60,7 +62,7 @@ readonly class GroupProfileService
         $newRole = GroupRole::fromString($role);
 
         if ($groupProfile->getRole()->equals($newRole)) {
-            throw new \RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
+            throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
         }
 
         $groupProfile->setRole($newRole);

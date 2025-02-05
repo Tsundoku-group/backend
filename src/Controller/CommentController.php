@@ -10,21 +10,19 @@ use App\Repository\ProfileRepository;
 use App\Service\CommentService;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[Route('/api/v1/comment')]
 class CommentController extends AbstractController
 {
-
     public function __construct(
         private readonly CommentService $commentService,
         private readonly PostRepository $postRepository,
         private readonly ProfileRepository $profileRepository,
-    )
-    {
+    ) {
     }
 
     #[Route('/{commentId}', name: 'get_comment_by_id', methods: ['GET'])]
@@ -91,19 +89,19 @@ class CommentController extends AbstractController
             return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
-        $findAuthor = $this->profileRepository->findOneBy((array)$dto->authorId);
+        $findAuthor = $this->profileRepository->findOneBy((array) $dto->authorId);
         if (!$findAuthor) {
             return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
-        $postId = (string)$post->getId();
+        $postId = (string) $post->getId();
 
         try {
             $comment = $this->commentService->addComment(
                 $postId,
                 $findAuthor->getId(),
                 $dto->content,
-                isset($dto->parentId) ? (string)$dto->parentId : null,
+                isset($dto->parentId) ? (string) $dto->parentId : null,
             );
 
             return new JsonResponse($comment);

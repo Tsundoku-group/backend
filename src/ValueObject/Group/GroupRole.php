@@ -2,6 +2,8 @@
 
 namespace App\ValueObject\Group;
 
+use InvalidArgumentException;
+
 final class GroupRole
 {
     private const ADMIN = 'admin';
@@ -12,7 +14,7 @@ final class GroupRole
     private function __construct(string $value)
     {
         if (!in_array($value, self::allRoles(), true)) {
-            throw new \InvalidArgumentException("Invalid role type: $value");
+            throw new InvalidArgumentException("Invalid role type: $value");
         }
         $this->value = $value;
     }
@@ -39,12 +41,12 @@ final class GroupRole
 
     public function canDeleteGroup(): bool
     {
-        return $this->value === self::ADMIN;
+        return self::ADMIN === $this->value;
     }
 
     public function canManageMembers(): bool
     {
-        return $this->value === self::ADMIN;
+        return self::ADMIN === $this->value;
     }
 
     public function canPostContent(): bool
@@ -64,12 +66,12 @@ final class GroupRole
 
     public function isAdmin(): bool
     {
-        return $this->value === self::ADMIN;
+        return self::ADMIN === $this->value;
     }
 
     public function isMember(): bool
     {
-        return $this->value === self::MEMBER;
+        return self::MEMBER === $this->value;
     }
 
     public static function allRoles(): array

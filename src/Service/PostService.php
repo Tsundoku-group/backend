@@ -13,28 +13,30 @@ use App\Repository\ProfileRepository;
 use App\Validator\Constraints\ProfileValidator;
 use App\ValueObject\Post\PostVisibility;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use RuntimeException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 readonly class PostService
 {
     public function __construct(
-        private ProfileValidator       $profileValidator,
-        private ProfileRepository      $profileRepository,
-        private GroupRepository        $groupRepository,
+        private ProfileValidator $profileValidator,
+        private ProfileRepository $profileRepository,
+        private GroupRepository $groupRepository,
         private EntityManagerInterface $entityManager,
         private GroupProfileRepository $groupProfileRepository,
-        private PostRepository         $postRepository,
-        private SluggerInterface       $slugger
-    )
-    {
+        private PostRepository $postRepository,
+        private SluggerInterface $slugger,
+    ) {
     }
 
     public function getRecentPosts(int $limit = 10): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -43,7 +45,7 @@ readonly class PostService
             'visibility' => $post->getVisibility()->getValue(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
-            ]
+            ],
         ], $posts);
     }
 
@@ -51,7 +53,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
@@ -60,7 +62,7 @@ readonly class PostService
             'visibility' => $post->getVisibility()->getValue(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
-            ]
+            ],
         ], $posts);
     }
 
@@ -70,25 +72,25 @@ readonly class PostService
 
         $author = $this->profileRepository->find($authorId);
         if (!$author) {
-            throw new \RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
+            throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
         $this->profileValidator->validateProfile($authorId);
 
         $group = $this->groupRepository->find($groupId);
         if (!$group) {
-            throw new \RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
+            throw new RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
         if ($visibilityObject->isPublic() && !$group->getVisibility()->isUniquePublicGroup($group->getSlug())) {
-            throw new \RuntimeException("Les posts publics ne peuvent être créés que dans le Fil d'actualité.");
+            throw new RuntimeException("Les posts publics ne peuvent être créés que dans le Fil d'actualité.");
         }
 
         if ($group->isPrivate() && !$group->isMember($author)) {
-            throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
         if ($group->isPrivate() && $visibilityObject->isPublic()) {
-            throw new \RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+            throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
         }
 
         $this->entityManager->beginTransaction();
@@ -98,7 +100,7 @@ readonly class PostService
             $post->setContent($content);
             $post->setVisibility($visibilityObject);
             $post->setSlug($this->slugger->slug($title)->lower());
-            $post->setCreatedAt(new \DateTimeImmutable());
+            $post->setCreatedAt(new DateTimeImmutable());
             $post->setGroup($group);
             $post->setAuthor($author);
 
@@ -107,16 +109,16 @@ readonly class PostService
             $this->entityManager->commit();
 
             return $post;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->entityManager->rollback();
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
+            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function updatePost(Post $post, Profile $editor, UpdatePostDto $dto): void
+    public function updatePost(Post $post, Profile $editor, UpdatePostDTO $dto): void
     {
         if ($post->getAuthor() !== $editor) {
-            throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
         $changesMade = false;
@@ -145,8 +147,8 @@ readonly class PostService
 
         try {
             $this->entityManager->flush();
-        } catch (\Exception $e) {
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
+        } catch (Exception $e) {
+            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -154,33 +156,35 @@ readonly class PostService
     {
         $post = $this->postRepository->findPostWithGroupById($postId);
         if (!$post) {
-            throw new \RuntimeException(ErrorMessagesConstant::POST_NOT_FOUND);
+            throw new RuntimeException(ErrorMessagesConstant::POST_NOT_FOUND);
         }
 
         if ($post->getAuthor() === $editor) {
             $this->removePost($post);
+
             return;
         }
 
         if ($post->getGroup() && $post->getGroup()->isPrivate()) {
             $groupProfile = $this->groupProfileRepository->findOneBy([
                 'group' => $post->getGroup(),
-                'profile' => $editor->getId()
+                'profile' => $editor->getId(),
             ]);
 
             if (!$groupProfile) {
-                throw new \RuntimeException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+                throw new RuntimeException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
             }
 
             if (!$groupProfile->getRole()->isAdmin()) {
-                throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+                throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
             }
 
             $this->removePost($post);
+
             return;
         }
 
-        throw new \RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+        throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
     }
 
     private function removePost(Post $post): void
@@ -188,8 +192,8 @@ readonly class PostService
         try {
             $this->entityManager->remove($post);
             $this->entityManager->flush();
-        } catch (\Exception $e) {
-            throw new \RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+        } catch (Exception $e) {
+            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 }
