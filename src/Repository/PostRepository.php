@@ -15,6 +15,37 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
+    public function findRecentPosts(int $limit = 10): array
+    {
+        $recentPosts = $this->createQueryBuilder('p')
+            ->where('p.visibility = :visibility')
+            ->setParameter('visibility', 'public')
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit);
+
+        try {
+            return $recentPosts->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+
+    public function findOlderPosts(int $page, int $limit): array
+    {
+        $olderPosts = $this->createQueryBuilder('p')
+            ->where('p.visibility = :visibility')
+            ->setParameter('visibility', 'public')
+            ->orderBy('p.createdAt', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        try {
+            return $olderPosts->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+
     public function findPostWithGroupById(int $postId): ?Post
     {
         $qb = $this->createQueryBuilder('p')
@@ -28,5 +59,13 @@ class PostRepository extends ServiceEntityRepository
         } catch (NoResultException) {
             return null;
         }
+    }
+
+    public function countTotalPosts(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

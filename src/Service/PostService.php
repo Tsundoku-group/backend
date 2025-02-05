@@ -30,6 +30,40 @@ readonly class PostService
     {
     }
 
+    public function getRecentPosts(int $limit = 10): array
+    {
+        $posts = $this->postRepository->findRecentPosts($limit);
+
+        return array_map(fn($post) => [
+            'id' => $post->getId(),
+            'title' => $post->getTitle(),
+            'content' => $post->getContent(),
+            'slug' => $post->getSlug(),
+            'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+            'visibility' => $post->getVisibility()->getValue(),
+            'author' => [
+                'id' => $post->getAuthor()->getId(),
+            ]
+        ], $posts);
+    }
+
+    public function getOlderPosts(int $page, int $limit): array
+    {
+        $posts = $this->postRepository->findOlderPosts($page, $limit);
+
+        return array_map(fn($post) => [
+            'id' => $post->getId(),
+            'title' => $post->getTitle(),
+            'content' => substr($post->getContent(), 0, 300),
+            'slug' => $post->getSlug(),
+            'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+            'visibility' => $post->getVisibility()->getValue(),
+            'author' => [
+                'id' => $post->getAuthor()->getId(),
+            ]
+        ], $posts);
+    }
+
     public function createPost(int $authorId, int $groupId, string $visibility, string $title, string $content): Post
     {
         $visibilityObject = PostVisibility::fromString($visibility);

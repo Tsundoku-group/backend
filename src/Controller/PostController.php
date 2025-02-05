@@ -23,6 +23,38 @@ class PostController extends AbstractController
         private readonly ProfileRepository $profileRepository
     ) {}
 
+    #[Route('/recent', methods: ['GET'])]
+    public function getRecentPosts(): JsonResponse
+    {
+        try {
+            $posts = $this->postService->getRecentPosts(10);
+            return new JsonResponse(['posts' => $posts], 200);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/older', methods: ['GET'])]
+    public function getOlderPosts(Request $request): JsonResponse
+    {
+        $page = max((int) $request->query->get('page', 1), 1);
+        $limit = max((int) $request->query->get('limit', 10), 10);
+
+        try {
+            $posts = $this->postService->getOlderPosts($page, $limit);
+            $totalPosts = $this->postRepository->countTotalPosts();
+            $remainingPosts = $totalPosts - ($page * $limit);
+            $nextPage = $remainingPosts > 0 ? $page + 1 : null;
+
+            return new JsonResponse([
+                'posts' => $posts,
+                'nextPage' => $nextPage
+            ], 200);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
     #[Route('/create', methods: ['POST'])]
     public function createPost(Request $request): JsonResponse
     {
