@@ -58,4 +58,17 @@ class CommentRepository extends DocumentRepository
             return null;
         }
     }
+
+    public function countCommentsForPost(string $postId): int
+    {
+        try {
+            return $this->createQueryBuilder()
+                ->field('postId')->equals($postId)
+                ->count()
+                ->getQuery()
+                ->execute();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 }
