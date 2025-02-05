@@ -82,7 +82,7 @@ readonly class CommentService
         }
     }
 
-    public function getCommentsForPost(string $postId, int $limit = 20): JsonResponse
+    public function getCommentsForPost(string $postId, int $limit = 5): JsonResponse
     {
         try {
             if (!$postId) {
@@ -101,7 +101,7 @@ readonly class CommentService
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
-                'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+                'createdAt' => $comment->getCreatedAt(),
             ], $comments);
 
             return new JsonResponse(['comments' => $formattedComments], 200);
