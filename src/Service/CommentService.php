@@ -38,45 +38,26 @@ readonly class CommentService
         }
     }
 
-    public function getCommentWithChildren(string $commentId): JsonResponse
+    public function getCommentChildren(string $commentId): JsonResponse
     {
         try {
-            $comments = $this->commentRepository->findCommentWithChildren($commentId);
+            $childComments = $this->commentRepository->findChildrenByParentId($commentId);
 
-            if (!$comments) {
-                return new JsonResponse(['error' => 'Comment not found'], 404);
+            if (empty($childComments)) {
+                return new JsonResponse([], 200);
             }
 
-            $commentMap = [];
+            $formattedComments = array_map(fn($comment) => [
+                '_id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
+                'parentId' => (string) $comment->getParentId(),
+                'content' => $comment->getContent(),
+                'authorId' => $comment->getAuthorId(),
+                'createdAt' => $comment->getCreatedAt(),
+                'children' => []
+            ], $childComments);
 
-            foreach ($comments as $comment) {
-                $commentId = (string) $comment->getId();
-                $parentId = $comment->getParentId() ? (string) $comment->getParentId() : null;
-
-                $commentMap[$commentId] = [
-                    '_id' => $commentId,
-                    'postId' => (string) $comment->getPostId(),
-                    'parentId' => $parentId,
-                    'content' => $comment->getContent(),
-                    'authorId' => $comment->getAuthorId(),
-                    'createdAt' => $comment->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
-                    'children' => [],
-                ];
-            }
-
-            $rootComment = null;
-            foreach ($comments as $comment) {
-                $commentId = (string) $comment->getId();
-                $parentId = $comment->getParentId() ? (string) $comment->getParentId() : null;
-
-                if ($parentId && isset($commentMap[$parentId])) {
-                    $commentMap[$parentId]['children'][] = &$commentMap[$commentId];
-                } else {
-                    $rootComment = &$commentMap[$commentId];
-                }
-            }
-
-            return new JsonResponse($rootComment, 200);
+            return new JsonResponse($formattedComments, 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
         }
@@ -102,6 +83,7 @@ readonly class CommentService
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
+                'replyCount' => $this->commentRepository->countChildrenByParentId($comment->getId()),
             ], $comments);
 
             return new JsonResponse(['comments' => $formattedComments], 200);

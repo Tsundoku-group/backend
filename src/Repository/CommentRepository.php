@@ -42,20 +42,16 @@ class CommentRepository extends DocumentRepository
         }
     }
 
-    public function findCommentWithChildren(string $commentId): ?array
+    public function findChildrenByParentId(string $commentId): array
     {
-        $comments = $this->dm->getRepository(Comment::class)
-            ->createQueryBuilder()
-            ->field('$or')->equals([
-                ['_id' => $commentId],
-                ['parentId' => $commentId],
-            ])
+        $commentChildren = $this->createQueryBuilder()
+            ->field('parentId')->equals($commentId)
             ->sort('createdAt', 'asc');
 
         try {
-            return $comments->getQuery()->execute()->toArray();
+            return $commentChildren->getQuery()->execute()->toArray();
         } catch (Exception $e) {
-            return null;
+            return [];
         }
     }
 
@@ -70,5 +66,14 @@ class CommentRepository extends DocumentRepository
         } catch (Exception $e) {
             return 0;
         }
+    }
+
+    public function countChildrenByParentId(string $commentId): int
+    {
+        return $this->createQueryBuilder()
+            ->field('parentId')->equals($commentId)
+            ->count()
+            ->getQuery()
+            ->execute();
     }
 }
