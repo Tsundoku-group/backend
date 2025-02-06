@@ -6,6 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
+use App\Repository\CommentRepository;
 use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
@@ -22,21 +23,23 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 readonly class PostService
 {
     public function __construct(
-        private ProfileValidator $profileValidator,
-        private ProfileRepository $profileRepository,
-        private GroupRepository $groupRepository,
+        private ProfileValidator       $profileValidator,
+        private ProfileRepository      $profileRepository,
+        private GroupRepository        $groupRepository,
         private EntityManagerInterface $entityManager,
         private GroupProfileRepository $groupProfileRepository,
-        private PostRepository $postRepository,
-        private SluggerInterface $slugger,
-    ) {
+        private PostRepository         $postRepository,
+        private SluggerInterface       $slugger,
+        private CommentRepository      $commentRepository,
+    )
+    {
     }
 
     public function getRecentPosts(int $limit = 10): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -46,6 +49,7 @@ readonly class PostService
             'author' => [
                 'id' => $post->getAuthor()->getId(),
             ],
+            'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
         ], $posts);
     }
 
@@ -53,7 +57,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
@@ -63,6 +67,7 @@ readonly class PostService
             'author' => [
                 'id' => $post->getAuthor()->getId(),
             ],
+            'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
         ], $posts);
     }
 

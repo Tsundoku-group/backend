@@ -60,7 +60,7 @@ class CommentController extends AbstractController
     public function getCommentWithChildren(string $commentId): JsonResponse
     {
         try {
-            return $this->commentService->getCommentWithChildren($commentId);
+            return $this->commentService->getCommentChildren($commentId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
