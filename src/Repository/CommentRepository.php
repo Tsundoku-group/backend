@@ -31,7 +31,6 @@ class CommentRepository extends DocumentRepository
     {
         $queryBuilder = $this->createQueryBuilder()
             ->field('postId')->equals($postId)
-            ->field('parentId')->equals(null)
             ->sort('_id', 'desc')
             ->limit($limit);
 

@@ -80,7 +80,7 @@ class CommentController extends AbstractController
             $data['parentId'] ?? null
         );
 
-        if (!isset($dto->post, $dto->authorId, $dto->content)) {
+        if (!isset($dto->postId, $dto->authorId, $dto->content)) {
             return $this->json(['error' => 'Missing parameters'], 400);
         }
 
@@ -89,7 +89,7 @@ class CommentController extends AbstractController
             return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
-        $findAuthor = $this->profileRepository->findOneBy((array) $dto->authorId);
+        $findAuthor = $this->profileRepository->findProfileById($dto->authorId);
         if (!$findAuthor) {
             return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
@@ -97,14 +97,12 @@ class CommentController extends AbstractController
         $postId = (string) $post->getId();
 
         try {
-            $comment = $this->commentService->addComment(
+            return $this->commentService->addComment(
                 $postId,
-                $findAuthor->getId(),
+                $findAuthor['id'],
                 $dto->content,
                 isset($dto->parentId) ? (string) $dto->parentId : null,
             );
-
-            return new JsonResponse($comment);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {

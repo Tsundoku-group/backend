@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Document\Comment;
 use App\Repository\CommentRepository;
+use App\Repository\PostRepository;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,6 +13,7 @@ readonly class CommentService
 {
     public function __construct(
         private CommentRepository $commentRepository,
+        private PostRepository $postRepository,
         private DocumentManager $dm,
     ) {
     }
@@ -66,6 +68,10 @@ readonly class CommentService
     public function getCommentsForPost(string $postId, int $limit = 5): JsonResponse
     {
         try {
+            $findPost = $this->postRepository->findOneBy(['id' => $postId]);
+            if (!$findPost) {
+                return new JsonResponse(['error' => 'Post not found'], 404);
+            }
             if (!$postId) {
                 return new JsonResponse(['error' => 'Post ID is required'], 400);
             }
