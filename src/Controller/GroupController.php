@@ -42,6 +42,10 @@ class GroupController extends AbstractController
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
 
+        if ($dto->visibility === 'public' && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
+            throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
+        }
+
         try {
             $group = $this->groupService->createGroup(
                 $dto->name,
@@ -83,8 +87,8 @@ class GroupController extends AbstractController
         }
         $this->profileValidator->validateProfile($dto->profileId);
 
-        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
-            return new JsonResponse(['error' => 'Access denied'], 403);
+        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) ) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::ACCESS_DENIED], 403);
         }
 
         try {
