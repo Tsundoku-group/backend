@@ -2,6 +2,8 @@
 
 namespace App\Security\Voter\Post;
 
+use App\Entity\Post;
+use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -22,15 +24,27 @@ final class PostStatusVoter extends Voter
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
-        if (!$subject) {
+        if (!$subject instanceof Post) {
             return false;
         }
 
-        return match ($attribute) {
-            self::EDIT_POST => $subject->canBeEdited(),
-            self::DELETE_POST => $subject->canBeDeleted(),
-            self::RESTORE_POST => $subject->canBeRestored(),
-            default => false,
-        };
+        $user = $token->getUser();
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        $profiles = $user->getProfiles();
+
+        foreach ($profiles as $profile) {
+            if ($subject->getAuthor()->getId() === $profile->getId()) {
+                return match ($attribute) {
+                    self::EDIT_POST, self::DELETE_POST => true,
+                    self::RESTORE_POST => false,
+                    default => false,
+                };
+            }
+        }
+
+        return false;
     }
 }
