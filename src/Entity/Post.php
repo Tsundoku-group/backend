@@ -34,7 +34,7 @@ class Post
     #[ORM\Column(type: Types::TEXT)]
     private string $content;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     private string $slug;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
