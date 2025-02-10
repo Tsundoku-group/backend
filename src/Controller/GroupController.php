@@ -53,7 +53,7 @@ class GroupController extends AbstractController
                     'id' => $group->getId(),
                     'name' => $group->getName(),
                     'slug' => $group->getSlug(),
-                    'visibility' => $group->getVisibility()->getValue(),
+                    'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt()->format('Y-m-d H:i:s'),
                 ],
             ], 201);
