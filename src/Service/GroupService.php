@@ -6,7 +6,6 @@ use App\Constant\ErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
-use App\Repository\GroupRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use DateTime;
 use DateTimeImmutable;
@@ -21,6 +20,7 @@ readonly class GroupService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private SluggerInterface $slugger,
+        private AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
