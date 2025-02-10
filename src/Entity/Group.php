@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\GroupRepository;
-use App\Security\Voter\Group\GroupRoleVoter;
-use App\Security\Voter\Group\GroupVisibilityVoter;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -12,7 +10,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[ORM\Entity(repositoryClass: GroupRepository::class)]
 #[ORM\Table(name: '`group`')]
@@ -48,15 +45,13 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
 
-    private AuthorizationCheckerInterface $authorizationChecker;
 
-    public function __construct(Profile $createdBy, AuthorizationCheckerInterface $authorizationChecker)
+    public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
-        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getId(): ?int
@@ -158,30 +153,5 @@ class Group
     {
         $this->updatedAt = $updatedAt;
         return $this;
-    }
-
-    public function canView(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::VIEW_GROUP, $this);
-    }
-
-    public function canEdit(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::EDIT_GROUP, $this);
-    }
-
-    public function canManageMembers(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $this);
-    }
-
-    public function canDelete(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $this);
-    }
-
-    public function canPostContent(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::POST_CONTENT, $this);
     }
 }
