@@ -103,13 +103,13 @@ class PostController extends AbstractController
             $data['visibility'] ?? 'private'
         );
 
-        $author = $this->profileRepository->find($data['authorId'] ?? 0);
+        $author = $this->profileRepository->find($data['authorId']);
         if (!$author) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $this->postService->updatePost($post, $author, $dto);
+            $this->postService->updatePost($post, $dto, $author);
 
             return new JsonResponse(['message' => 'Post mis à jour avec succès']);
         } catch (RuntimeException $e) {
