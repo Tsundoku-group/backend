@@ -115,6 +115,18 @@ class Group
         return $this;
     }
 
+    public function getVisibility(): ?string
+    {
+        return $this->visibility;
+    }
+
+    public function setVisibility(string $visibility): self
+    {
+        $this->visibility = $visibility;
+
+        return $this;
+    }
+
     public function canView(): bool
     {
         return $this->authorizationChecker->isGranted(GroupVisibilityVoter::VIEW_GROUP, $this);
