@@ -3,13 +3,14 @@
 namespace App\Entity;
 
 use App\Repository\PostRepository;
-use App\ValueObject\Post\PostStatus;
-use App\ValueObject\Post\PostVisibility;
+use App\Security\Voter\Post\PostStatusVoter;
+use App\Security\Voter\Post\PostVisibilityVoter;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 class Post
@@ -48,10 +49,13 @@ class Post
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?DateTimeInterface $updatedAt = null;
 
-    public function __construct()
+    private AuthorizationCheckerInterface $authorizationChecker;
+
+    public function __construct(AuthorizationCheckerInterface $authorizationChecker)
     {
-        $this->status = PostStatus::ACTIVE;
+        $this->status = 'active';
         $this->createdAt = new DateTimeImmutable();
+        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getId(): int
@@ -67,7 +71,6 @@ class Post
     public function setAuthor(Profile $author): self
     {
         $this->author = $author;
-
         return $this;
     }
 
@@ -79,7 +82,6 @@ class Post
     public function setGroup(?Group $group): self
     {
         $this->group = $group;
-
         return $this;
     }
 
@@ -114,30 +116,27 @@ class Post
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
-
         return $this;
     }
 
-    public function getVisibility(): PostVisibility
+    public function canChangeVisibility(string $newVisibility): bool
     {
-        return PostVisibility::fromString($this->visibility);
+        return $this->authorizationChecker->isGranted(PostVisibilityVoter::CHANGE_VISIBILITY, $this->visibility);
     }
 
-    public function setVisibility(PostVisibility $visibility): void
+    public function canEdit(): bool
     {
-        $this->visibility = $visibility->getValue();
-        $this->markAsUpdated();
+        return $this->authorizationChecker->isGranted(PostStatusVoter::EDIT_POST, $this->status);
     }
 
-    public function getStatus(): PostStatus
+    public function canDelete(): bool
     {
-        return PostStatus::fromString($this->status);
+        return $this->authorizationChecker->isGranted(PostStatusVoter::DELETE_POST, $this->status);
     }
 
-    public function setStatus(PostStatus $status): void
+    public function canRestore(): bool
     {
-        $this->status = $status->getValue();
-        $this->markAsUpdated();
+        return $this->authorizationChecker->isGranted(PostStatusVoter::RESTORE_POST, $this->status);
     }
 
     public function getCreatedAt(): DateTimeImmutable
@@ -148,7 +147,6 @@ class Post
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 
@@ -160,7 +158,6 @@ class Post
     public function setUpdatedAt(DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
-
         return $this;
     }
 
