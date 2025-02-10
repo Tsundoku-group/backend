@@ -49,13 +49,10 @@ class Post
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?DateTimeInterface $updatedAt = null;
 
-    private AuthorizationCheckerInterface $authorizationChecker;
-
-    public function __construct(AuthorizationCheckerInterface $authorizationChecker)
+    public function __construct()
     {
         $this->status = 'active';
         $this->createdAt = new DateTimeImmutable();
-        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getId(): int
@@ -129,26 +126,6 @@ class Post
         $this->visibility = $visibility;
 
         return $this;
-    }
-
-    public function canChangeVisibility(string $newVisibility): bool
-    {
-        return $this->authorizationChecker->isGranted(PostVisibilityVoter::CHANGE_VISIBILITY, $this->visibility);
-    }
-
-    public function canEdit(): bool
-    {
-        return $this->authorizationChecker->isGranted(PostStatusVoter::EDIT_POST, $this->status);
-    }
-
-    public function canDelete(): bool
-    {
-        return $this->authorizationChecker->isGranted(PostStatusVoter::DELETE_POST, $this->status);
-    }
-
-    public function canRestore(): bool
-    {
-        return $this->authorizationChecker->isGranted(PostStatusVoter::RESTORE_POST, $this->status);
     }
 
     public function getCreatedAt(): DateTimeImmutable
