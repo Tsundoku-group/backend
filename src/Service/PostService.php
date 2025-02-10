@@ -45,7 +45,7 @@ readonly class PostService
             'content' => $post->getContent(),
             'slug' => $post->getSlug(),
             'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
-            'visibility' => $post->getVisibility()->getValue(),
+            'visibility' => $post->getVisibility(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
             ],
@@ -62,7 +62,7 @@ readonly class PostService
             'content' => substr($post->getContent(), 0, 300),
             'slug' => $post->getSlug(),
             'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
-            'visibility' => $post->getVisibility()->getValue(),
+            'visibility' => $post->getVisibility(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
             ],
