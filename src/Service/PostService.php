@@ -6,7 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
-use App\Repository\CommentRepository;
+use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
@@ -26,12 +26,44 @@ readonly class PostService
     public function __construct(
         private ProfileValidator       $profileValidator,
         private ProfileRepository      $profileRepository,
+        private GroupProfileRepository $groupProfileRepository,
         private GroupRepository        $groupRepository,
         private EntityManagerInterface $entityManager,
         private PostRepository         $postRepository,
         private SluggerInterface       $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
     ) {}
+
+    public function getRecentPosts(int $limit = 10): array
+    {
+        $posts = $this->postRepository->findRecentPosts($limit);
+        return array_map(fn ($post) => [
+            'id' => $post->getId(),
+            'title' => $post->getTitle(),
+            'content' => $post->getContent(),
+            'slug' => $post->getSlug(),
+            'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+            'visibility' => $post->getVisibility()->getValue(),
+            'author' => [
+                'id' => $post->getAuthor()->getId(),
+            ],
+        ], $posts);
+    }
+    public function getOlderPosts(int $page, int $limit): array
+    {
+        $posts = $this->postRepository->findOlderPosts($page, $limit);
+        return array_map(fn ($post) => [
+            'id' => $post->getId(),
+            'title' => $post->getTitle(),
+            'content' => substr($post->getContent(), 0, 300),
+            'slug' => $post->getSlug(),
+            'createdAt' => $post->getCreatedAt()->format('Y-m-d\TH:i:s\Z'),
+            'visibility' => $post->getVisibility()->getValue(),
+            'author' => [
+                'id' => $post->getAuthor()->getId(),
+            ],
+        ], $posts);
+    }
 
     public function createPost(int $authorId, int $groupId, string $visibility, string $title, string $content): Post
     {
@@ -46,12 +78,16 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
-        if (!$this->authorizationChecker->isGranted('post_content', $group)) {
+        if (!$this->groupProfileRepository->findOneBy(['group' => $group, 'profile' => $author])) {
             throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
         if ($visibility === 'public' && $group->getVisibility() !== 'public') {
             throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+        }
+
+        if (!$this->authorizationChecker->isGranted('post_content', $group)) {
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
         $this->entityManager->beginTransaction();
@@ -76,8 +112,12 @@ readonly class PostService
         }
     }
 
-    public function updatePost(Post $post, Profile $editor, UpdatePostDTO $dto): void
+    public function updatePost(Post $post, UpdatePostDTO $dto, Profile $editor): void
     {
+        if ($post->getAuthor()->getId() !== $editor->getId()) {
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+        }
+
         if (!$this->authorizationChecker->isGranted(PostStatusVoter::EDIT_POST, $post)) {
             throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
