@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\GroupRepository;
-use App\ValueObject\Group\GroupVisibility;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -46,23 +45,17 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
 
-    public function __construct(Profile $createdBy, GroupVisibility $visibility)
+    public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
-        $this->visibility = $visibility->getValue();
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(int $id): void
-    {
-        $this->id = $id;
     }
 
     /**
@@ -118,14 +111,14 @@ class Group
         return $this;
     }
 
-    public function getVisibility(): GroupVisibility
+    public function getVisibility(): ?string
     {
-        return GroupVisibility::fromString($this->visibility);
+        return $this->visibility;
     }
 
-    public function setVisibility(GroupVisibility $visibility): self
+    public function setVisibility(string $visibility): self
     {
-        $this->visibility = $visibility->getValue();
+        $this->visibility = $visibility;
 
         return $this;
     }
@@ -164,31 +157,5 @@ class Group
         $this->updatedAt = $updatedAt;
 
         return $this;
-    }
-
-    public function isPublic(): bool
-    {
-        return GroupVisibility::PUBLIC === $this->visibility;
-    }
-
-    public function isPrivate(): bool
-    {
-        return GroupVisibility::PRIVATE === $this->visibility;
-    }
-
-    public function isFeedGroup(): bool
-    {
-        return 'Fil d’actualité' === $this->name;
-    }
-
-    public function isMember(Profile $profile): bool
-    {
-        foreach ($this->groupProfiles as $groupProfile) {
-            if ($groupProfile->getProfile()->getId() === $profile->getId()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

@@ -59,7 +59,7 @@ class PostController extends AbstractController
         }
     }
 
-    #[Route('/create', methods: ['POST'])]
+    #[Route('', methods: ['POST'])]
     public function createPost(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -87,7 +87,7 @@ class PostController extends AbstractController
         }
     }
 
-    #[Route('/{postId}/edit', methods: ['PUT'])]
+    #[Route('/{postId}', methods: ['PUT'])]
     public function updatePost(int $postId, Request $request): JsonResponse
     {
         $post = $this->postRepository->find($postId);
@@ -103,13 +103,13 @@ class PostController extends AbstractController
             $data['visibility'] ?? 'private'
         );
 
-        $author = $this->profileRepository->find($data['authorId'] ?? 0);
+        $author = $this->profileRepository->find($data['authorId']);
         if (!$author) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $this->postService->updatePost($post, $author, $dto);
+            $this->postService->updatePost($post, $dto, $author);
 
             return new JsonResponse(['message' => 'Post mis à jour avec succès']);
         } catch (RuntimeException $e) {
@@ -119,7 +119,7 @@ class PostController extends AbstractController
         }
     }
 
-    #[Route('/{postId}/delete', methods: ['DELETE'])]
+    #[Route('/{postId}', methods: ['DELETE'])]
     public function deletePost(int $postId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

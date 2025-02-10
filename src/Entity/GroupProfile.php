@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\ValueObject\Group\GroupRole;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,7 +30,7 @@ class GroupProfile
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $updatedAt = null;
 
-    public function __construct(Group $group, Profile $profile, GroupRole $role)
+    public function __construct(Group $group, Profile $profile, string $role)
     {
         $this->group = $group;
         $this->profile = $profile;
@@ -49,14 +48,14 @@ class GroupProfile
         return $this->profile;
     }
 
-    public function getRole(): GroupRole
+    public function getRole(): string
     {
-        return GroupRole::fromString($this->role);
+        return $this->role;
     }
 
-    public function setRole(GroupRole $role): void
+    public function setRole(string $role): void
     {
-        $this->role = $role->getValue();
+        $this->role = $role;
         $this->markAsUpdated();
     }
 
@@ -71,7 +70,7 @@ class GroupProfile
         $this->markAsUpdated();
     }
 
-    public function getUpdatedAt(): DateTime
+    public function getUpdatedAt(): ?DateTime
     {
         return $this->updatedAt;
     }
@@ -85,7 +84,7 @@ class GroupProfile
 
     public function isAdmin(): bool
     {
-        return $this->role->isAdmin();
+        return 'admin' === $this->role;
     }
 
     #[ORM\PreUpdate]

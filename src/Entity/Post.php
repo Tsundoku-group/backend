@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\PostRepository;
-use App\ValueObject\Post\PostStatus;
-use App\ValueObject\Post\PostVisibility;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -33,7 +31,7 @@ class Post
     #[ORM\Column(type: Types::TEXT)]
     private string $content;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     private string $slug;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
@@ -50,7 +48,7 @@ class Post
 
     public function __construct()
     {
-        $this->status = PostStatus::ACTIVE;
+        $this->status = 'active';
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -118,26 +116,28 @@ class Post
         return $this;
     }
 
-    public function getVisibility(): PostVisibility
+    public function getVisibility(): string
     {
-        return PostVisibility::fromString($this->visibility);
+        return $this->visibility;
     }
 
-    public function setVisibility(PostVisibility $visibility): void
+    public function setVisibility(string $visibility): self
     {
-        $this->visibility = $visibility->getValue();
-        $this->markAsUpdated();
+        $this->visibility = $visibility;
+
+        return $this;
     }
 
-    public function getStatus(): PostStatus
+    public function getStatus(): string
     {
-        return PostStatus::fromString($this->status);
+        return $this->status;
     }
 
-    public function setStatus(PostStatus $status): void
+    public function setStatus(string $status): self
     {
-        $this->status = $status->getValue();
-        $this->markAsUpdated();
+        $this->status = $status;
+
+        return $this;
     }
 
     public function getCreatedAt(): DateTimeImmutable

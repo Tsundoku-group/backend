@@ -14,7 +14,7 @@ class DeletePostDTO
     #[Assert\Type(type: 'integer', message: "L'identifiant de l'éditeur doit être un nombre entier.")]
     public int $editorId;
 
-    public function __construct(int $postId, int $editorId)
+    public function __construct(int $editorId, int $postId)
     {
         $this->postId = $postId;
         $this->editorId = $editorId;

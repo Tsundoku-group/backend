@@ -7,6 +7,7 @@ use App\DTO\Group\CreateGroupDTO;
 use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
 use App\Repository\GroupRepository;
+use App\Security\Voter\Group\GroupRoleVoter;
 use App\Service\GroupService;
 use App\Validator\Constraints\ProfileValidator;
 use Exception;
@@ -15,6 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[Route('/api/v1/group')]
 class GroupController extends AbstractController
@@ -23,10 +25,11 @@ class GroupController extends AbstractController
         private readonly GroupService $groupService,
         private readonly GroupRepository $groupRepository,
         private readonly ProfileValidator $profileValidator,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
-    #[Route('/create', methods: ['POST'])]
+    #[Route('', methods: ['POST'])]
     public function createGroup(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -38,6 +41,10 @@ class GroupController extends AbstractController
         }
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
+
+        if ('public' === $dto->visibility && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
+            throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
+        }
 
         try {
             $group = $this->groupService->createGroup(
@@ -53,7 +60,7 @@ class GroupController extends AbstractController
                     'id' => $group->getId(),
                     'name' => $group->getName(),
                     'slug' => $group->getSlug(),
-                    'visibility' => $group->getVisibility()->getValue(),
+                    'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt()->format('Y-m-d H:i:s'),
                 ],
             ], 201);
@@ -64,7 +71,7 @@ class GroupController extends AbstractController
         }
     }
 
-    #[Route('/{id}/edit', methods: ['PUT'])]
+    #[Route('/{id}', methods: ['PUT'])]
     public function updateGroup(int $id, Request $request): JsonResponse
     {
         $group = $this->groupRepository->find($id);
@@ -73,19 +80,22 @@ class GroupController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        $dto = new UpdateGroupDTO($data['name'], $data['visibility'], $data['profileId'], $data['description'], $group->getId());
-        if (!isset($dto->name, $dto->description, $dto->profileId)) {
+        $dto = new UpdateGroupDTO($group->getId(), $data['name'], $data['description'], $data['profileId']);
+
+        if (!isset($dto->profileId, $dto->name, $dto->description)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
-        $creator = $this->profileValidator->validateProfile($dto->profileId);
+        $this->profileValidator->validateProfile($dto->profileId);
+
+        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::ACCESS_DENIED], 403);
+        }
 
         try {
             $this->groupService->updateGroup(
                 $group,
-                $creator->getId(),
                 $dto->name,
                 $dto->description,
-                $dto->visibility
             );
 
             return new JsonResponse(['message' => 'Groupe mis à jour avec succès']);
@@ -96,12 +106,16 @@ class GroupController extends AbstractController
         }
     }
 
-    #[Route('/{id}/delete', methods: ['DELETE'])]
+    #[Route('/{id}', methods: ['DELETE'])]
     public function deleteGroup(int $id, Request $request): JsonResponse
     {
         $group = $this->groupRepository->find($id);
         if (!$group) {
             return new JsonResponse(['error' => 'Groupe introuvable'], 404);
+        }
+
+        if ('public' === $group->getVisibility()) {
+            return new JsonResponse(['error' => 'Vous ne pouvez pas supprimer ce groupe'], 400);
         }
 
         $data = json_decode($request->getContent(), true);

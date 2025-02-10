@@ -49,14 +49,14 @@ readonly class CommentService
                 return new JsonResponse([], 200);
             }
 
-            $formattedComments = array_map(fn($comment) => [
+            $formattedComments = array_map(fn ($comment) => [
                 '_id' => (string) $comment->getId(),
                 'postId' => (string) $comment->getPostId(),
                 'parentId' => (string) $comment->getParentId(),
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
-                'children' => []
+                'children' => [],
             ], $childComments);
 
             return new JsonResponse($formattedComments, 200);
