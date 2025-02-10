@@ -2,6 +2,7 @@
 
 namespace App\Security\Voter\Post;
 
+use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -22,12 +23,14 @@ final class PostVisibilityVoter extends Voter
         }
 
         $user = $token->getUser();
-        if (!$user instanceof UserInterface) {
+        if (!$user instanceof User) {
             return false;
         }
 
-        if ($subject->isPrivate()) {
-            return in_array('ROLE_ADMIN', $user->getRoles(), true);
+        foreach ($user->getProfiles() as $profile) {
+            if ($subject->getAuthor()->getId() === $profile->getId()) {
+                return true;
+            }
         }
 
         return true;
