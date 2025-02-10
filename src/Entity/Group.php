@@ -127,31 +127,6 @@ class Group
         return $this;
     }
 
-    public function canView(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::VIEW_GROUP, $this);
-    }
-
-    public function canEdit(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::EDIT_GROUP, $this);
-    }
-
-    public function canManageMembers(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $this);
-    }
-
-    public function canDelete(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $this);
-    }
-
-    public function canPostContent(): bool
-    {
-        return $this->authorizationChecker->isGranted(GroupRoleVoter::POST_CONTENT, $this);
-    }
-
     public function getSlug(): ?string
     {
         return $this->slug;
@@ -185,9 +160,28 @@ class Group
         return $this;
     }
 
-    #[ORM\PreUpdate]
-    public function markAsUpdated(): void
+    public function canView(): bool
     {
-        $this->updatedAt = new DateTime();
+        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::VIEW_GROUP, $this);
+    }
+
+    public function canEdit(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::EDIT_GROUP, $this);
+    }
+
+    public function canManageMembers(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $this);
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $this);
+    }
+
+    public function canPostContent(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::POST_CONTENT, $this);
     }
 }
