@@ -2,6 +2,7 @@
 
 namespace App\Security\Voter\Group;
 
+use App\Entity\Group;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -20,13 +21,13 @@ final class GroupVisibilityVoter extends Voter
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
-        if (!$subject) {
+        if (!$subject instanceof Group) {
             return false;
         }
 
         return match ($attribute) {
-            self::VIEW_GROUP => $subject->isPublic() || $subject->isPrivate(),
-            self::EDIT_GROUP => $subject->isPrivate(),
+            self::VIEW_GROUP => $subject->canView(),
+            self::EDIT_GROUP => $subject->canEdit(),
             default => false,
         };
     }
