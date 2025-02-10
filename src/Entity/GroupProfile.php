@@ -2,11 +2,9 @@
 
 namespace App\Entity;
 
-use App\Security\Voter\Group\GroupRoleVoter;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
@@ -32,15 +30,12 @@ class GroupProfile
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $updatedAt = null;
 
-    private AuthorizationCheckerInterface $authorizationChecker;
-
-    public function __construct(Group $group, Profile $profile, string $role, AuthorizationCheckerInterface $authorizationChecker)
+    public function __construct(Group $group, Profile $profile, string $role)
     {
         $this->group = $group;
         $this->profile = $profile;
         $this->role = $role;
         $this->joinAt = new DateTimeImmutable();
-        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getGroup(): Group
@@ -60,9 +55,6 @@ class GroupProfile
 
     public function setRole(string $role): void
     {
-        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $this->group)) {
-            throw new \RuntimeException("Access denied.");
-        }
         $this->role = $role;
         $this->markAsUpdated();
     }
