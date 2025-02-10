@@ -163,15 +163,14 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::POST_NOT_FOUND);
         }
 
+        if ($post->getAuthor()->getId() !== $editor->getId()) {
+            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+        }
+
         if (!$this->authorizationChecker->isGranted('delete_post', $post)) {
             throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
-        $this->removePost($post);
-    }
-
-    private function removePost(Post $post): void
-    {
         try {
             $this->entityManager->remove($post);
             $this->entityManager->flush();
