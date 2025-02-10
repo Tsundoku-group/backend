@@ -119,6 +119,18 @@ class Post
         return $this;
     }
 
+    public function getVisibility(): string
+    {
+        return $this->visibility;
+    }
+
+    public function setVisibility(string $visibility): self
+    {
+        $this->visibility = $visibility;
+
+        return $this;
+    }
+
     public function canChangeVisibility(string $newVisibility): bool
     {
         return $this->authorizationChecker->isGranted(PostVisibilityVoter::CHANGE_VISIBILITY, $this->visibility);
