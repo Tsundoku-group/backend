@@ -26,11 +26,11 @@ final class GroupRoleVoter extends Voter
     protected function supports(string $attribute, mixed $subject): bool
     {
         return in_array($attribute, [
-                self::DELETE_GROUP,
-                self::MANAGE_MEMBERS,
-                self::POST_CONTENT,
-                self::VIEW_GROUP,
-            ], true) && $subject instanceof Group;
+            self::DELETE_GROUP,
+            self::MANAGE_MEMBERS,
+            self::POST_CONTENT,
+            self::VIEW_GROUP,
+        ], true) && $subject instanceof Group;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
@@ -72,17 +72,17 @@ final class GroupRoleVoter extends Voter
     {
         $groupProfile = $this->groupProfileRepository->findOneBy([
             'group' => $group,
-            'profile' => $profile
+            'profile' => $profile,
         ]);
 
-        return $groupProfile && $groupProfile->getRole() === 'admin';
+        return $groupProfile && 'admin' === $groupProfile->getRole();
     }
 
     private function isGroupMember(Profile $profile, Group $group): bool
     {
         return (bool) $this->groupProfileRepository->findOneBy([
             'group' => $group,
-            'profile' => $profile
+            'profile' => $profile,
         ]);
     }
 }

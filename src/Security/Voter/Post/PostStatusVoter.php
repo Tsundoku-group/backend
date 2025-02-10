@@ -16,10 +16,10 @@ final class PostStatusVoter extends Voter
     protected function supports(string $attribute, mixed $subject): bool
     {
         return in_array($attribute, [
-                self::EDIT_POST,
-                self::DELETE_POST,
-                self::RESTORE_POST,
-            ], true) && $subject;
+            self::EDIT_POST,
+            self::DELETE_POST,
+            self::RESTORE_POST,
+        ], true) && $subject;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool

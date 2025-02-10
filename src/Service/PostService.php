@@ -24,19 +24,21 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 readonly class PostService
 {
     public function __construct(
-        private ProfileValidator       $profileValidator,
-        private ProfileRepository      $profileRepository,
+        private ProfileValidator $profileValidator,
+        private ProfileRepository $profileRepository,
         private GroupProfileRepository $groupProfileRepository,
-        private GroupRepository        $groupRepository,
+        private GroupRepository $groupRepository,
         private EntityManagerInterface $entityManager,
-        private PostRepository         $postRepository,
-        private SluggerInterface       $slugger,
+        private PostRepository $postRepository,
+        private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
-    ) {}
+    ) {
+    }
 
     public function getRecentPosts(int $limit = 10): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
+
         return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
@@ -49,9 +51,11 @@ readonly class PostService
             ],
         ], $posts);
     }
+
     public function getOlderPosts(int $page, int $limit): array
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
+
         return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
@@ -82,7 +86,7 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
         }
 
-        if ($visibility === 'public' && $group->getVisibility() !== 'public') {
+        if ('public' === $visibility && 'public' !== $group->getVisibility()) {
             throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
         }
 

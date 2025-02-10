@@ -51,7 +51,7 @@ readonly class GroupService
         }
     }
 
-    public function updateGroup(Group $group, ?string $name, ?string $description): Void
+    public function updateGroup(Group $group, ?string $name, ?string $description): void
     {
         $hasChanges = false;
 

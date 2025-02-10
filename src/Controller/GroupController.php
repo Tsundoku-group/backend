@@ -25,7 +25,7 @@ class GroupController extends AbstractController
         private readonly GroupService $groupService,
         private readonly GroupRepository $groupRepository,
         private readonly ProfileValidator $profileValidator,
-        private readonly AuthorizationCheckerInterface $authorizationChecker
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
@@ -42,7 +42,7 @@ class GroupController extends AbstractController
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
 
-        if ($dto->visibility === 'public' && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
+        if ('public' === $dto->visibility && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
             throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
         }
 
@@ -87,7 +87,7 @@ class GroupController extends AbstractController
         }
         $this->profileValidator->validateProfile($dto->profileId);
 
-        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) ) {
+        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::ACCESS_DENIED], 403);
         }
 
@@ -114,8 +114,8 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => 'Groupe introuvable'], 404);
         }
 
-        if ($group->getVisibility() === 'public') {
-            return new JsonResponse(['error' => 'Vous ne pouvez pas supprimer ce groupe'], 400 );
+        if ('public' === $group->getVisibility()) {
+            return new JsonResponse(['error' => 'Vous ne pouvez pas supprimer ce groupe'], 400);
         }
 
         $data = json_decode($request->getContent(), true);

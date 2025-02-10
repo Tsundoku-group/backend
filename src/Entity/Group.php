@@ -45,7 +45,6 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
 
-
     public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
@@ -96,6 +95,7 @@ class Group
     public function setName(string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -107,6 +107,7 @@ class Group
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -130,6 +131,7 @@ class Group
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -141,6 +143,7 @@ class Group
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -152,6 +155,7 @@ class Group
     public function setUpdatedAt(DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 }

@@ -78,12 +78,13 @@ class GroupProfile
     public function setUpdatedAt(?DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return 'admin' === $this->role;
     }
 
     #[ORM\PreUpdate]

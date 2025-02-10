@@ -3,14 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\PostRepository;
-use App\Security\Voter\Post\PostStatusVoter;
-use App\Security\Voter\Post\PostVisibilityVoter;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 class Post
@@ -68,6 +65,7 @@ class Post
     public function setAuthor(Profile $author): self
     {
         $this->author = $author;
+
         return $this;
     }
 
@@ -79,6 +77,7 @@ class Post
     public function setGroup(?Group $group): self
     {
         $this->group = $group;
+
         return $this;
     }
 
@@ -113,6 +112,7 @@ class Post
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -124,6 +124,7 @@ class Post
     public function setVisibility(string $visibility): self
     {
         $this->visibility = $visibility;
+
         return $this;
     }
 
@@ -135,6 +136,7 @@ class Post
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
@@ -146,6 +148,7 @@ class Post
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -157,6 +160,7 @@ class Post
     public function setUpdatedAt(DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 
