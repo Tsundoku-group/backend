@@ -3,7 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\GroupRepository;
-use App\ValueObject\Group\GroupVisibility;
+use App\Security\Voter\Group\GroupRoleVoter;
+use App\Security\Voter\Group\GroupVisibilityVoter;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -11,6 +12,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 #[ORM\Entity(repositoryClass: GroupRepository::class)]
 #[ORM\Table(name: '`group`')]
@@ -46,23 +48,20 @@ class Group
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
 
-    public function __construct(Profile $createdBy, GroupVisibility $visibility)
+    private AuthorizationCheckerInterface $authorizationChecker;
+
+    public function __construct(Profile $createdBy, AuthorizationCheckerInterface $authorizationChecker)
     {
         $this->groupProfiles = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
-        $this->visibility = $visibility->getValue();
+        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(int $id): void
-    {
-        $this->id = $id;
     }
 
     /**
@@ -102,7 +101,6 @@ class Group
     public function setName(string $name): self
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -114,20 +112,32 @@ class Group
     public function setDescription(?string $description): self
     {
         $this->description = $description;
-
         return $this;
     }
 
-    public function getVisibility(): GroupVisibility
+    public function canView(): bool
     {
-        return GroupVisibility::fromString($this->visibility);
+        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::VIEW_GROUP, $this);
     }
 
-    public function setVisibility(GroupVisibility $visibility): self
+    public function canEdit(): bool
     {
-        $this->visibility = $visibility->getValue();
+        return $this->authorizationChecker->isGranted(GroupVisibilityVoter::EDIT_GROUP, $this);
+    }
 
-        return $this;
+    public function canManageMembers(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $this);
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $this);
+    }
+
+    public function canPostContent(): bool
+    {
+        return $this->authorizationChecker->isGranted(GroupRoleVoter::POST_CONTENT, $this);
     }
 
     public function getSlug(): ?string
@@ -138,7 +148,6 @@ class Group
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
-
         return $this;
     }
 
@@ -150,7 +159,6 @@ class Group
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 
@@ -162,33 +170,12 @@ class Group
     public function setUpdatedAt(DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
-
         return $this;
     }
 
-    public function isPublic(): bool
+    #[ORM\PreUpdate]
+    public function markAsUpdated(): void
     {
-        return GroupVisibility::PUBLIC === $this->visibility;
-    }
-
-    public function isPrivate(): bool
-    {
-        return GroupVisibility::PRIVATE === $this->visibility;
-    }
-
-    public function isFeedGroup(): bool
-    {
-        return 'Fil d’actualité' === $this->name;
-    }
-
-    public function isMember(Profile $profile): bool
-    {
-        foreach ($this->groupProfiles as $groupProfile) {
-            if ($groupProfile->getProfile()->getId() === $profile->getId()) {
-                return true;
-            }
-        }
-
-        return false;
+        $this->updatedAt = new DateTime();
     }
 }
