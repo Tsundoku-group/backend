@@ -48,6 +48,9 @@ readonly class PostService
             'visibility' => $post->getVisibility(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
+                'lastname' => $post->getAuthor()->getLastname(),
+                'firstname' => $post->getAuthor()->getFirstname(),
+                'username' => $post->getAuthor()->getUsername(),
             ],
         ], $posts);
     }
@@ -65,6 +68,9 @@ readonly class PostService
             'visibility' => $post->getVisibility(),
             'author' => [
                 'id' => $post->getAuthor()->getId(),
+                'lastname' => $post->getAuthor()->getLastname(),
+                'firstname' => $post->getAuthor()->getFirstname(),
+                'username' => $post->getAuthor()->getUsername(),
             ],
         ], $posts);
     }
