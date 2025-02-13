@@ -6,6 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
+use App\Repository\CommentRepository;
 use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
@@ -27,6 +28,7 @@ readonly class PostService
         private ProfileValidator $profileValidator,
         private ProfileRepository $profileRepository,
         private GroupProfileRepository $groupProfileRepository,
+        private CommentRepository $commentRepository,
         private GroupRepository $groupRepository,
         private EntityManagerInterface $entityManager,
         private PostRepository $postRepository,
@@ -52,6 +54,7 @@ readonly class PostService
                 'firstname' => $post->getAuthor()->getFirstname(),
                 'username' => $post->getAuthor()->getUsername(),
             ],
+            'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
         ], $posts);
     }
 
@@ -72,6 +75,7 @@ readonly class PostService
                 'firstname' => $post->getAuthor()->getFirstname(),
                 'username' => $post->getAuthor()->getUsername(),
             ],
+            'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
         ], $posts);
     }
 
