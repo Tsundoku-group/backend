@@ -21,6 +21,9 @@ class Post
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Group $group = null;
 
+    #[ORM\Column(length: 255)]
+    private string $type;
+
     #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $author;
@@ -55,6 +58,16 @@ class Post
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): void
+    {
+        $this->type = $type;
     }
 
     public function getAuthor(): Profile
