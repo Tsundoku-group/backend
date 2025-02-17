@@ -74,3 +74,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-68] Ajout de méthodes dans CommentController.php [#68](https://trello.com/c/oneN0Z0V/68-t-68-ajout-de-m%C3%A9thodes-dans-commentcontrollerphp)
 - [t-70] Changement de ValueObject pour Voter [#70](https://trello.com/c/FHyEIhbs/70-70-changement-de-valueobject-pour-voter)
 - [t-71] Remonter les informations d'un profile user dans un post [#71](https://trello.com/c/PVxZTN6m/71-t-71-remonter-les-informations-dun-profile-user-dans-un-post)
+- [t-72] Ajout du crud pour comment [#72](https://trello.com/c/6BZMmM6I/72-t-72-ajout-du-crud-pour-comment)
