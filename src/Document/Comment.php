@@ -24,6 +24,9 @@ class Comment
     #[ODM\Field(type: 'date')]
     private DateTime $createdAt;
 
+    #[ODM\Field(type: 'date')]
+    private DateTime $updatedAt;
+
     #[ODM\Field(type: 'string')]
     private ?string $parentId = null;
 
@@ -60,9 +63,24 @@ class Comment
         return $this->content;
     }
 
+    public function setContent(string $content): void
+    {
+        $this->content = $content;
+    }
+
     public function getCreatedAt(): string
     {
         return $this->createdAt->format('Y-m-d\TH:i:s\Z');
+    }
+
+    public function getUpdatedAt(): DateTime
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(DateTime $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
     }
 
     public function getParentId(): ?string
