@@ -15,11 +15,10 @@ readonly class CommentService
 {
     public function __construct(
         private CommentRepository $commentRepository,
-        private ProfileValidator  $profileValidator,
-        private PostRepository    $postRepository,
-        private DocumentManager   $dm,
-    )
-    {
+        private ProfileValidator $profileValidator,
+        private PostRepository $postRepository,
+        private DocumentManager $dm,
+    ) {
     }
 
     public function getCommentById(string $commentId): JsonResponse
@@ -34,7 +33,7 @@ readonly class CommentService
             return new JsonResponse([
                 'id' => $comment->getId(),
                 'postId' => $comment->getPostId(),
-                'parentId' => $comment->getParentId() ? (string)$comment->getParentId() : null,
+                'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
@@ -53,10 +52,10 @@ readonly class CommentService
                 return new JsonResponse([], 200);
             }
 
-            $formattedComments = array_map(fn($comment) => [
-                '_id' => (string)$comment->getId(),
-                'postId' => (string)$comment->getPostId(),
-                'parentId' => (string)$comment->getParentId(),
+            $formattedComments = array_map(fn ($comment) => [
+                '_id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
+                'parentId' => (string) $comment->getParentId(),
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
@@ -89,15 +88,15 @@ readonly class CommentService
 
             $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
 
-            $formattedComments = array_map(fn($comment) => [
-                'id' => (string)$comment->getId(),
-                'postId' => (string)$comment->getPostId(),
+            $formattedComments = array_map(fn ($comment) => [
+                'id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'author' => [
-                    'id' => (string)$author->getId(),
-                    'firstname' => (string)$author->getFirstName(),
-                    'lastname' => (string)$author->getLastName(),
+                    'id' => (string) $author->getId(),
+                    'firstname' => (string) $author->getFirstName(),
+                    'lastname' => (string) $author->getLastName(),
                 ],
                 'createdAt' => $comment->getCreatedAt(),
                 'replyCount' => $this->commentRepository->countChildrenByParentId($comment->getId()),
@@ -153,10 +152,9 @@ readonly class CommentService
                 'comment' => [
                     'id' => $comment->getId(),
                     'content' => $comment->getContent(),
-                    'updatedAt' => $comment->getUpdatedAt()->format('Y-m-d H:i:s')
-                ]
+                    'updatedAt' => $comment->getUpdatedAt()->format('Y-m-d H:i:s'),
+                ],
             ], JsonResponse::HTTP_OK);
-
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -196,7 +194,7 @@ readonly class CommentService
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),
                     'postId' => $reply->getPostId(),
-                    'parent' => (string)$reply->getParentId(),
+                    'parent' => (string) $reply->getParentId(),
                     'createdAt' => $reply->getCreatedAt(),
                 ],
             ], 201);

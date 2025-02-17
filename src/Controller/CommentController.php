@@ -120,13 +120,12 @@ class CommentController extends AbstractController
         }
     }
 
-
     #[Route('/{commentId}/delete', name: 'delete_comment', methods: ['DELETE'])]
     public function deleteComment(string $commentId, Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $authorId = $data['authorId'] ;
+            $authorId = $data['authorId'];
 
             $author = $this->profileRepository->findProfileById($data['authorId']);
             if (!$author) {
