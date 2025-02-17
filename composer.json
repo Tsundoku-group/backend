@@ -7,6 +7,7 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-mongodb": "*",
         "doctrine/doctrine-bundle": "^2.12",
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/mongodb-odm-bundle": "^5.2",
@@ -15,6 +16,7 @@
         "lexik/jwt-authentication-bundle": "^3.1",
         "nelmio/cors-bundle": "^2.5",
         "predis/predis": "*",
+        "ramsey/uuid-doctrine": "^2.1",
         "symfony/console": "7.1.*",
         "symfony/dotenv": "7.1.*",
         "symfony/flex": "^2",
@@ -28,8 +30,7 @@
         "symfony/security-bundle": "7.1.*",
         "symfony/security-core": "7.1.*",
         "symfony/validator": "7.1.*",
-        "symfony/yaml": "7.1.*",
-        "ext-mongodb": "*"
+        "symfony/yaml": "7.1.*"
     },
     "config": {
         "allow-plugins": {
