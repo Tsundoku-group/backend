@@ -5,8 +5,8 @@ namespace App\Service;
 use App\Document\Comment;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
-use App\Repository\ProfileRepository;
 use App\Validator\Constraints\ProfileValidator;
+use DateTime;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,11 +15,11 @@ readonly class CommentService
 {
     public function __construct(
         private CommentRepository $commentRepository,
-        private ProfileRepository $profileRepository,
-        private ProfileValidator $profileValidator,
-        private PostRepository $postRepository,
-        private DocumentManager $dm,
-    ) {
+        private ProfileValidator  $profileValidator,
+        private PostRepository    $postRepository,
+        private DocumentManager   $dm,
+    )
+    {
     }
 
     public function getCommentById(string $commentId): JsonResponse
@@ -34,7 +34,7 @@ readonly class CommentService
             return new JsonResponse([
                 'id' => $comment->getId(),
                 'postId' => $comment->getPostId(),
-                'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
+                'parentId' => $comment->getParentId() ? (string)$comment->getParentId() : null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
@@ -53,10 +53,10 @@ readonly class CommentService
                 return new JsonResponse([], 200);
             }
 
-            $formattedComments = array_map(fn ($comment) => [
-                '_id' => (string) $comment->getId(),
-                'postId' => (string) $comment->getPostId(),
-                'parentId' => (string) $comment->getParentId(),
+            $formattedComments = array_map(fn($comment) => [
+                '_id' => (string)$comment->getId(),
+                'postId' => (string)$comment->getPostId(),
+                'parentId' => (string)$comment->getParentId(),
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
@@ -87,18 +87,17 @@ readonly class CommentService
                 return new JsonResponse(['message' => 'No comments found'], 200);
             }
 
-            $author = $this->profileRepository->findOneBy(['id' => $findPost->getAuthor()->getId()]);
-            $this->profileValidator->validateProfile($author);
+            $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
 
-            $formattedComments = array_map(fn ($comment) => [
-                'id' => (string) $comment->getId(),
-                'postId' => (string) $comment->getPostId(),
+            $formattedComments = array_map(fn($comment) => [
+                'id' => (string)$comment->getId(),
+                'postId' => (string)$comment->getPostId(),
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'author' => [
-                    'id' => (string) $author->getId(),
-                    'firstname' => (string) $author->getFirstName(),
-                    'lastname' => (string) $author->getLastName(),
+                    'id' => (string)$author->getId(),
+                    'firstname' => (string)$author->getFirstName(),
+                    'lastname' => (string)$author->getLastName(),
                 ],
                 'createdAt' => $comment->getCreatedAt(),
                 'replyCount' => $this->commentRepository->countChildrenByParentId($comment->getId()),
@@ -113,10 +112,6 @@ readonly class CommentService
     public function addCommentToPost(string $postId, string $authorId, string $content): JsonResponse
     {
         try {
-            if (empty($postId) || empty($authorId) || empty($content)) {
-                return new JsonResponse(['error' => 'Missing parameters: postId, authorId, and content are required'], 400);
-            }
-
             $comment = new Comment($postId, $authorId, $content);
             $this->dm->persist($comment);
             $this->dm->flush();
@@ -134,6 +129,45 @@ readonly class CommentService
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
         }
+    }
+
+    public function editComment(string $commentId, string $authorId, string $content): JsonResponse
+    {
+        $comment = $this->commentRepository->findCommentById($commentId);
+
+        if (!$comment) {
+            return new JsonResponse(['error' => 'Comment not found'], 404);
+        }
+
+        if ($comment->getAuthorId() !== $authorId) {
+            return new JsonResponse(['error' => 'Author id does not match'], 400);
+        }
+        try {
+            $comment->setContent($content);
+            $comment->setUpdatedAt(new DateTime());
+
+            $this->dm->flush();
+
+            return new JsonResponse([
+                'message' => 'Commentaire mis à jour avec succès',
+                'comment' => [
+                    'id' => $comment->getId(),
+                    'content' => $comment->getContent(),
+                    'updatedAt' => $comment->getUpdatedAt()->format('Y-m-d H:i:s')
+                ]
+            ], JsonResponse::HTTP_OK);
+
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
+        }
+    }
+
+    public function deleteComment(Comment $comment): JsonResponse
+    {
+        $this->dm->remove($comment);
+        $this->dm->flush();
+
+        return new JsonResponse(['message' => 'Comment deleted successfully'], 200);
     }
 
     public function replyToComment(string $postId, string $authorId, string $content, string $parentId): JsonResponse
@@ -162,7 +196,7 @@ readonly class CommentService
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),
                     'postId' => $reply->getPostId(),
-                    'parent' => (string) $reply->getParentId(),
+                    'parent' => (string)$reply->getParentId(),
                     'createdAt' => $reply->getCreatedAt(),
                 ],
             ], 201);
