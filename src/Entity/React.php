@@ -19,7 +19,11 @@ class React
 
     #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
-    private Profile $profile;
+    private Profile $actor;
+
+    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
+    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    private Profile $receiver;
 
     #[ORM\Column(type: "string", length: 50, enumType: ReactTypeEnum::class)]
     private ReactTypeEnum $reactType;
@@ -36,9 +40,10 @@ class React
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?DateTimeImmutable $updatedAt = null;
 
-    public function __construct(Profile $profile, string $resourceId, ResourceTypeEnum $resourceType, ReactTypeEnum $reactType)
+    public function __construct(Profile $actor, Profile $receiver, string $resourceId, ResourceTypeEnum $resourceType, ReactTypeEnum $reactType)
     {
-        $this->profile = $profile;
+        $this->actor = $actor;
+        $this->receiver = $receiver;
         $this->resourceType = $resourceType;
         $this->resourceId = $resourceId;
         $this->reactType = $reactType;
@@ -55,14 +60,24 @@ class React
         $this->id = $id;
     }
 
-    public function getProfile(): Profile
+    public function getActor(): Profile
     {
-        return $this->profile;
+        return $this->actor;
     }
 
-    public function setProfile(Profile $profile): void
+    public function setActor(Profile $actor): void
     {
-        $this->profile = $profile;
+        $this->actor = $actor;
+    }
+
+    public function getReceiver(): Profile
+    {
+        return $this->receiver;
+    }
+
+    public function setReceiver(Profile $receiver): void
+    {
+        $this->receiver = $receiver;
     }
 
     public function getType(): ReactTypeEnum
