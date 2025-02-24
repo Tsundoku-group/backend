@@ -11,7 +11,7 @@ use Ramsey\Uuid\UuidInterface;
 #[ORM\Entity]
 #[ORM\Table(name: "notifications")]
 #[ORM\Index(name: "idx_notifications_recipient", columns: ["recipient_id"])]
-#[ORM\Index(name: "idx_notifications_actor", columns: ["actor_id"])]
+#[ORM\Index(name: "idx_notifications_profile", columns: ["profile_id"])]
 class Notification
 {
     #[ORM\Id]
@@ -26,7 +26,7 @@ class Notification
 
     #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
-    private Profile $actor;
+    private Profile $profile;
 
     #[ORM\Column(type: "string", length: 50)]
     private string $type;
@@ -43,10 +43,10 @@ class Notification
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?DateTimeImmutable $isReadAt = null;
 
-    public function __construct(Profile $recipient, Profile $actor, NotificationTypeEnum $type, ?UuidInterface $resourceId = null)
+    public function __construct(Profile $recipient, Profile $profile, NotificationTypeEnum $type, ?UuidInterface $resourceId = null)
     {
         $this->recipient = $recipient;
-        $this->actor = $actor;
+        $this->profile = $profile;
         $this->type = $type->value;
         $this->resourceId = $resourceId;
         $this->createdAt = new DateTimeImmutable();
@@ -72,14 +72,14 @@ class Notification
         $this->recipient = $recipient;
     }
 
-    public function getActor(): Profile
+    public function getProfile(): Profile
     {
-        return $this->actor;
+        return $this->profile;
     }
 
-    public function setActor(Profile $actor): void
+    public function setProfile(Profile $profile): void
     {
-        $this->actor = $actor;
+        $this->profile = $profile;
     }
 
     public function getType(): NotificationTypeEnum
