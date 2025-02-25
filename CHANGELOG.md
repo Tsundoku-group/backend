@@ -77,3 +77,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-73] Ajouter propriété type à l'entité Post [#73](https://trello.com/c/HL36P0fI/73-t-73-ajouter-propri%C3%A9t%C3%A9-type-%C3%A0-lentit%C3%A9-post)
 - [t-72] Ajout du crud pour comment [#72](https://trello.com/c/6BZMmM6I/72-t-72-ajout-du-crud-pour-comment)
 - [t-75] Ajout du système de notification avec redis + cron postgres [#75](https://trello.com/c/W5wyRmvA/75-t-75-ajout-du-syst%C3%A8me-de-notification-avec-redis-cron-postgres)
+- [t-76] Tests unitaires [#76](https://trello.com/c/N4Y2LM11/76-t-76-tests-unitaires)
