@@ -34,11 +34,12 @@ class ReactController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $profileId = $data['profileId'] ?? null;
+        $receiverId = $data['receiverId'] ?? null;
         $resourceType = $data['resourceType'] ?? null;
         $resourceId = $data['resourceId'] ?? null;
         $reactionType = $data['reactionType'] ?? ReactTypeEnum::LIKE->value;
 
-        if (!$profileId || !$resourceType || !$resourceId) {
+        if (!$profileId || !$receiverId|| !$resourceType || !$resourceId) {
             return $this->json(['error' => 'Données manquantes'], 400);
         }
 
@@ -47,8 +48,14 @@ class ReactController extends AbstractController
             return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
+        $receiver = $this->profileRepository->find($receiverId);
+        if (!$receiver) {
+            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+        }
+
         $existingReaction = $this->reactRepository->findOneBy([
             'profile' => $profile,
+            'receiver' => $receiver,
             'resourceType' => $resourceType,
             'resourceId' => $resourceId,
         ]);
@@ -62,7 +69,7 @@ class ReactController extends AbstractController
 
         $this->redisReactService->addReactionToCache(
             profileId: $profileId,
-            receiverId: $profileId, // à corriger
+            receiverId: $receiverId,
             resourceType: $resourceType,
             reactType: $reactionType,
             resourceId: $resourceId
