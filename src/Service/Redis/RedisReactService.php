@@ -12,6 +12,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 readonly class RedisReactService
 {
@@ -20,18 +21,19 @@ readonly class RedisReactService
         private EntityManagerInterface $entityManager,
         private ReactRepository        $reactRepository,
         private ProfileRepository      $profileRepository,
+        #[Autowire(service: 'monolog.logger.reactions')]
         private LoggerInterface        $logger
     )
     {
     }
 
-    public function addReactionToCache(string $recipientId, string $profileId, string $resourceType, string $reactType, ?string $resourceId): void
+    public function addReactionToCache(string $profileId,string $receiverId, string $resourceType, string $reactType, ?string $resourceId): void
     {
         $reactionKey = "reactions:{$resourceType}:{$resourceId}";
 
         $reactionData = json_encode([
-            'recipientId' => $recipientId,
-            'profileId' => $profileId,
+            'actorId' => $profileId,
+            'receiverId' => $receiverId,
             'reactType' => $reactType,
             'resourceId' => $resourceId,
             'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
@@ -70,7 +72,6 @@ readonly class RedisReactService
             if (count($parts) < 3) continue;
 
             [$prefix, $resourceType, $resourceId] = $parts;
-
             $this->logger->info("⚡ Flush en cours pour {$resourceId} ({$resourceType})");
 
             try {
@@ -80,38 +81,51 @@ readonly class RedisReactService
                     continue;
                 }
 
+                $actorIds = array_column($reactions, 'actorId');
+                $receiverIds = array_column($reactions, 'receiverId');
+                $allProfiles = $this->profileRepository->findBy(['id' => array_unique(array_merge($actorIds, $receiverIds))]);
+
+                $profileMap = [];
+                foreach ($allProfiles as $profile) {
+                    $profileMap[$profile->getId()] = $profile;
+                }
+
+                $existingReactions = $this->reactRepository->findBy([
+                    'resourceId' => $resourceId,
+                    'resourceType' => ResourceTypeEnum::from($resourceType),
+                ]);
+
+                $existingReactionsMap = [];
+                foreach ($existingReactions as $reaction) {
+                    $existingReactionsMap[$reaction->getActor()->getId()][$reaction->getReactType()->value] = $reaction;
+                }
+
                 foreach ($reactions as $reactionData) {
-                    $profile = $this->profileRepository->find($reactionData['profileId']);
-                    if (!$profile) {
-                        $this->logger->error("❌ Profil introuvable : {$reactionData['profileId']}");
+                    $actor = $profileMap[$reactionData['actorId']] ?? null;
+                    $receiver = $profileMap[$reactionData['receiverId']] ?? null;
+
+                    if (!$actor || !$receiver) {
+                        $this->logger->error("❌ Profils introuvables : {$reactionData['actorId']} ou {$reactionData['receiverId']}");
                         continue;
                     }
 
-                    $existingReaction = $this->reactRepository->findOneBy([
-                        'profile' => $profile,
-                        'resourceId' => $resourceId,
-                        'resourceType' => ResourceTypeEnum::from($resourceType),
-                        'reactType' => ReactTypeEnum::from($reactionData['reactType']),
-                    ]);
+                    $reactType = ReactTypeEnum::from($reactionData['reactType']);
 
-                    if (!$existingReaction) {
-                        $reaction = new React(
-                            $profile,
-                            $resourceId,
-                            ResourceTypeEnum::from($resourceType),
-                            ReactTypeEnum::from($reactionData['reactType'])
-                        );
-
-                        $this->entityManager->persist($reaction);
-                        $batchPersist = true;
-
-                        $this->logger->info("📝 Nouvelle réaction ajoutée", [
-                            'profileId' => $reactionData['profileId'],
-                            'resourceId' => $reactionData['resourceId'],
-                            'resourceType' => $resourceType,
-                            'reactType' => $reactionData['reactType']
-                        ]);
+                    if (isset($existingReactionsMap[$actor->getId()][$reactType->value])) {
+                        continue;
                     }
+
+                    $reaction = new React($actor, $receiver, $resourceId, ResourceTypeEnum::from($resourceType), $reactType);
+                    $this->entityManager->persist($reaction);
+                    $batchPersist = true;
+
+                    $this->logger->info("📝 Nouvelle réaction ajoutée", [
+                        'actorId' => $reactionData['actorId'],
+                        'receiverId' => $reactionData['receiverId'],
+                        'resourceId' => $reactionData['resourceId'],
+                        'resourceType' => $resourceType,
+                        'reactType' => $reactionData['reactType']
+                    ]);
                 }
 
                 $this->redis->getClient()->del($key);
