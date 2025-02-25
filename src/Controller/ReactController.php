@@ -4,9 +4,11 @@ namespace App\Controller;
 
 use App\Config\RedisClientConfig;
 use App\Constant\ErrorMessagesConstant;
+use App\Enum\NotificationTypeEnum;
 use App\Enum\ReactTypeEnum;
 use App\Repository\ProfileRepository;
 use App\Repository\ReactRepository;
+use App\Service\Redis\RedisNotificationService;
 use App\Service\Redis\RedisReactService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,6 +25,7 @@ class ReactController extends AbstractController
         private readonly ReactRepository $reactRepository,
         private readonly RedisClientConfig $redis,
         private readonly RedisReactService $redisReactService,
+        private readonly RedisNotificationService $redisNotificationService,
     ) {
     }
 
@@ -59,9 +62,16 @@ class ReactController extends AbstractController
 
         $this->redisReactService->addReactionToCache(
             profileId: $profileId,
-            receiverId: $profileId,
+            receiverId: $profileId, // à corriger
             resourceType: $resourceType,
             reactType: $reactionType,
+            resourceId: $resourceId
+        );
+
+        $this->redisNotificationService->addNotificationToCache(
+            receiverId: $receiver->getId(),
+            actorId: $profile->getId(),
+            notificationTypeEnum: NotificationTypeEnum::LIKE->value,
             resourceId: $resourceId
         );
 
