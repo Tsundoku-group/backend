@@ -9,43 +9,48 @@ use App\Repository\ProfileRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 readonly class RedisNotificationService
 {
     public function __construct(
-        private RedisClientConfig $redisClient,
+        private RedisClientConfig $redis,
         private EntityManagerInterface $entityManager,
         private ProfileRepository $profileRepository,
+        #[Autowire(service: 'monolog.logger.notifications')]
         private LoggerInterface $logger
     ) {
     }
 
-    public function addNotificationToCache(string $recipientId, string $actorId, string $resourceType, ?string $resourceId): void
+    public function addNotificationToCache(string $receiverId, string $actorId, ?string $resourceId): void
     {
-        $notificationKey = "notifications:{$recipientId}";
+        $notificationKey = "notifications:{$receiverId}";
         $notificationData = json_encode([
-            'recipientId' => $recipientId,
+            'receiverId' => $receiverId,
             'actorId' => $actorId,
-            'resourceType' => $resourceType,
             'resourceId' => $resourceId,
-            'type' => NotificationTypeEnum::LIKE->value,
+            'notificationType' => NotificationTypeEnum::LIKE->value,
             'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
-        $this->redisClient->getClient()->rpush($notificationKey, (array)$notificationData);
+        $this->redis->getClient()->rpush($notificationKey, (array)$notificationData);
 
-        $this->logger->info("📌 Notification ajoutée en cache", [
-            'recipientId' => $recipientId,
-            'actorId' => $actorId,
-            'resourceType' => $resourceType,
-            'resourceId' => $resourceId,
-            'type' => NotificationTypeEnum::LIKE->value
-        ]);
+        if ($this->redis->getClient()->llen($notificationKey) >= 50) {
+            $this->flushNotificationsToDatabase();
+        }
+    }
+
+    public function getNotificationsFromCache(string $receiverId): array
+    {
+        $reactionKey = "notifications:{$receiverId}";
+        $reactionsJson = $this->redis->getClient()->lrange($reactionKey, 0, -1);
+
+        return array_map(fn($json) => json_decode($json, true), $reactionsJson);
     }
 
     public function flushNotificationsToDatabase(): void
     {
-        $client = $this->redisClient->getClient();
+        $client = $this->redis->getClient();
         $keys = $client->keys("notifications:*");
 
         if (empty($keys)) {
@@ -56,11 +61,11 @@ readonly class RedisNotificationService
         $this->logger->info("📢 Début du flush des notifications...");
 
         foreach ($keys as $key) {
-            $recipientId = str_replace("notifications:", "", $key);
+            $receiverId = str_replace("notifications:", "", $key);
             $notifications = $client->lrange($key, 0, -1);
 
             if (empty($notifications)) {
-                $this->logger->info("⚠️ Aucune notification pour {$recipientId}, suppression de la clé.");
+                $this->logger->info("⚠️ Aucune notification pour {$receiverId}, suppression de la clé.");
                 $client->del($key);
                 continue;
             }
@@ -96,12 +101,12 @@ readonly class RedisNotificationService
                 $this->entityManager->commit();
                 $client->del($key);
 
-                $this->logger->info("✅ Notifications flushées pour {$recipientId}");
+                $this->logger->info("✅ Notifications flushées pour {$receiverId}");
             } catch (\Exception $e) {
                 $this->entityManager->rollback();
                 $this->logger->error("❌ Échec du flush des notifications", [
                     'error' => $e->getMessage(),
-                    'recipientId' => $recipientId
+                    'recipientId' => $receiverId
                 ]);
             }
         }
