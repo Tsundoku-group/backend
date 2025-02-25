@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\React;
+use App\Config\RedisClientConfig;
+use App\Constant\ErrorMessagesConstant;
 use App\Enum\ReactTypeEnum;
-use App\Enum\ResourceTypeEnum;
 use App\Repository\ProfileRepository;
 use App\Repository\ReactRepository;
 use App\Service\Redis\RedisReactService;
@@ -21,7 +21,8 @@ class ReactController extends AbstractController
         private readonly ProfileRepository      $profileRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ReactRepository        $reactRepository,
-        private readonly RedisReactService     $redisReactService
+        private readonly RedisClientConfig      $redis,
+        private readonly RedisReactService      $redisReactService
     )
     {
     }
@@ -41,7 +42,7 @@ class ReactController extends AbstractController
 
         $profile = $this->profileRepository->find($profileId);
         if (!$profile) {
-            return $this->json(['error' => 'Profil non trouvé'], 404);
+            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         $existingReaction = $this->reactRepository->findOneBy([
@@ -56,31 +57,38 @@ class ReactController extends AbstractController
             return $this->json(['message' => 'Réaction supprimée']);
         }
 
-        $reaction = new React($profile, $resourceType, $resourceId, ReactTypeEnum::from($reactionType));
-        $this->entityManager->persist($reaction);
-        $this->entityManager->flush();
+        $this->redisReactService->addReactionToCache(
+            profileId: $profileId,
+            receiverId: $profileId,
+            resourceType: $resourceType,
+            reactType: $reactionType,
+            resourceId: $resourceId
+        );
 
         return $this->json(['message' => 'Réaction ajoutée']);
     }
 
-    #[Route('/{resourceId}/{resourceType}/likes', name: 'get_reactions', methods: ['GET'])]
-    public function getReactions(string $resourceId, string $resourceType): JsonResponse
+    #[Route('/{profileId}', name: 'get_reaction_notifications', methods: ['GET'])]
+    public function getReactionsForProfile(string $profileId): JsonResponse
     {
-        $reactions = $this->redisReactService->getReactionsFromCache($resourceId, $resourceType);
-
-        if (empty($reactions)) {
-            $reactionsFromDB = $this->reactRepository->findBy([
-                'resourceId' => $resourceId,
-                'resourceType' => ResourceTypeEnum::from($resourceType),
-            ]);
-
-            $reactions = array_map(fn($reaction) => [
-                'profileId' => $reaction->getProfile()->getId(),
-                'type' => $reaction->getType()->value,
-                'createdAt' => $reaction->getCreatedAt()->format('Y-m-d H:i:s'),
-            ], $reactionsFromDB);
+        $profile = $this->profileRepository->find($profileId);
+        if (!$profile) {
+            return $this->json(['error' => 'Profil non trouvé'], 404);
         }
 
-        return new JsonResponse(['reactions' => $reactions]);
+        $keys = $this->redis->getClient()->keys("reactions:*");
+        $reactionsArray = [];
+
+        foreach ($keys as $key) {
+            $reactions = $this->redisReactService->getReactionsFromCache(explode(":", $key)[2], explode(":", $key)[1]);
+
+            foreach ($reactions as $reaction) {
+                if ($reaction['actorId'] === $profileId) {
+                    $reactionsArray[] = $reaction;
+                }
+            }
+        }
+
+        return $this->json(['reactions' => $reactionsArray]);
     }
 }
