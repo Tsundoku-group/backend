@@ -33,7 +33,6 @@ class PostTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->post);
         $property = $reflection->getProperty('id');
-        $property->setAccessible(true);
         $property->setValue($this->post, 1);
 
         $this->assertEquals(1, $this->post->getId());
