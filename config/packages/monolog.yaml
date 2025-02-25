@@ -4,22 +4,20 @@ monolog:
 
 when@dev:
     monolog:
+        channels: [ 'reactions', 'notifications' ]
+
         handlers:
-            main:
+            notifications:
                 type: stream
-                path: "%kernel.logs_dir%/%kernel.environment%.log"
-                level: debug
-                channels: ["!event"]
-
-            flush_reactions:
-                type: stream
-                path: "%kernel.project_dir%/src/Logs/flush_reactions.log"
+                path: "%kernel.project_dir%/src/Logs/Notifications/flush_notifications.log"
                 level: info
+                channels: [ 'notifications' ]
 
-            flush_reactions_error:
+            reactions:
                 type: stream
-                path: "%kernel.project_dir%/src/Logs/flush_reactions_error.log"
-                level: error
+                path: "%kernel.project_dir%/src/Logs/Reactions/flush_reactions.log"
+                level: info
+                channels: [ 'reactions' ]
 
             # uncomment to get logging in your browser
             # you may have to allow bigger header sizes in your Web server configuration
