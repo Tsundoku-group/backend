@@ -42,5 +42,13 @@ services:
         arguments:
             - 'App\Document\Comment'
 
+    monolog.logger.reactions:
+        alias: monolog.logger
+        public: true
+
+    monolog.logger.notifications:
+        alias: monolog.logger
+        public: true
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
