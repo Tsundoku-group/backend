@@ -8,6 +8,7 @@ use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\ConversationRepository;
 use App\Repository\UserRepository;
+use App\Service\Redis\RedisMessageService;
 use DateTime;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
@@ -16,7 +17,7 @@ use Exception;
 readonly class MessageService
 {
     public function __construct(
-        private ConfRedisService $redisChatService,
+        private RedisMessageService $redisMessageService,
         private EntityManagerInterface $entityManager,
         private ConversationRepository $conversationRepository,
         private UserRepository $userRepository,
@@ -66,7 +67,7 @@ readonly class MessageService
                 'isReadAt' => null,
             ];
 
-            $this->redisChatService->addMessageToConversation($conversationId, $messageData);
+            $this->redisMessageService->addMessageToConversation($conversationId, $messageData);
 
             $conversation->setLastMessageAt($dateTime);
             $this->entityManager->persist($conversation);
@@ -86,7 +87,7 @@ readonly class MessageService
         }
 
         try {
-            $allMessages = $this->redisChatService->getMessagesFromConversation((string) $conversationId);
+            $allMessages = $this->redisMessageService->getMessagesFromConversation((string) $conversationId);
             if (empty($allMessages)) {
                 return [];
             }
@@ -129,7 +130,7 @@ readonly class MessageService
                 return ['error' => 'User is not a participant in this conversation.', 'status' => 403];
             }
 
-            $this->redisChatService->markMessagesRead($conversationId, $userEmail);
+            $this->redisMessageService->markMessagesRead($conversationId, $userEmail);
 
             return ['success' => 'All messages marked as read.'];
         } catch (Exception $e) {

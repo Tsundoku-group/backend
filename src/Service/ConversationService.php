@@ -9,6 +9,7 @@ use App\Entity\Profile;
 use App\Repository\ConversationRepository;
 use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
+use App\Service\Redis\RedisMessageService;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -23,7 +24,7 @@ class ConversationService
         private readonly UserRepository $userRepository,
         private readonly ProfileRepository $profileRepository,
         private readonly ConversationRepository $conversationRepository,
-        private readonly ConfRedisService $confRedisService,
+        private readonly RedisMessageService $redisMessageService,
     ) {
     }
 
@@ -79,7 +80,7 @@ class ConversationService
 
             $lastMessages = [];
             foreach ($conversations as $conversation) {
-                $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
+                $messages = $this->redisMessageService->getMessagesFromConversation($conversation->getId());
                 $lastMessages[$conversation->getId()] = $messages ? end($messages) : null;
             }
 
@@ -203,7 +204,7 @@ class ConversationService
 
             $lastMessages = [];
             foreach ($conversations as $conversation) {
-                $messages = $this->confRedisService->getMessagesFromConversation($conversation->getId());
+                $messages = $this->redisMessageService->getMessagesFromConversation($conversation->getId());
                 $lastMessages[$conversation->getId()] = $messages ? end($messages) : null;
             }
 
