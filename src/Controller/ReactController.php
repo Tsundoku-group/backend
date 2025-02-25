@@ -18,13 +18,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class ReactController extends AbstractController
 {
     public function __construct(
-        private readonly ProfileRepository      $profileRepository,
+        private readonly ProfileRepository $profileRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly ReactRepository        $reactRepository,
-        private readonly RedisClientConfig      $redis,
-        private readonly RedisReactService      $redisReactService
-    )
-    {
+        private readonly ReactRepository $reactRepository,
+        private readonly RedisClientConfig $redis,
+        private readonly RedisReactService $redisReactService,
+    ) {
     }
 
     #[Route('/toggle', name: 'toggle_react', methods: ['POST'])]
@@ -54,6 +53,7 @@ class ReactController extends AbstractController
         if ($existingReaction) {
             $this->entityManager->remove($existingReaction);
             $this->entityManager->flush();
+
             return $this->json(['message' => 'Réaction supprimée']);
         }
 
@@ -76,11 +76,11 @@ class ReactController extends AbstractController
             return $this->json(['error' => 'Profil non trouvé'], 404);
         }
 
-        $keys = $this->redis->getClient()->keys("reactions:*");
+        $keys = $this->redis->getClient()->keys('reactions:*');
         $reactionsArray = [];
 
         foreach ($keys as $key) {
-            $reactions = $this->redisReactService->getReactionsFromCache(explode(":", $key)[2], explode(":", $key)[1]);
+            $reactions = $this->redisReactService->getReactionsFromCache(explode(':', $key)[2], explode(':', $key)[1]);
 
             foreach ($reactions as $reaction) {
                 if ($reaction['actorId'] === $profileId) {

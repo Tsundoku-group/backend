@@ -3,44 +3,44 @@
 namespace App\Entity;
 
 use App\Enum\NotificationTypeEnum;
-use Doctrine\ORM\Mapping as ORM;
 use DateTimeImmutable;
+use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity]
-#[ORM\Table(name: "notifications")]
-#[ORM\Index(name: "idx_notifications_recipient", columns: ["recipient_id"])]
-#[ORM\Index(name: "idx_notifications_profile", columns: ["profile_id"])]
+#[ORM\Table(name: 'notifications')]
+#[ORM\Index(name: 'idx_notifications_recipient', columns: ['recipient_id'])]
+#[ORM\Index(name: 'idx_notifications_profile', columns: ['profile_id'])]
 class Notification
 {
     #[ORM\Id]
-    #[ORM\Column(type: "uuid", unique: true)]
-    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?UuidInterface $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $recipient;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $profile;
 
-    #[ORM\Column(type: "string", length: 50)]
+    #[ORM\Column(type: 'string', length: 50)]
     private string $type;
 
-    #[ORM\Column(type: "uuid", nullable: true)]
+    #[ORM\Column(type: 'uuid', nullable: true)]
     private ?UuidInterface $resourceId = null;
 
-    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isRead = false;
 
-    #[ORM\Column(type: "datetime_immutable")]
+    #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $isReadAt = null;
 
     public function __construct(Profile $recipient, Profile $profile, NotificationTypeEnum $type, ?UuidInterface $resourceId = null)

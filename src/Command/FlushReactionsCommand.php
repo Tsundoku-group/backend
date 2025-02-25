@@ -23,6 +23,7 @@ class FlushReactionsCommand extends Command
     {
         $this->redisReactService->flushAllReactionsToDatabase();
         $output->writeln('<info>Reactions flushed to database successfully!</info>');
+
         return Command::SUCCESS;
     }
 }

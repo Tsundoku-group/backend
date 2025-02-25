@@ -13,9 +13,8 @@ class NotificationController extends AbstractController
 {
     public function __construct(
         private readonly RedisNotificationService $redisNotificationService,
-        private readonly NotificationRepository   $notificationRepository
-    )
-    {
+        private readonly NotificationRepository $notificationRepository,
+    ) {
     }
 
     #[Route('/{receiverId}', name: 'get_notifications', methods: ['GET'])]
@@ -28,7 +27,7 @@ class NotificationController extends AbstractController
                 'receiver' => $receiverId,
             ]);
 
-            $notifications = array_map(fn($notification) => [
+            $notifications = array_map(fn ($notification) => [
                 'profileId' => $notification->getProfile()->getId(),
                 'type' => $notification->getType(),
                 'resourceId' => $notification->getResourceId(),

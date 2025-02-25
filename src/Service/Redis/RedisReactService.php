@@ -17,17 +17,16 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 readonly class RedisReactService
 {
     public function __construct(
-        private RedisClientConfig      $redis,
+        private RedisClientConfig $redis,
         private EntityManagerInterface $entityManager,
-        private ReactRepository        $reactRepository,
-        private ProfileRepository      $profileRepository,
+        private ReactRepository $reactRepository,
+        private ProfileRepository $profileRepository,
         #[Autowire(service: 'monolog.logger.reactions')]
-        private LoggerInterface        $logger
-    )
-    {
+        private LoggerInterface $logger,
+    ) {
     }
 
-    public function addReactionToCache(string $profileId,string $receiverId, string $resourceType, string $reactType, ?string $resourceId): void
+    public function addReactionToCache(string $profileId, string $receiverId, string $resourceType, string $reactType, ?string $resourceId): void
     {
         $reactionKey = "reactions:{$resourceType}:{$resourceId}";
 
@@ -39,7 +38,7 @@ readonly class RedisReactService
             'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
-        $this->redis->getClient()->rpush($reactionKey, (array)$reactionData);
+        $this->redis->getClient()->rpush($reactionKey, (array) $reactionData);
 
         if ($this->redis->getClient()->llen($reactionKey) >= 50) {
             $this->flushAllReactionsToDatabase();
@@ -51,25 +50,28 @@ readonly class RedisReactService
         $reactionKey = "reactions:{$resourceType}:{$resourceId}";
         $reactionsJson = $this->redis->getClient()->lrange($reactionKey, 0, -1);
 
-        return array_map(fn($json) => json_decode($json, true), $reactionsJson);
+        return array_map(fn ($json) => json_decode($json, true), $reactionsJson);
     }
 
     public function flushAllReactionsToDatabase(): void
     {
-        $keys = $this->redis->getClient()->keys("reactions:*");
+        $keys = $this->redis->getClient()->keys('reactions:*');
 
         if (empty($keys)) {
-            $this->logger->warning("❌ Aucune clé de réaction trouvée dans Redis !");
+            $this->logger->warning('❌ Aucune clé de réaction trouvée dans Redis !');
+
             return;
         }
 
-        $this->logger->info("🔍 Clés trouvées dans Redis :", ['keys' => $keys]);
+        $this->logger->info('🔍 Clés trouvées dans Redis :', ['keys' => $keys]);
 
         $batchPersist = false;
 
         foreach ($keys as $key) {
-            $parts = explode(":", $key);
-            if (count($parts) < 3) continue;
+            $parts = explode(':', $key);
+            if (count($parts) < 3) {
+                continue;
+            }
 
             [$prefix, $resourceType, $resourceId] = $parts;
             $this->logger->info("⚡ Flush en cours pour {$resourceId} ({$resourceType})");
@@ -119,31 +121,30 @@ readonly class RedisReactService
                     $this->entityManager->persist($reaction);
                     $batchPersist = true;
 
-                    $this->logger->info("📝 Nouvelle réaction ajoutée", [
+                    $this->logger->info('📝 Nouvelle réaction ajoutée', [
                         'actorId' => $reactionData['actorId'],
                         'receiverId' => $reactionData['receiverId'],
                         'resourceId' => $reactionData['resourceId'],
                         'resourceType' => $resourceType,
-                        'reactType' => $reactionData['reactType']
+                        'reactType' => $reactionData['reactType'],
                     ]);
                 }
 
                 $this->redis->getClient()->del($key);
                 $this->logger->info("✅ Flush réussi pour {$resourceId} ({$resourceType})", [
-                    'timestamp' => date('Y-m-d H:i:s')
+                    'timestamp' => date('Y-m-d H:i:s'),
                 ]);
-
             } catch (Exception $e) {
                 $this->logger->error("❌ Échec du flush des réactions pour {$resourceId} ({$resourceType})", [
                     'error' => $e->getMessage(),
-                    'timestamp' => date('Y-m-d H:i:s')
+                    'timestamp' => date('Y-m-d H:i:s'),
                 ]);
             }
         }
 
         if ($batchPersist) {
             $this->entityManager->flush();
-            $this->logger->info("✅ Toutes les nouvelles réactions ont été enregistrées en BDD.");
+            $this->logger->info('✅ Toutes les nouvelles réactions ont été enregistrées en BDD.');
         }
     }
 }

@@ -4,7 +4,7 @@ namespace App\Command;
 
 use App\Service\Redis\RedisNotificationService;
 use Symfony\Component\Console\Attribute\AsCommand;
-use  Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -23,6 +23,7 @@ class FlushNotificationsCommand extends Command
     {
         $this->redisNotificationService->flushNotificationsToDatabase();
         $output->writeln('<info>Flushing notifications from Redis to PostgreSQL</info>');
+
         return Command::SUCCESS;
     }
 }

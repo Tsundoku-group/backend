@@ -1,43 +1,44 @@
 <?php
+
 namespace App\Entity;
 
 use App\Enum\ReactTypeEnum;
 use App\Enum\ResourceTypeEnum;
-use Doctrine\ORM\Mapping as ORM;
 use DateTimeImmutable;
+use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 
 #[ORM\Entity]
-#[ORM\Table(name: "react")]
+#[ORM\Table(name: 'react')]
 class React
 {
     #[ORM\Id]
-    #[ORM\Column(type: "uuid", unique: true)]
-    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?string $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $actor;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ["remove"])]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $receiver;
 
-    #[ORM\Column(type: "string", length: 50, enumType: ReactTypeEnum::class)]
+    #[ORM\Column(type: 'string', length: 50, enumType: ReactTypeEnum::class)]
     private ReactTypeEnum $reactType;
 
-    #[ORM\Column(type: "string", length: 50, enumType: ResourceTypeEnum::class)]
+    #[ORM\Column(type: 'string', length: 50, enumType: ResourceTypeEnum::class)]
     private ResourceTypeEnum $resourceType;
 
-    #[ORM\Column(type: "uuid")]
+    #[ORM\Column(type: 'uuid')]
     private string $resourceId;
 
-    #[ORM\Column(type: "datetime_immutable")]
+    #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $updatedAt = null;
 
     public function __construct(Profile $actor, Profile $receiver, string $resourceId, ResourceTypeEnum $resourceType, ReactTypeEnum $reactType)
