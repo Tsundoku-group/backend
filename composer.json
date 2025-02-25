@@ -18,6 +18,7 @@
         "predis/predis": "*",
         "ramsey/uuid-doctrine": "^2.1",
         "symfony/console": "7.1.*",
+        "symfony/doctrine-messenger": "7.1.*",
         "symfony/dotenv": "7.1.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.1.*",
