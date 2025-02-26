@@ -17,136 +17,70 @@ readonly class RedisNotificationService
 {
     public function __construct(
         private RedisClientConfig      $redis,
-        private EntityManagerInterface $entityManager,
-        private ProfileRepository      $profileRepository,
-        #[Autowire(service: 'monolog.logger.notifications')]
-        private LoggerInterface        $logger,
         private NotificationRepository $notificationRepository,
     )
     {
     }
 
-    public function addNotificationToCache(string $receiverId, string $actorId, string $notificationTypeEnum, ?string $resourceId): void
+    public function addNotificationToCache(string $receiverId, string $actorId, string $notificationTypeEnum, ?string $resourceId, string $resourceTypeEnum): void
     {
         $notificationKey = "notifications:{$receiverId}";
         $notificationData = json_encode([
             'receiverId' => $receiverId,
             'actorId' => $actorId,
             'resourceId' => $resourceId,
+            'resourceType' => $resourceTypeEnum,
             'isRead' => false,
             'notificationType' => $notificationTypeEnum,
             'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
         $this->redis->getClient()->rpush($notificationKey, (array)$notificationData);
-
-        if ($this->redis->getClient()->llen($notificationKey) >= 50) {
-            $this->flushNotificationsToDatabase();
-        }
     }
 
-    public function getNotificationsFromCache(string $receiverId): array
+    public function getNotifications(string $receiverId): array
     {
-        $reactionKey = "notifications:{$receiverId}";
-        $reactionsJson = $this->redis->getClient()->lrange($reactionKey, 0, -1);
+        $notificationKey = "notifications:{$receiverId}";
+        $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
-        return array_map(fn($json) => json_decode($json, true), $reactionsJson);
-    }
-
-    public function flushNotificationsToDatabase(?string $receiverId = null, bool $onlyRead = false): void
-    {
-        $client = $this->redis->getClient();
-        $keys = $receiverId ? ["notifications:{$receiverId}"] : $client->keys('notifications:*');
-
-        if (empty($keys)) {
-            $this->logger->info('ℹ️ Aucune notification à flusher.');
-            return;
+        if (!empty($notificationsJson)) {
+            return array_map(fn($json) => json_decode($json, true), $notificationsJson);
         }
 
-        $this->logger->info('📢 Début du flush des notifications...');
+        $notificationsFromDB = $this->notificationRepository->findBy(
+            ['receiver' => $receiverId],
+            ['createdAt' => 'DESC'],
+            10
+        );
 
-        foreach ($keys as $key) {
-            $receiverId = str_replace('notifications:', '', $key);
-            $notifications = $client->lrange($key, 0, -1);
+        $notifications = array_map(fn($notification) => [
+            'receiverId' => $notification->getReceiver()->getId(),
+            'actorId' => $notification->getActor()->getId(),
+            'resourceId' => $notification->getResourceId(),
+            'resourceType' => $notification->getResourceType(),
+            'notificationType' => $notification->getType(),
+            'isRead' => $notification->isRead(),
+            'createdAt' => $notification->getCreatedAt()->format('Y-m-d H:i:s'),
+        ], $notificationsFromDB);
 
-            if (empty($notifications)) {
-                $this->logger->info("⚠️ Aucune notification pour {$receiverId}, suppression de la clé.");
-                $client->del($key);
-                continue;
-            }
+        foreach ($notifications as $notification) {
+            $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notification));
+        }
 
-            $this->entityManager->beginTransaction();
+        return $notifications;
+    }
 
-            try {
-                foreach ($notifications as $notificationJson) {
-                    $notificationData = json_decode($notificationJson, true);
+    public function markNotificationsAsReadInCache(string $receiverId): void
+    {
+        $notifications = $this->getNotifications($receiverId);
 
-                    if ($onlyRead && empty($notificationData['isRead'])) {
-                        continue;
-                    }
+        foreach ($notifications as &$notification) {
+            $notification['isRead'] = true;
+        }
 
-                    $recipient = $this->profileRepository->find($notificationData['recipientId']);
-                    $actor = $this->profileRepository->find($notificationData['actorId']);
-
-                    if (!$recipient || !$actor) {
-                        $this->logger->warning("⚠️ Impossible de récupérer le profil ou l'acteur pour la notification", [
-                            'recipientId' => $notificationData['recipientId'],
-                            'actorId' => $notificationData['actorId'],
-                        ]);
-                        continue;
-                    }
-
-                    $existingNotification = $this->notificationRepository->findOneBy([
-                        'recipient' => $recipient,
-                        'profile' => $actor,
-                        'type' => NotificationTypeEnum::from($notificationData['notificationType']),
-                        'resourceId' => $notificationData['resourceId'] ?? null
-                    ]);
-
-                    if ($existingNotification) {
-                        if ($notificationData['isRead'] === true) {
-                            $existingNotification->setIsRead(true);
-                            $existingNotification->setIsReadAt(new DateTimeImmutable());
-                            $this->logger->info("✅ Notification mise à jour comme lue en BDD", [
-                                'notificationId' => $existingNotification->getId()
-                            ]);
-                        }
-                    } else {
-                        $notification = new Notification(
-                            $recipient,
-                            $actor,
-                            NotificationTypeEnum::from($notificationData['notificationType']),
-                            $notificationData['resourceId'] ?? null
-                        );
-
-                        $notification->setIsRead($notificationData['isRead'] ?? false);
-                        if ($notification->isRead()) {
-                            $notification->setIsReadAt(new DateTimeImmutable());
-                        }
-
-                        $this->entityManager->persist($notification);
-                        $this->logger->info("📝 Nouvelle notification enregistrée en BDD", [
-                            'recipientId' => $notificationData['recipientId'],
-                            'actorId' => $notificationData['actorId'],
-                            'type' => $notificationData['notificationType'],
-                            'resourceId' => $notificationData['resourceId'] ?? null,
-                            'isRead' => $notification->isRead()
-                        ]);
-                    }
-                }
-
-                $this->entityManager->flush();
-                $this->entityManager->commit();
-                $client->del($key);
-
-                $this->logger->info("✅ Notifications flushées en BDD pour {$receiverId}");
-            } catch (Exception $e) {
-                $this->entityManager->rollback();
-                $this->logger->error('❌ Échec du flush des notifications', [
-                    'error' => $e->getMessage(),
-                    'recipientId' => $receiverId,
-                ]);
-            }
+        $this->redis->getClient()->del("notifications:{$receiverId}");
+        foreach ($notifications as &$notification) {
+            $this->redis->getClient()->rpush("notifications:{$receiverId}", (array)json_encode($notification));
         }
     }
 }
