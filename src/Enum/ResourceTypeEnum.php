@@ -4,6 +4,6 @@ namespace App\Enum;
 
 enum ResourceTypeEnum: string
 {
-    case POST = 'post';
-    case COMMENT = 'comment';
+    case POST = 'POST';
+    case COMMENT = 'COMMENT';
 }
