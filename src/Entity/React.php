@@ -18,11 +18,11 @@ class React
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?string $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $actor;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $receiver;
 
@@ -32,7 +32,7 @@ class React
     #[ORM\Column(type: 'string', length: 50, enumType: ResourceTypeEnum::class)]
     private ResourceTypeEnum $resourceType;
 
-    #[ORM\Column(type: 'uuid')]
+    #[ORM\Column(type: 'string')]
     private string $resourceId;
 
     #[ORM\Column(type: 'datetime_immutable')]
