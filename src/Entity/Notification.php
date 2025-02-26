@@ -3,15 +3,16 @@
 namespace App\Entity;
 
 use App\Enum\NotificationTypeEnum;
+use App\Enum\ResourceTypeEnum;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'notifications')]
-#[ORM\Index(name: 'idx_notifications_recipient', columns: ['recipient_id'])]
-#[ORM\Index(name: 'idx_notifications_profile', columns: ['profile_id'])]
+#[ORM\Table(name: 'notification')]
+#[ORM\Index(name: 'idx_notifications_profile', columns: ['actor_id'])]
+#[ORM\Index(name: 'idx_notifications_receiver', columns: ['receiver_id'])]
 class Notification
 {
     #[ORM\Id]
@@ -20,19 +21,22 @@ class Notification
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?UuidInterface $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Profile $recipient;
+    private Profile $actor;
 
-    #[ORM\ManyToOne(targetEntity: Profile::class, cascade: ['remove'])]
+    #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Profile $profile;
+    private Profile $receiver;
 
     #[ORM\Column(type: 'string', length: 50)]
-    private string $type;
+    private string $notificationType;
 
-    #[ORM\Column(type: 'uuid', nullable: true)]
-    private ?UuidInterface $resourceId = null;
+    #[ORM\Column(type: 'string', nullable: true)]
+    private string $resourceId;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $resourceType;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isRead = false;
@@ -43,12 +47,13 @@ class Notification
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $isReadAt = null;
 
-    public function __construct(Profile $recipient, Profile $profile, NotificationTypeEnum $type, ?UuidInterface $resourceId = null)
+    public function __construct(Profile $receiver, Profile $actor, NotificationTypeEnum $notificationType, string $resourceId, ResourceTypeEnum $resourceType)
     {
-        $this->recipient = $recipient;
-        $this->profile = $profile;
-        $this->type = $type->value;
+        $this->receiver = $receiver;
+        $this->actor = $actor;
+        $this->notificationType = $notificationType->value;
         $this->resourceId = $resourceId;
+        $this->resourceType = $resourceType->value;
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -62,44 +67,54 @@ class Notification
         $this->id = $id;
     }
 
-    public function getRecipient(): Profile
+    public function getReceiver(): Profile
     {
-        return $this->recipient;
+        return $this->receiver;
     }
 
-    public function setRecipient(Profile $recipient): void
+    public function setReceiver(Profile $receiver): void
     {
-        $this->recipient = $recipient;
+        $this->receiver = $receiver;
     }
 
-    public function getProfile(): Profile
+    public function getActor(): Profile
     {
-        return $this->profile;
+        return $this->actor;
     }
 
-    public function setProfile(Profile $profile): void
+    public function setActor(Profile $actor): void
     {
-        $this->profile = $profile;
+        $this->actor = $actor;
     }
 
-    public function getType(): NotificationTypeEnum
+    public function getNotificationType(): NotificationTypeEnum
     {
-        return NotificationTypeEnum::from($this->type);
+        return NotificationTypeEnum::from($this->notificationType);
     }
 
-    public function setType(NotificationTypeEnum $type): void
+    public function setNotificationType(NotificationTypeEnum $notificationType): void
     {
-        $this->type = $type->value;
+        $this->notificationType = $notificationType->value;
     }
 
-    public function getResourceId(): ?UuidInterface
+    public function getResourceId(): string
     {
         return $this->resourceId;
     }
 
-    public function setResourceId(?UuidInterface $resourceId): void
+    public function setResourceId(string $resourceId): void
     {
         $this->resourceId = $resourceId;
+    }
+
+    public function getResourceType(): ResourceTypeEnum
+    {
+        return ResourceTypeEnum::from($this->resourceType);
+    }
+
+    public function setResourceType(ResourceTypeEnum $resourceType): void
+    {
+        $this->resourceType = $resourceType->value;
     }
 
     public function isRead(): bool
