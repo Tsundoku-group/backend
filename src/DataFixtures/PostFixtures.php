@@ -4,7 +4,6 @@ namespace App\DataFixtures;
 
 use App\Entity\Post;
 use App\Entity\Profile;
-use App\ValueObject\Post\PostVisibility;
 use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -55,7 +54,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
             $post->setTitle($title);
             $post->setContent($contents[$i % count($contents)]);
             $post->setCreatedAt((new DateTimeImmutable())->modify("-$i days"));
-            $post->setVisibility(PostVisibility::fromString('public'));
+            $post->setVisibility('public');
             $post->setAuthor($profiles[array_rand($profiles)]);
 
             // ✅ Générer un slug unique en ajoutant un ID au slug
