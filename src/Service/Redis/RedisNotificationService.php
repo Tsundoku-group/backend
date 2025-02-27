@@ -100,7 +100,7 @@ readonly class RedisNotificationService
         $notificationKey = "notifications:{$receiverId}";
         $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
-        $notifications = array_map(fn($json) => json_decode($json, true), $notificationsJson);
+        $notifications = array_reverse(array_map(fn($json) => json_decode($json, true), $notificationsJson));
 
         $startDate = (new DateTimeImmutable("now - {$weeksAgo} weeks"))
             ->modify('Monday this week')->setTime(0, 0);
