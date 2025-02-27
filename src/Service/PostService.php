@@ -11,6 +11,7 @@ use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
+use App\Repository\ReactRepository;
 use App\Security\Voter\Post\PostStatusVoter;
 use App\Security\Voter\Post\PostVisibilityVoter;
 use App\Validator\Constraints\ProfileValidator;
@@ -34,10 +35,11 @@ readonly class PostService
         private PostRepository $postRepository,
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private ReactRepository $reactRepository,
     ) {
     }
 
-    public function getRecentPosts(int $limit = 10): array
+    public function getRecentPosts(int $limit, string $profileId): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
@@ -55,10 +57,11 @@ readonly class PostService
                 'username' => $post->getAuthor()->getUsername(),
             ],
             'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
+            'hasLiked' => $this->reactRepository->hasUserLikedPost($profileId, $post->getId()),
         ], $posts);
     }
 
-    public function getOlderPosts(int $page, int $limit): array
+    public function getOlderPosts(int $page, int $limit, string $profileId): array
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
@@ -76,6 +79,7 @@ readonly class PostService
                 'username' => $post->getAuthor()->getUsername(),
             ],
             'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
+            'hasLiked' => $this->reactRepository->hasUserLikedPost($profileId, $post->getId()),
         ], $posts);
     }
 

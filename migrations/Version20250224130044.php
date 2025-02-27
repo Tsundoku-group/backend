@@ -35,6 +35,5 @@ final class Version20250224130044 extends AbstractMigration
         $this->addSql('ALTER TABLE react DROP CONSTRAINT FK_19656FD5CD53EDB6');
         $this->addSql('DROP TABLE react');
         $this->addSql('ALTER TABLE post ALTER type TYPE VARCHAR(255)');
-        $this->addSql('ALTER TABLE post ALTER type DROP NOT NULL');
     }
 }

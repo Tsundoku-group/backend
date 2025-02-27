@@ -26,11 +26,11 @@ class PostController extends AbstractController
     ) {
     }
 
-    #[Route('/recent', methods: ['GET'])]
-    public function getRecentPosts(): JsonResponse
+    #[Route('/{profileId}/recent', methods: ['GET'])]
+    public function getRecentPosts(string $profileId): JsonResponse
     {
         try {
-            $posts = $this->postService->getRecentPosts(10);
+            $posts = $this->postService->getRecentPosts(10, $profileId);
 
             return new JsonResponse(['posts' => $posts], 200);
         } catch (Exception $e) {
@@ -38,14 +38,14 @@ class PostController extends AbstractController
         }
     }
 
-    #[Route('/older', methods: ['GET'])]
-    public function getOlderPosts(Request $request): JsonResponse
+    #[Route('/{profileId}/older', methods: ['GET'])]
+    public function getOlderPosts(string $profileId, Request $request): JsonResponse
     {
         $page = max((int) $request->query->get('page', 1), 1);
         $limit = max((int) $request->query->get('limit', 10), 10);
 
         try {
-            $posts = $this->postService->getOlderPosts($page, $limit);
+            $posts = $this->postService->getOlderPosts($page, $limit, $profileId);
             $totalPosts = $this->postRepository->countTotalPosts();
             $remainingPosts = $totalPosts - ($page * $limit);
             $nextPage = $remainingPosts > 0 ? $page + 1 : null;
