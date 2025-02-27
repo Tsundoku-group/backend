@@ -73,9 +73,9 @@ readonly class RedisNotificationService
                 'actorFirstName' => $actor->getFirstName(),
                 'actorLastName' => $actor->getLastName(),
                 'resourceId' => $resourceId,
-                'resourceType' => $resourceTypeEnum,
+                'resourceType' => ResourceTypeEnum::from($resourceTypeEnum),
                 'isRead' => false,
-                'notificationType' => $notificationTypeEnum,
+                'notificationType' => NotificationTypeEnum::from($notificationTypeEnum),
                 'actorCount' => 1,
                 'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
             ];
