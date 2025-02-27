@@ -33,7 +33,7 @@ class Notification
     private string $notificationType;
 
     #[ORM\Column(type: 'string', nullable: true)]
-    private string $resourceId;
+    private ?string $resourceId = null;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $resourceType;
@@ -50,7 +50,7 @@ class Notification
     #[ORM\Column(type: 'integer', options: ['default' => 1])]
     private int $actorCount = 1;
 
-    public function __construct(Profile $receiver, Profile $actor, NotificationTypeEnum $notificationType, string $resourceId, ResourceTypeEnum $resourceType)
+    public function __construct(Profile $receiver, Profile $actor, NotificationTypeEnum $notificationType, ?string $resourceId, ResourceTypeEnum $resourceType)
     {
         $this->receiver = $receiver;
         $this->actor = $actor;
