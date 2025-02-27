@@ -29,9 +29,23 @@ readonly class RedisNotificationService
     /**
      * @throws ExceptionInterface
      */
-    public function addNotificationToCache(string $receiverId, string $actorId, string $notificationTypeEnum, ?string $resourceId, string $resourceTypeEnum): void
-    {
+    public function addNotificationToCache(
+        string $receiverId,
+        string $actorId,
+        string $notificationTypeEnum,
+        ?string $resourceId,
+        string $resourceTypeEnum
+    ): void {
         $notificationKey = "notifications:{$receiverId}";
+        $thresholdKey = "notification_flush_threshold:{$receiverId}";
+
+        if (!$this->redis->getClient()->exists($thresholdKey)) {
+            $this->redis->getClient()->set($thresholdKey, 10);
+            error_log("✅ [Redis] Initialisation du seuil pour {$receiverId} à 10");
+        }
+
+        $threshold = (int) $this->redis->getClient()->get($thresholdKey);
+
         $notificationData = json_encode([
             'receiverId' => $receiverId,
             'actorId' => $actorId,
@@ -45,8 +59,13 @@ readonly class RedisNotificationService
         $this->redis->getClient()->rpush($notificationKey, (array)$notificationData);
         $this->redis->getClient()->expire($notificationKey, 86400);
 
-        if ($this->redis->getClient()->llen($notificationKey) >= 50) {
-            $this->bus->dispatch(new FlushNotificationsMessage());
+        $notificationCount = $this->redis->getClient()->llen($notificationKey);
+
+        if ($notificationCount >= $threshold) {
+            $this->bus->dispatch(new FlushNotificationsMessage($receiverId));
+
+            $newThreshold = min(100, (int) ceil($threshold * 1.5));
+            $this->redis->getClient()->set($thresholdKey, $newThreshold);
         }
     }
 
