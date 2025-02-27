@@ -4,7 +4,6 @@ namespace App\Repository;
 
 use App\Entity\React;
 use App\Enum\ResourceTypeEnum;
-use App\Service\Redis\RedisReactService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

@@ -11,17 +11,17 @@ use App\Repository\ProfileRepository;
 use App\Repository\ReactRepository;
 use App\Service\Redis\RedisNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 readonly class ReactService
 {
     public function __construct(
-        private ProfileRepository        $profileRepository,
-        private ReactRepository          $reactRepository,
-        private EntityManagerInterface   $entityManager,
-        private RedisNotificationService $redisNotificationService
-    )
-    {
+        private ProfileRepository $profileRepository,
+        private ReactRepository $reactRepository,
+        private EntityManagerInterface $entityManager,
+        private RedisNotificationService $redisNotificationService,
+    ) {
     }
 
     public function toggleReaction(array $data): JsonResponse
@@ -58,6 +58,7 @@ readonly class ReactService
             if ($existingReaction) {
                 $this->entityManager->remove($existingReaction);
                 $this->entityManager->flush();
+
                 return new JsonResponse(['message' => 'Réaction supprimée'], 200);
             }
 
@@ -75,7 +76,7 @@ readonly class ReactService
             );
 
             return new JsonResponse(['message' => 'Réaction ajoutée et notification mise en cache', 'status' => 201]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500]);
         }
     }

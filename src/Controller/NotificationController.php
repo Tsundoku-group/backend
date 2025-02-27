@@ -21,7 +21,7 @@ class NotificationController extends AbstractController
         $notifications = $this->redisNotificationService->getNotifications($receiverId);
 
         return $this->json([
-            'notifications' => $notifications
+            'notifications' => $notifications,
         ]);
     }
 

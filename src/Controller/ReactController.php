@@ -20,6 +20,7 @@ class ReactController extends AbstractController
     public function toggleReaction(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
         return $this->reactService->toggleReaction($data);
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Notification;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DateTimeImmutable;
 
 class NotificationRepository extends ServiceEntityRepository
 {

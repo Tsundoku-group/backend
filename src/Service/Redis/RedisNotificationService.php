@@ -17,13 +17,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
 readonly class RedisNotificationService
 {
     public function __construct(
-        private RedisClientConfig      $redis,
+        private RedisClientConfig $redis,
         private NotificationRepository $notificationRepository,
         private EntityManagerInterface $entityManager,
         private ProfileRepository $profileRepository,
         private MessageBusInterface $bus,
-    )
-    {
+    ) {
     }
 
     /**
@@ -42,7 +41,7 @@ readonly class RedisNotificationService
             'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
-        $this->redis->getClient()->rpush($notificationKey, (array)$notificationData);
+        $this->redis->getClient()->rpush($notificationKey, (array) $notificationData);
         if ($this->redis->getClient()->llen($notificationKey) >= 5) {
             $this->bus->dispatch(new FlushNotificationsMessage());
         }
@@ -54,7 +53,7 @@ readonly class RedisNotificationService
         $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
         if (!empty($notificationsJson)) {
-            return array_map(fn($json) => json_decode($json, true), $notificationsJson);
+            return array_map(fn ($json) => json_decode($json, true), $notificationsJson);
         }
 
         $notificationsFromDB = $this->notificationRepository->findBy(
@@ -63,7 +62,7 @@ readonly class RedisNotificationService
             10
         );
 
-        $notifications = array_map(fn($notification) => [
+        $notifications = array_map(fn ($notification) => [
             'receiverId' => $notification->getReceiver()->getId(),
             'actorId' => $notification->getActor()->getId(),
             'resourceId' => $notification->getResourceId(),
@@ -74,7 +73,7 @@ readonly class RedisNotificationService
         ], $notificationsFromDB);
 
         foreach ($notifications as $notification) {
-            $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notification));
+            $this->redis->getClient()->rpush($notificationKey, (array) json_encode($notification));
         }
 
         return $notifications;
@@ -82,7 +81,7 @@ readonly class RedisNotificationService
 
     public function getAllNotifications(): array
     {
-        $keys = $this->redis->getClient()->keys("notifications:*");
+        $keys = $this->redis->getClient()->keys('notifications:*');
         $allNotifications = [];
 
         if (empty($keys)) {
@@ -94,7 +93,7 @@ readonly class RedisNotificationService
             $notifications = $this->redis->getClient()->lrange($key, 0, -1);
 
             if (!empty($notifications)) {
-                $allNotifications[$receiverId] = array_map(fn($json) => json_decode($json, true), $notifications);
+                $allNotifications[$receiverId] = array_map(fn ($json) => json_decode($json, true), $notifications);
             }
         }
 
@@ -111,7 +110,7 @@ readonly class RedisNotificationService
 
         $this->redis->getClient()->del("notifications:{$receiverId}");
         foreach ($notifications as &$notification) {
-            $this->redis->getClient()->rpush("notifications:{$receiverId}", (array)json_encode($notification));
+            $this->redis->getClient()->rpush("notifications:{$receiverId}", (array) json_encode($notification));
         }
     }
 
@@ -134,7 +133,7 @@ readonly class RedisNotificationService
 
         $notification->setIsRead($notificationData['isRead']);
         if ($notification->isRead()) {
-            $notification->setIsReadAt(new \DateTimeImmutable());
+            $notification->setIsReadAt(new DateTimeImmutable());
         }
 
         $this->entityManager->persist($notification);
@@ -143,7 +142,7 @@ readonly class RedisNotificationService
 
     public function clearNotificationsCache(string $receiverId): void
     {
-        $keys = $this->redis->getClient()->keys("notifications:*");
+        $keys = $this->redis->getClient()->keys('notifications:*');
 
         if (!empty($keys)) {
             $this->redis->getClient()->del($keys);

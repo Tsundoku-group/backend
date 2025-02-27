@@ -26,25 +26,24 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 readonly class PostService
 {
     public function __construct(
-        private ProfileValidator              $profileValidator,
-        private ProfileRepository             $profileRepository,
-        private GroupProfileRepository        $groupProfileRepository,
-        private CommentRepository             $commentRepository,
-        private GroupRepository               $groupRepository,
-        private EntityManagerInterface        $entityManager,
-        private PostRepository                $postRepository,
-        private SluggerInterface              $slugger,
+        private ProfileValidator $profileValidator,
+        private ProfileRepository $profileRepository,
+        private GroupProfileRepository $groupProfileRepository,
+        private CommentRepository $commentRepository,
+        private GroupRepository $groupRepository,
+        private EntityManagerInterface $entityManager,
+        private PostRepository $postRepository,
+        private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
-        private ReactRepository               $reactRepository,
-    )
-    {
+        private ReactRepository $reactRepository,
+    ) {
     }
 
     public function getRecentPosts(int $limit, string $profileId): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -66,7 +65,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
