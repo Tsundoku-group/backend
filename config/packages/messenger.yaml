@@ -12,7 +12,6 @@ framework:
         routing:
             # Route your messages to the transports
             App\Message\FlushNotificationsMessage: async
-            App\Message\FlushReactionsMessage: async
 
 # when@test:
 #    framework:
