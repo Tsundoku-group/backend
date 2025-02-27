@@ -32,7 +32,6 @@ class FlushNotificationsHandler
                 foreach ($notifications as $notification) {
                     $this->redisNotificationService->flushNotificationToDatabase($notification);
                 }
-                $this->redisNotificationService->clearNotificationsCache($receiverId);
             }
 
             $this->entityManager->commit();
