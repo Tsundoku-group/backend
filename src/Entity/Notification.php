@@ -11,8 +11,8 @@ use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'notification')]
-#[ORM\Index(name: 'idx_notifications_profile', columns: ['actor_id'])]
-#[ORM\Index(name: 'idx_notifications_receiver', columns: ['receiver_id'])]
+#[ORM\Index(name: 'IDX_BF5476CA10DAF24A', columns: ['actor_id'])]
+#[ORM\Index(name: 'IDX_BF5476CACD53EDB6', columns: ['receiver_id'])]
 class Notification
 {
     #[ORM\Id]

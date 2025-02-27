@@ -21,8 +21,8 @@ class Post
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Group $group = null;
 
-    #[ORM\Column(length: 255)]
-    private string $type;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $type = null;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
