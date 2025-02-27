@@ -14,7 +14,7 @@ class FlushNotificationsSchedule implements ScheduleProviderInterface
     public function getSchedule(): Schedule
     {
         return (new Schedule())->add(
-            RecurringMessage::every('5 minutes', new FlushNotificationsMessage())
+            RecurringMessage::every('30 minutes', new FlushNotificationsMessage())
         );
     }
 }
