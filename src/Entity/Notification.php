@@ -47,6 +47,9 @@ class Notification
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $isReadAt = null;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 1])]
+    private int $actorCount = 1;
+
     public function __construct(Profile $receiver, Profile $actor, NotificationTypeEnum $notificationType, string $resourceId, ResourceTypeEnum $resourceType)
     {
         $this->receiver = $receiver;
@@ -151,5 +154,15 @@ class Notification
     {
         $this->isRead = true;
         $this->isReadAt = new DateTimeImmutable();
+    }
+
+    public function incrementActorCount(): void
+    {
+        $this->actorCount++;
+    }
+
+    public function getActorCount(): int
+    {
+        return $this->actorCount;
     }
 }
