@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Service\Redis\RedisNotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/v1/notification')]
@@ -12,13 +13,16 @@ class NotificationController extends AbstractController
 {
     public function __construct(
         private readonly RedisNotificationService $redisNotificationService,
-    ) {
+    )
+    {
     }
 
     #[Route('/{receiverId}', name: 'get_notifications', methods: ['GET'])]
-    public function getNotifications(string $receiverId): JsonResponse
+    public function getNotifications(string $receiverId, Request $request): JsonResponse
     {
-        $notifications = $this->redisNotificationService->getNotifications($receiverId);
+        $weeksAgo = max(0, (int)$request->query->get('weeksAgo', 0));
+
+        $notifications = $this->redisNotificationService->getNotificationsByWeek($receiverId, $weeksAgo);
 
         return $this->json([
             'notifications' => $notifications,
