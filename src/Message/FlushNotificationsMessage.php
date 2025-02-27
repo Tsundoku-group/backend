@@ -4,7 +4,15 @@ namespace App\Message;
 
 class FlushNotificationsMessage
 {
-    public function __construct()
+    private ?string $receiverId;
+
+    public function __construct(?string $receiverId = null)
     {
+        $this->receiverId = $receiverId;
+    }
+
+    public function getReceiverId(): ?string
+    {
+        return $this->receiverId;
     }
 }
