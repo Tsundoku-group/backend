@@ -45,6 +45,22 @@ class PostRepository extends ServiceEntityRepository
         }
     }
 
+    public function findArticlesByUser(int $userId): array
+    {
+        $articles = $this->createQueryBuilder('p')
+            ->where('p.author = :user')
+            ->andWhere('p.type = :type')
+            ->setParameter('user', $userId)
+            ->setParameter('type', 'article')
+            ->orderBy('p.createdAt', 'DESC');
+
+        try {
+            return $articles->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+
     public function findPostWithGroupById(int $postId): ?Post
     {
         $qb = $this->createQueryBuilder('p')

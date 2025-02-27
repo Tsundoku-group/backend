@@ -6,6 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
+use App\Entity\User;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\PostService;
@@ -56,6 +57,26 @@ class PostController extends AbstractController
             ], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/articles', methods: ['GET'])]
+    public function getArticlesByUser(): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 401);
+        }
+
+        try {
+            $articles = $this->postRepository->findArticlesByUser($user->getId());
+
+            return new JsonResponse([
+                'articles' => $articles,
+            ], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 
