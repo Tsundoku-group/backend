@@ -3,8 +3,12 @@
 namespace App\Service;
 
 use App\Document\Comment;
+use App\Enum\NotificationTypeEnum;
+use App\Enum\ResourceTypeEnum;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
+use App\Repository\ProfileRepository;
+use App\Service\Redis\RedisNotificationService;
 use App\Validator\Constraints\ProfileValidator;
 use DateTime;
 use Doctrine\ODM\MongoDB\DocumentManager;
@@ -18,6 +22,8 @@ readonly class CommentService
         private ProfileValidator $profileValidator,
         private PostRepository $postRepository,
         private DocumentManager $dm,
+        private ProfileRepository $profileRepository,
+        private RedisNotificationService $redisNotificationService,
     ) {
     }
 
@@ -111,9 +117,29 @@ readonly class CommentService
     public function addCommentToPost(string $postId, string $authorId, string $content): JsonResponse
     {
         try {
+            $post = $this->postRepository->find($postId);
+            if (!$post) {
+                return new JsonResponse(['error' => 'Post not found'], 404);
+            }
+
+            $author = $this->profileRepository->find($authorId);
+            if (!$author) {
+                return new JsonResponse(['error' => 'Author not found'], 404);
+            }
+
+            $receiver = $post->getAuthor();
+
             $comment = new Comment($postId, $authorId, $content);
             $this->dm->persist($comment);
             $this->dm->flush();
+
+            $this->redisNotificationService->addNotificationToCache(
+                receiverId: $receiver->getId(),
+                actorId: $author->getId(),
+                notificationTypeEnum: NotificationTypeEnum::COMMENT->value,
+                resourceId: $postId,
+                resourceTypeEnum: ResourceTypeEnum::POST->value,
+            );
 
             return new JsonResponse([
                 'message' => 'Comment successfully added to post',

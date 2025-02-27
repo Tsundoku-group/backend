@@ -4,8 +4,11 @@ namespace App\Service;
 
 use App\Constant\ErrorMessagesConstant;
 use App\Entity\Follower;
+use App\Enum\NotificationTypeEnum;
+use App\Enum\ResourceTypeEnum;
 use App\Repository\FollowerRepository;
 use App\Repository\ProfileRepository;
+use App\Service\Redis\RedisNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +19,7 @@ readonly class FollowerService
         private ProfileRepository $profileRepository,
         private FollowerRepository $followerRepository,
         private EntityManagerInterface $entityManager,
+        private RedisNotificationService $redisNotificationService,
     ) {
     }
 
@@ -100,7 +104,15 @@ readonly class FollowerService
             $this->entityManager->persist($follow);
             $this->entityManager->flush();
 
-            return ['message' => 'Successfully followed the profile.'];
+            $this->redisNotificationService->addNotificationToCache(
+                receiverId: $following->getId(),
+                actorId: $follower->getId(),
+                notificationTypeEnum: NotificationTypeEnum::FOLLOW->value,
+                resourceId: null,
+                resourceTypeEnum: ResourceTypeEnum::FOLLOW->value,
+            );
+
+            return ['message' => 'Successfully followed the profile.', 'status' => 201];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
