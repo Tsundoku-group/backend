@@ -5,38 +5,50 @@ namespace App\Worker;
 use App\Message\FlushNotificationsMessage;
 use App\Service\Redis\RedisNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-class FlushNotificationsHandler
+readonly class FlushNotificationsHandler
 {
     public function __construct(
         private RedisNotificationService $redisNotificationService,
-        private EntityManagerInterface $entityManager,
-    ) {
-    }
+        private EntityManagerInterface   $entityManager
+    ) {}
 
     public function __invoke(FlushNotificationsMessage $message): void
     {
-        $allNotifications = $this->redisNotificationService->getAllNotifications();
+        $receiverId = $message->getReceiverId();
 
-        if (empty($allNotifications)) {
-            return;
-        }
+        if ($receiverId) {
+            $notifications = $this->redisNotificationService->getNotifications($receiverId);
 
-        $this->entityManager->beginTransaction();
-
-        try {
-            foreach ($allNotifications as $receiverId => $notifications) {
-                foreach ($notifications as $notification) {
-                    $this->redisNotificationService->flushNotificationToDatabase($notification);
+            if (!empty($notifications)) {
+                $this->entityManager->beginTransaction();
+                try {
+                    foreach ($notifications as $notification) {
+                        $this->redisNotificationService->flushNotificationToDatabase($notification);
+                    }
+                    $this->entityManager->commit();
+                } catch (\Exception $e) {
+                    $this->entityManager->rollback();
                 }
             }
+        } else {
+            $allNotifications = $this->redisNotificationService->getAllNotifications();
 
-            $this->entityManager->commit();
-        } catch (Exception $e) {
-            $this->entityManager->rollback();
+            if (!empty($allNotifications)) {
+                $this->entityManager->beginTransaction();
+                try {
+                    foreach ($allNotifications as $notifications) {
+                        foreach ($notifications as $notification) {
+                            $this->redisNotificationService->flushNotificationToDatabase($notification);
+                        }
+                    }
+                    $this->entityManager->commit();
+                } catch (\Exception $e) {
+                    $this->entityManager->rollback();
+                }
+            }
         }
     }
 }
