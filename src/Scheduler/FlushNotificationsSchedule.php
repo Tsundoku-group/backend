@@ -4,7 +4,6 @@ namespace App\Scheduler;
 
 use App\Message\FlushNotificationsMessage;
 use App\Message\ResetThresholdMessage;
-use App\Service\ResetThresholdService;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule;
