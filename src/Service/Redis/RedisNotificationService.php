@@ -41,22 +41,48 @@ readonly class RedisNotificationService
 
         if (!$this->redis->getClient()->exists($thresholdKey)) {
             $this->redis->getClient()->set($thresholdKey, 10);
-            error_log("✅ [Redis] Initialisation du seuil pour {$receiverId} à 10");
         }
 
         $threshold = (int) $this->redis->getClient()->get($thresholdKey);
+        $actor = $this->profileRepository->find($actorId);
+        $notifications = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
-        $notificationData = json_encode([
-            'receiverId' => $receiverId,
-            'actorId' => $actorId,
-            'resourceId' => $resourceId,
-            'resourceType' => $resourceTypeEnum,
-            'isRead' => false,
-            'notificationType' => $notificationTypeEnum,
-            'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
-        ]);
+        $updated = false;
+        foreach ($notifications as $index => $notifJson) {
+            $notif = json_decode($notifJson, true);
 
-        $this->redis->getClient()->rpush($notificationKey, (array)$notificationData);
+            if (
+                $notif['resourceId'] === $resourceId &&
+                $notif['resourceType'] === $resourceTypeEnum &&
+                $notif['notificationType'] === $notificationTypeEnum
+            ) {
+                $notif['actorCount'] = isset($notif['actorCount']) ? $notif['actorCount'] + 1 : 2;
+                $notif['updatedAt'] = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+
+                $this->redis->getClient()->lset($notificationKey, $index, json_encode($notif));
+
+                $updated = true;
+                break;
+            }
+        }
+
+        if (!$updated) {
+            $notificationData = [
+                'receiverId' => $receiverId,
+                'actorId' => $actorId,
+                'actorFirstName' => $actor->getFirstName(),
+                'actorLastName' => $actor->getLastName(),
+                'resourceId' => $resourceId,
+                'resourceType' => $resourceTypeEnum,
+                'isRead' => false,
+                'notificationType' => $notificationTypeEnum,
+                'actorCount' => 1,
+                'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ];
+
+            $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notificationData));
+        }
+
         $this->redis->getClient()->expire($notificationKey, 86400);
 
         $notificationCount = $this->redis->getClient()->llen($notificationKey);
@@ -199,6 +225,8 @@ readonly class RedisNotificationService
         return [
             'receiverId' => $notification->getReceiver()->getId(),
             'actorId' => $notification->getActor()->getId(),
+            'actorFirstName' => $notification->getActor()->getFirstName(),
+            'actorLastName' => $notification->getActor()->getLastName(),
             'resourceId' => $notification->getResourceId(),
             'resourceType' => $notification->getResourceType(),
             'notificationType' => $notification->getNotificationType(),
