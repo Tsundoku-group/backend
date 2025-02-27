@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Schedule;
+namespace App\Scheduler;
 
 use App\Message\DeleteUserMessage;
 use Symfony\Component\Scheduler\RecurringMessage;
