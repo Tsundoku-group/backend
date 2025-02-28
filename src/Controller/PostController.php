@@ -6,7 +6,6 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
-use App\Entity\User;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\PostService;
@@ -15,11 +14,14 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 #[Route('/api/v1/post')]
 class PostController extends AbstractController
 {
+
     public function __construct(
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
@@ -60,22 +62,28 @@ class PostController extends AbstractController
         }
     }
 
-    #[Route('/articles', methods: ['GET'])]
-    public function getArticlesByUser(): JsonResponse
+    #[Route('/{profileId}/articles', methods: ['GET'])]
+    public function getArticlesByProfile(int $profileId, SerializerInterface $serializer): JsonResponse
     {
-        $user = $this->getUser();
-
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 401);
+        $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
+        
+        if (!$profile) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $articles = $this->postRepository->findArticlesByUser($user->getId());
+            $articles = $this->postRepository->findArticlesByProfile($profile->getId());
+            $serializedArticles = $serializer->serialize($articles, 'json', [
+                AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER => function ($object) {
+                    return $object->getId();
+                },
+            ]);
 
             return new JsonResponse([
-                'articles' => $articles,
+                'articles' => json_decode($serializedArticles),
             ], 200);
         } catch (Exception $e) {
+            var_dump($e->getMessage());
             return new JsonResponse(['error' => ErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }

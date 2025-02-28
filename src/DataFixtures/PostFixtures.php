@@ -64,6 +64,21 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
             $manager->persist($post);
         }
 
+        $adminProfile = $manager->getRepository(Profile::class)->findOneBy(['username' => 'admin_username_1']);
+        if (!$adminProfile) {
+            throw new Exception('Le profil avec le username "admin_username_1" n\'a pas été trouvé.');
+        }
+
+        $article = new Post();
+        $article->setTitle('Bienvenue sur notre blog !');
+        $article->setType('article');
+        $article->setContent('Nous sommes ravis de vous accueillir sur notre blog. N’hésitez pas à partager vos lectures et à discuter avec la communauté !');
+        $article->setCreatedAt(new DateTimeImmutable());
+        $article->setVisibility('public');
+        $article->setAuthor($adminProfile);
+        $article->setSlug($slugger->slug('bienvenue-sur-notre-blog')->lower());
+        $manager->persist($article);
+
         $manager->flush();
     }
 

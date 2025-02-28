@@ -45,12 +45,12 @@ class PostRepository extends ServiceEntityRepository
         }
     }
 
-    public function findArticlesByUser(int $userId): array
+    public function findArticlesByProfile(int $profileId): array
     {
         $articles = $this->createQueryBuilder('p')
-            ->where('p.author = :user')
+            ->where('p.author = :profile')
             ->andWhere('p.type = :type')
-            ->setParameter('user', $userId)
+            ->setParameter('profile', $profileId)
             ->setParameter('type', 'article')
             ->orderBy('p.createdAt', 'DESC');
 
