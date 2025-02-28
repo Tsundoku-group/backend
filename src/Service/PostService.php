@@ -28,7 +28,6 @@ readonly class PostService
     public function __construct(
         private ProfileValidator $profileValidator,
         private ProfileRepository $profileRepository,
-        private GroupProfileRepository $groupProfileRepository,
         private CommentRepository $commentRepository,
         private GroupRepository $groupRepository,
         private EntityManagerInterface $entityManager,
@@ -96,12 +95,11 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
-        if (!$this->groupProfileRepository->findOneBy(['group' => $group, 'profile' => $author])) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
-        }
-
         if ('public' === $visibility && 'public' !== $group->getVisibility()) {
-            throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+            $publicGroup = $this->groupRepository->findOneBy(['name' => 'Fil d’actualité', 'visibility' => 'public']);
+            if (!$publicGroup || $group->getId() !== $publicGroup->getId()) {
+                throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+            }
         }
 
         if (!$this->authorizationChecker->isGranted('post_content', $group)) {

@@ -2,12 +2,14 @@
 
 namespace App\Service;
 
+use App\Constant\ErrorMessagesConstant;
 use App\Document\Comment;
 use App\Enum\NotificationTypeEnum;
 use App\Enum\ResourceTypeEnum;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
+use App\Repository\ReactRepository;
 use App\Service\Redis\RedisNotificationService;
 use App\Validator\Constraints\ProfileValidator;
 use DateTime;
@@ -18,13 +20,15 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 readonly class CommentService
 {
     public function __construct(
-        private CommentRepository $commentRepository,
-        private ProfileValidator $profileValidator,
-        private PostRepository $postRepository,
-        private DocumentManager $dm,
-        private ProfileRepository $profileRepository,
+        private CommentRepository        $commentRepository,
+        private ProfileValidator         $profileValidator,
+        private PostRepository           $postRepository,
+        private DocumentManager          $dm,
+        private ProfileRepository        $profileRepository,
         private RedisNotificationService $redisNotificationService,
-    ) {
+        private ReactRepository          $reactRepository,
+    )
+    {
     }
 
     public function getCommentById(string $commentId): JsonResponse
@@ -39,17 +43,17 @@ readonly class CommentService
             return new JsonResponse([
                 'id' => $comment->getId(),
                 'postId' => $comment->getPostId(),
-                'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
+                'parentId' => $comment->getParentId() ? (string)$comment->getParentId() : null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function getCommentChildren(string $commentId): JsonResponse
+    public function getCommentChildren(string $commentId, string $profileId): JsonResponse
     {
         try {
             $childComments = $this->commentRepository->findChildrenByParentId($commentId);
@@ -58,23 +62,31 @@ readonly class CommentService
                 return new JsonResponse([], 200);
             }
 
-            $formattedComments = array_map(fn ($comment) => [
-                '_id' => (string) $comment->getId(),
-                'postId' => (string) $comment->getPostId(),
-                'parentId' => (string) $comment->getParentId(),
+            $author = $this->profileRepository->findProfileById($childComments[0]->getAuthorId());
+            if (!$author) {
+                return new JsonResponse([], 200);
+            }
+
+            $formattedComments = array_map(fn($comment) => [
+                '_id' => (string)$comment->getId(),
+                'postId' => (string)$comment->getPostId(),
+                'parentId' => (string)$comment->getParentId(),
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
+                'authorFirstName' => $author['firstName'],
+                'authorLastName' => $author['lastName'],
                 'createdAt' => $comment->getCreatedAt(),
                 'children' => [],
+                'hasLiked' => $this->reactRepository->hasUserLikedComment($profileId, (string)$comment->getId()),
             ], $childComments);
 
             return new JsonResponse($formattedComments, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function getCommentsForPost(string $postId, int $limit = 5): JsonResponse
+    public function getCommentsForPost(string $postId, string $profileId, int $limit = 5): JsonResponse
     {
         try {
             $findPost = $this->postRepository->findOneBy(['id' => $postId]);
@@ -94,23 +106,24 @@ readonly class CommentService
 
             $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
 
-            $formattedComments = array_map(fn ($comment) => [
-                'id' => (string) $comment->getId(),
-                'postId' => (string) $comment->getPostId(),
+            $formattedComments = array_map(fn($comment) => [
+                'id' => (string)$comment->getId(),
+                'postId' => (string)$comment->getPostId(),
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'author' => [
-                    'id' => (string) $author->getId(),
-                    'firstname' => (string) $author->getFirstName(),
-                    'lastname' => (string) $author->getLastName(),
+                    'id' => (string)$author->getId(),
+                    'firstname' => (string)$author->getFirstName(),
+                    'lastname' => (string)$author->getLastName(),
                 ],
                 'createdAt' => $comment->getCreatedAt(),
                 'replyCount' => $this->commentRepository->countChildrenByParentId($comment->getId()),
+                'hasLiked' => $this->reactRepository->hasUserLikedComment($profileId, $comment->getId()),
             ], $comments);
 
             return new JsonResponse(['comments' => $formattedComments], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -152,7 +165,7 @@ readonly class CommentService
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -182,7 +195,7 @@ readonly class CommentService
                 ],
             ], JsonResponse::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
         }
     }
 
@@ -220,12 +233,12 @@ readonly class CommentService
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),
                     'postId' => $reply->getPostId(),
-                    'parent' => (string) $reply->getParentId(),
+                    'parent' => (string)$reply->getParentId(),
                     'createdAt' => $reply->getCreatedAt(),
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

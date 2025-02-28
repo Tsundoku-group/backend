@@ -72,7 +72,7 @@ readonly class ReactService
                 actorId: $profile->getId(),
                 notificationTypeEnum: NotificationTypeEnum::LIKE->value,
                 resourceId: $resourceId,
-                resourceTypeEnum: ResourceTypeEnum::POST->value,
+                resourceTypeEnum: $resourceType,
             );
 
             return new JsonResponse(['message' => 'Réaction ajoutée et notification mise en cache', 'status' => 201]);

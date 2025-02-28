@@ -38,8 +38,8 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{postId}/comments', methods: ['GET'])]
-    public function getCommentsForPost(string $postId): JsonResponse
+    #[Route('/{postId}/{profileId}/comments', methods: ['GET'])]
+    public function getCommentsForPost(string $postId, string $profileId): JsonResponse
     {
         try {
             $dto = new GetCommentDTO($postId);
@@ -49,19 +49,23 @@ class CommentController extends AbstractController
                 return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
-            return $this->commentService->getCommentsForPost($dto->postId);
+            return $this->commentService->getCommentsForPost($dto->postId, $profileId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/{commentId}/children', methods: ['GET'])]
-    public function getCommentWithChildren(string $commentId): JsonResponse
+    #[Route('/{commentId}/{profileId}/children', methods: ['GET'])]
+    public function getCommentWithChildren(string $commentId, string $profileId): JsonResponse
     {
+        if (!$profileId) {
+            return $this->json(['error' => 'data is missing'], 404);
+        }
+
         try {
-            return $this->commentService->getCommentChildren($commentId);
+            return $this->commentService->getCommentChildren($commentId, $profileId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {

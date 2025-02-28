@@ -27,4 +27,19 @@ class ReactRepository extends ServiceEntityRepository
                 ->getQuery()
                 ->getSingleScalarResult() > 0;
     }
+
+    public function hasUserLikedComment(int $profileId, string $commentId): bool
+    {
+
+        return (bool) $this->createQueryBuilder('r')
+                ->select('COUNT(r.id)')
+                ->where('r.actor = :profileId')
+                ->andWhere('r.resourceId = :commentId')
+                ->andWhere('r.resourceType = :resourceType')
+                ->setParameter('profileId', $profileId)
+                ->setParameter('commentId', $commentId)
+                ->setParameter('resourceType', ResourceTypeEnum::COMMENT)
+                ->getQuery()
+                ->getSingleScalarResult() > 0;
+    }
 }
