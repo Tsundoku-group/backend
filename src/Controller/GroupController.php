@@ -18,15 +18,36 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-#[Route('/api/v1/group')]
+#[Route('/api/v1/group/private')]
 class GroupController extends AbstractController
 {
     public function __construct(
-        private readonly GroupService $groupService,
-        private readonly GroupRepository $groupRepository,
-        private readonly ProfileValidator $profileValidator,
+        private readonly GroupService                  $groupService,
+        private readonly GroupRepository               $groupRepository,
+        private readonly ProfileValidator              $profileValidator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-    ) {
+    )
+    {
+    }
+
+    #[Route('', name: 'group_private', methods: ['GET'])]
+    public function getAllPrivateGroups(Request $request): JsonResponse
+    {
+        try {
+            $search = $request->query->get('search', '');
+            $tagName = $request->query->get('tagName', '');
+            $sort = $request->query->get('sort', 'newest');
+            $page = (int)$request->query->get('page', 1);
+            $limit = (int)$request->query->get('limit', 20);
+
+            $tagFilter = !empty($tagName) ? $tagName : null;
+
+            $privateGroups = $this->groupService->getPrivateGroups($search, $tagFilter, $sort, $page, $limit);
+
+            return new JsonResponse(['groups' => $privateGroups], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
     }
 
     #[Route('', methods: ['POST'])]
@@ -35,7 +56,7 @@ class GroupController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         $dto = new CreateGroupDTO($data['name'], $data['description'] ?? null, $data['visibility'], $data['profileId']);
-
+        $tagNames = $data['tags'] ?? [];
         if (!isset($dto->name, $dto->description)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
@@ -51,7 +72,8 @@ class GroupController extends AbstractController
                 $dto->name,
                 $dto->description,
                 $creator,
-                $dto->visibility
+                $dto->visibility,
+                $tagNames
             );
 
             return new JsonResponse([
@@ -61,7 +83,8 @@ class GroupController extends AbstractController
                     'name' => $group->getName(),
                     'slug' => $group->getSlug(),
                     'visibility' => $group->getVisibility(),
-                    'createdAt' => $group->getCreatedAt()->format('Y-m-d H:i:s'),
+                    'createdAt' => $group->getCreatedAt(),
+                    'tags' => array_map(fn($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
                 ],
             ], 201);
         } catch (RuntimeException $e) {
