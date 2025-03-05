@@ -40,10 +40,13 @@ class Group
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?DateTimeImmutable $createdAt = null;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
+
+    #[ORM\OneToMany(targetEntity: Taggable::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $taggables;
 
     public function __construct(Profile $createdBy)
     {
@@ -51,6 +54,7 @@ class Group
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
+        $this->taggables = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -58,9 +62,6 @@ class Group
         return $this->id;
     }
 
-    /**
-     * @return Collection|GroupProfile[]
-     */
     public function getGroupProfiles(): Collection
     {
         return $this->groupProfiles;
@@ -95,7 +96,6 @@ class Group
     public function setName(string $name): self
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -107,7 +107,6 @@ class Group
     public function setDescription(?string $description): self
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -119,7 +118,6 @@ class Group
     public function setVisibility(string $visibility): self
     {
         $this->visibility = $visibility;
-
         return $this;
     }
 
@@ -131,11 +129,10 @@ class Group
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
-
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): DateTimeInterface
     {
         return $this->createdAt;
     }
@@ -143,11 +140,10 @@ class Group
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 
-    public function getUpdatedAt(): ?DateTimeInterface
+    public function getUpdatedAt(): ?DateTime
     {
         return $this->updatedAt;
     }
@@ -157,5 +153,36 @@ class Group
         $this->updatedAt = $updatedAt;
 
         return $this;
+    }
+
+    public function getTaggables(): Collection
+    {
+        return $this->taggables;
+    }
+
+    public function addTag(Tag $tag): self
+    {
+        $taggable = new Taggable($tag, 'group', $this->id);
+        if (!$this->taggables->contains($taggable)) {
+            $this->taggables->add($taggable);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): self
+    {
+        foreach ($this->taggables as $taggable) {
+            if ($taggable->getTag() === $tag) {
+                $this->taggables->removeElement($taggable);
+                break;
+            }
+        }
+        return $this;
+    }
+
+    public function getTags(): array
+    {
+        return $this->taggables->map(fn (Taggable $taggable) => $taggable->getTag())->toArray();
     }
 }
