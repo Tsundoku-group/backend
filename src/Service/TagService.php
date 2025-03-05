@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use App\Entity\Group;
-use App\Entity\Tag;
 use App\Entity\Taggable;
 use App\Repository\TagRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,19 +10,17 @@ use Exception;
 
 class TagService
 {
-
     public function __construct(
-        private readonly TagRepository          $tagRepository,
-        private readonly EntityManagerInterface $entityManager
-    )
-    {
+        private readonly TagRepository $tagRepository,
+        private readonly EntityManagerInterface $entityManager,
+    ) {
     }
 
     public function getAllTags(): array
     {
         $tags = $this->tagRepository->findAllTags();
 
-        return array_map(fn($tag) => [
+        return array_map(fn ($tag) => [
             'id' => $tag->getId(),
             'name' => $tag->getName(),
             'slug' => $tag->getSlug(),
@@ -42,7 +39,7 @@ class TagService
         }
 
         $entity = null;
-        if ($entityType === 'group') {
+        if ('group' === $entityType) {
             $entity = $this->entityManager->getRepository(Group::class)->find($entityId);
         }
 
@@ -60,7 +57,7 @@ class TagService
             $existingTaggable = $this->entityManager->getRepository(Taggable::class)->findOneBy([
                 'tag' => $tag,
                 'taggableType' => $entityType,
-                'taggableId' => $entityId
+                'taggableId' => $entityId,
             ]);
 
             if (!$existingTaggable) {
@@ -80,7 +77,7 @@ class TagService
 
         $entity = match ($entityType) {
             'group' => $this->entityManager->getRepository(Group::class)->find($entityId),
-            default => null
+            default => null,
         };
 
         if (!$entity) {
@@ -96,7 +93,7 @@ class TagService
             $taggable = $this->entityManager->getRepository(Taggable::class)->findOneBy([
                 'tag' => $tag,
                 'taggableType' => $entityType,
-                'taggableId' => $entityId
+                'taggableId' => $entityId,
             ]);
 
             if ($taggable) {

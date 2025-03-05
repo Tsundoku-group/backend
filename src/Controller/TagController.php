@@ -17,9 +17,7 @@ class TagController extends AbstractController
 {
     public function __construct(
         private readonly TagService $tagService,
-    )
-    {
-
+    ) {
     }
 
     #[Route('', methods: ['GET'])]
@@ -39,7 +37,6 @@ class TagController extends AbstractController
     #[Route('', name: 'add_tags_to_entity', methods: ['POST'])]
     public function addTagsToEntity(Request $request): JsonResponse
     {
-
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['entityType'], $data['entityId'], $data['tags'])) {
@@ -47,7 +44,7 @@ class TagController extends AbstractController
         }
 
         try {
-            $this->tagService->addTagToEntity($data['entityType'], (int)$data['entityId'], $data['tags']);
+            $this->tagService->addTagToEntity($data['entityType'], (int) $data['entityId'], $data['tags']);
 
             return new JsonResponse(['message' => 'Tags ajoutés avec succès.'], 200);
         } catch (InvalidArgumentException $e) {
@@ -67,7 +64,7 @@ class TagController extends AbstractController
         }
 
         try {
-            $this->tagService->removeTagsFromEntity($data['entityType'], (int)$data['entityId'], $data['tags']);
+            $this->tagService->removeTagsFromEntity($data['entityType'], (int) $data['entityId'], $data['tags']);
 
             return new JsonResponse(['message' => 'Tags supprimés']);
         } catch (InvalidArgumentException $e) {

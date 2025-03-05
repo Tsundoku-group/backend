@@ -13,14 +13,13 @@ class NotificationController extends AbstractController
 {
     public function __construct(
         private readonly RedisNotificationService $redisNotificationService,
-    )
-    {
+    ) {
     }
 
     #[Route('/{receiverId}', name: 'get_notifications', methods: ['GET'])]
     public function getNotifications(string $receiverId, Request $request): JsonResponse
     {
-        $weeksAgo = max(0, (int)$request->query->get('weeksAgo', 0));
+        $weeksAgo = max(0, (int) $request->query->get('weeksAgo', 0));
 
         $notifications = $this->redisNotificationService->getNotificationsByWeek($receiverId, $weeksAgo);
 

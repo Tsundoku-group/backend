@@ -2,10 +2,10 @@
 
 namespace App\Entity;
 
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use DateTimeImmutable;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'tag')]
@@ -59,6 +59,7 @@ class Tag
     {
         $this->name = $name;
         $this->slug = strtolower(str_replace(' ', '-', $name));
+
         return $this;
     }
 
@@ -80,6 +81,7 @@ class Tag
     public function setParentTag(?Tag $parentTag): self
     {
         $this->parentTag = $parentTag;
+
         return $this;
     }
 

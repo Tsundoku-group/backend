@@ -3,7 +3,6 @@
 namespace App\Security\Voter\Group;
 
 use App\Entity\Group;
-use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\GroupProfileRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -26,11 +25,11 @@ final class GroupRoleVoter extends Voter
     protected function supports(string $attribute, mixed $subject): bool
     {
         return in_array($attribute, [
-                self::DELETE_GROUP,
-                self::MANAGE_MEMBERS,
-                self::POST_CONTENT,
-                self::VIEW_GROUP,
-            ], true) && $subject instanceof Group;
+            self::DELETE_GROUP,
+            self::MANAGE_MEMBERS,
+            self::POST_CONTENT,
+            self::VIEW_GROUP,
+        ], true) && $subject instanceof Group;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
@@ -44,11 +43,11 @@ final class GroupRoleVoter extends Voter
             return false;
         }
 
-        if ($subject->getId() === 1 && $attribute === self::POST_CONTENT) {
+        if (1 === $subject->getId() && self::POST_CONTENT === $attribute) {
             return true;
         }
 
-        if ($attribute === self::VIEW_GROUP && $subject->getVisibility() === 'public') {
+        if (self::VIEW_GROUP === $attribute && 'public' === $subject->getVisibility()) {
             return true;
         }
 
@@ -61,7 +60,7 @@ final class GroupRoleVoter extends Voter
 
         if ($groupProfile) {
             $permissions = [
-                self::DELETE_GROUP => $groupProfile->getRole() === 'admin',
+                self::DELETE_GROUP => 'admin' === $groupProfile->getRole(),
                 self::MANAGE_MEMBERS => in_array($groupProfile->getRole(), ['admin', 'moderator']),
                 self::POST_CONTENT => true,
                 self::VIEW_GROUP => true,

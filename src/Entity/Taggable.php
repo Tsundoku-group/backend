@@ -21,7 +21,6 @@ class Taggable
     #[ORM\Column(type: 'integer')]
     private int $taggableId;
 
-
     #[ORM\ManyToOne(targetEntity: Group::class, inversedBy: 'taggables')]
     #[ORM\JoinColumn(name: 'taggable_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Group $group = null;

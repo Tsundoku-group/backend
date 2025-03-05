@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Group;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 
 /**
  * @extends ServiceEntityRepository<Group>
@@ -21,7 +22,7 @@ class GroupRepository extends ServiceEntityRepository
         ?string $tagName = null,
         string $sort = 'newest',
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
     ): array {
         $qb = $this->createQueryBuilder('g')
             ->select('g', 'COUNT(DISTINCT gp.profile) AS membersCount')
@@ -58,7 +59,7 @@ class GroupRepository extends ServiceEntityRepository
 
         $sortOptions = [
             'members' => 'membersCount DESC',
-            'newest' => 'g.createdAt DESC'
+            'newest' => 'g.createdAt DESC',
         ];
         $qb->orderBy(...explode(' ', $sortOptions[$sort] ?? 'g.createdAt DESC'));
 
@@ -67,7 +68,7 @@ class GroupRepository extends ServiceEntityRepository
 
         try {
             return $qb->getQuery()->getResult();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }

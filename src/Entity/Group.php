@@ -96,6 +96,7 @@ class Group
     public function setName(string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -107,6 +108,7 @@ class Group
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -118,6 +120,7 @@ class Group
     public function setVisibility(string $visibility): self
     {
         $this->visibility = $visibility;
+
         return $this;
     }
 
@@ -129,6 +132,7 @@ class Group
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -140,6 +144,7 @@ class Group
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -178,6 +183,7 @@ class Group
                 break;
             }
         }
+
         return $this;
     }
 

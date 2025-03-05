@@ -13,20 +13,18 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 readonly class GroupService
 {
     public function __construct(
-        private EntityManagerInterface        $entityManager,
-        private SluggerInterface              $slugger,
+        private EntityManagerInterface $entityManager,
+        private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
-        private GroupRepository               $groupRepository,
-        private TagService                    $tagService,
-    )
-    {
+        private GroupRepository $groupRepository,
+        private TagService $tagService,
+    ) {
     }
 
     public function getPrivateGroups(string $search = '', ?string $tagName = null, string $sort = 'newest', int $page = 1, int $limit = 20): array
@@ -35,7 +33,7 @@ readonly class GroupService
 
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort, $limit, $offset);
 
-        return array_map(fn($result) => $this->formatGroupResult($result), $privateGroups);
+        return array_map(fn ($result) => $this->formatGroupResult($result), $privateGroups);
     }
 
     public function createGroup(string $name, ?string $description, Profile $creator, string $visibility, array $tagNames = []): Group
@@ -123,14 +121,14 @@ readonly class GroupService
                 'id' => $group->getCreatedBy()->getId(),
                 'username' => $group->getCreatedBy()->getUsername(),
             ],
-            'tags' => array_map(fn($taggable) => [
+            'tags' => array_map(fn ($taggable) => [
                 'name' => $taggable->getTag()->getName(),
                 'slug' => $taggable->getTag()->getSlug(),
                 'parent' => $taggable->getTag()->getParentTag() ? [
                     'name' => $taggable->getTag()->getParentTag()->getName(),
                     'slug' => $taggable->getTag()->getParentTag()->getSlug(),
-                ] : null
-            ], $group->getTaggables()->toArray())
+                ] : null,
+            ], $group->getTaggables()->toArray()),
         ];
     }
 }

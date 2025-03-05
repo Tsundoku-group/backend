@@ -17,7 +17,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ImportTagsCommand extends Command
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface $entityManager,
     ) {
         parent::__construct();
     }
@@ -29,6 +29,7 @@ class ImportTagsCommand extends Command
 
         if (!file_exists($filePath)) {
             $io->error('Fichier tags.json introuvable.');
+
             return Command::FAILURE;
         }
 
@@ -37,6 +38,7 @@ class ImportTagsCommand extends Command
 
         if (null === $tagsData) {
             $io->error('Le fichier JSON est mal formaté.');
+
             return Command::FAILURE;
         }
 
@@ -69,6 +71,7 @@ class ImportTagsCommand extends Command
         $this->entityManager->flush();
 
         $io->success('Les tags ont été importés avec succès !');
+
         return Command::SUCCESS;
     }
 }

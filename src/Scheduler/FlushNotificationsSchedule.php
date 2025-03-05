@@ -12,7 +12,9 @@ use Symfony\Component\Scheduler\ScheduleProviderInterface;
 #[AsSchedule]
 class FlushNotificationsSchedule implements ScheduleProviderInterface
 {
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function getSchedule(): Schedule
     {

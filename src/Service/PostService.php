@@ -7,7 +7,6 @@ use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
 use App\Repository\CommentRepository;
-use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;

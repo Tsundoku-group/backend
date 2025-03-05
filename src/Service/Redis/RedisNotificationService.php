@@ -17,13 +17,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
 readonly class RedisNotificationService
 {
     public function __construct(
-        private RedisClientConfig      $redis,
+        private RedisClientConfig $redis,
         private NotificationRepository $notificationRepository,
         private EntityManagerInterface $entityManager,
-        private ProfileRepository      $profileRepository,
-        private MessageBusInterface    $bus,
-    )
-    {
+        private ProfileRepository $profileRepository,
+        private MessageBusInterface $bus,
+    ) {
     }
 
     /**
@@ -34,7 +33,7 @@ readonly class RedisNotificationService
         string $actorId,
         string $notificationTypeEnum,
         ?string $resourceId,
-        string $resourceTypeEnum
+        string $resourceTypeEnum,
     ): void {
         $notificationKey = "notifications:{$receiverId}";
         $thresholdKey = "notification_flush_threshold:{$receiverId}";
@@ -52,9 +51,9 @@ readonly class RedisNotificationService
             $notif = json_decode($notifJson, true);
 
             if (
-                $notif['resourceId'] === $resourceId &&
-                $notif['resourceType'] === $resourceTypeEnum &&
-                $notif['notificationType'] === $notificationTypeEnum
+                $notif['resourceId'] === $resourceId
+                && $notif['resourceType'] === $resourceTypeEnum
+                && $notif['notificationType'] === $notificationTypeEnum
             ) {
                 $notif['actorCount'] = isset($notif['actorCount']) ? $notif['actorCount'] + 1 : 2;
                 $notif['updatedAt'] = (new DateTimeImmutable())->format('Y-m-d H:i:s');
@@ -80,7 +79,7 @@ readonly class RedisNotificationService
                 'createdAt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
             ];
 
-            $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notificationData));
+            $this->redis->getClient()->rpush($notificationKey, (array) json_encode($notificationData));
         }
 
         $this->redis->getClient()->expire($notificationKey, 86400);
@@ -100,7 +99,7 @@ readonly class RedisNotificationService
         $notificationKey = "notifications:{$receiverId}";
         $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
-        $notifications = array_reverse(array_map(fn($json) => json_decode($json, true), $notificationsJson));
+        $notifications = array_reverse(array_map(fn ($json) => json_decode($json, true), $notificationsJson));
 
         $startDate = (new DateTimeImmutable("now - {$weeksAgo} weeks"))
             ->modify('Monday this week')->setTime(0, 0);
@@ -108,15 +107,16 @@ readonly class RedisNotificationService
 
         $filteredNotifications = array_filter($notifications, function ($notif) use ($startDate, $endDate) {
             $notifDate = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $notif['createdAt']);
+
             return $notifDate >= $startDate && $notifDate <= $endDate;
         });
 
         if (empty($filteredNotifications)) {
             $filteredNotifications = $this->notificationRepository->fetchNotificationsFromDatabase($receiverId, $startDate, $endDate);
-            $notificationsToCache = array_map(fn($notification) => $this->formatNotification($notification), $filteredNotifications);
+            $notificationsToCache = array_map(fn ($notification) => $this->formatNotification($notification), $filteredNotifications);
 
             foreach ($notificationsToCache as $notif) {
-                $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notif));
+                $this->redis->getClient()->rpush($notificationKey, (array) json_encode($notif));
             }
         }
 
@@ -129,7 +129,7 @@ readonly class RedisNotificationService
         $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
 
         if (!empty($notificationsJson)) {
-            return array_map(fn($json) => json_decode($json, true), $notificationsJson);
+            return array_map(fn ($json) => json_decode($json, true), $notificationsJson);
         }
 
         $notificationsFromDB = $this->notificationRepository->findBy(
@@ -138,10 +138,10 @@ readonly class RedisNotificationService
             10
         );
 
-        $notifications = array_map(fn($notification) => $this->formatNotification($notification), $notificationsFromDB);
+        $notifications = array_map(fn ($notification) => $this->formatNotification($notification), $notificationsFromDB);
 
         foreach ($notifications as $notification) {
-            $this->redis->getClient()->rpush($notificationKey, (array)json_encode($notification));
+            $this->redis->getClient()->rpush($notificationKey, (array) json_encode($notification));
         }
 
         return $notifications;
@@ -161,7 +161,7 @@ readonly class RedisNotificationService
             $notifications = $this->redis->getClient()->lrange($key, 0, -1);
 
             if (!empty($notifications)) {
-                $allNotifications[$receiverId] = array_map(fn($json) => json_decode($json, true), $notifications);
+                $allNotifications[$receiverId] = array_map(fn ($json) => json_decode($json, true), $notifications);
             }
         }
 
@@ -178,7 +178,7 @@ readonly class RedisNotificationService
 
         $this->redis->getClient()->del("notifications:{$receiverId}");
         foreach ($notifications as &$notification) {
-            $this->redis->getClient()->rpush("notifications:{$receiverId}", (array)json_encode($notification));
+            $this->redis->getClient()->rpush("notifications:{$receiverId}", (array) json_encode($notification));
         }
     }
 

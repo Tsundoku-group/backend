@@ -20,15 +20,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 readonly class CommentService
 {
     public function __construct(
-        private CommentRepository        $commentRepository,
-        private ProfileValidator         $profileValidator,
-        private PostRepository           $postRepository,
-        private DocumentManager          $dm,
-        private ProfileRepository        $profileRepository,
+        private CommentRepository $commentRepository,
+        private ProfileValidator $profileValidator,
+        private PostRepository $postRepository,
+        private DocumentManager $dm,
+        private ProfileRepository $profileRepository,
         private RedisNotificationService $redisNotificationService,
-        private ReactRepository          $reactRepository,
-    )
-    {
+        private ReactRepository $reactRepository,
+    ) {
     }
 
     public function getCommentById(string $commentId): JsonResponse
@@ -43,7 +42,7 @@ readonly class CommentService
             return new JsonResponse([
                 'id' => $comment->getId(),
                 'postId' => $comment->getPostId(),
-                'parentId' => $comment->getParentId() ? (string)$comment->getParentId() : null,
+                'parentId' => $comment->getParentId() ? (string) $comment->getParentId() : null,
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'createdAt' => $comment->getCreatedAt(),
@@ -67,17 +66,17 @@ readonly class CommentService
                 return new JsonResponse([], 200);
             }
 
-            $formattedComments = array_map(fn($comment) => [
-                '_id' => (string)$comment->getId(),
-                'postId' => (string)$comment->getPostId(),
-                'parentId' => (string)$comment->getParentId(),
+            $formattedComments = array_map(fn ($comment) => [
+                '_id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
+                'parentId' => (string) $comment->getParentId(),
                 'content' => $comment->getContent(),
                 'authorId' => $comment->getAuthorId(),
                 'authorFirstName' => $author['firstName'],
                 'authorLastName' => $author['lastName'],
                 'createdAt' => $comment->getCreatedAt(),
                 'children' => [],
-                'hasLiked' => $this->reactRepository->hasUserLikedComment($profileId, (string)$comment->getId()),
+                'hasLiked' => $this->reactRepository->hasUserLikedComment($profileId, (string) $comment->getId()),
             ], $childComments);
 
             return new JsonResponse($formattedComments, 200);
@@ -106,15 +105,15 @@ readonly class CommentService
 
             $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
 
-            $formattedComments = array_map(fn($comment) => [
-                'id' => (string)$comment->getId(),
-                'postId' => (string)$comment->getPostId(),
+            $formattedComments = array_map(fn ($comment) => [
+                'id' => (string) $comment->getId(),
+                'postId' => (string) $comment->getPostId(),
                 'parentId' => null,
                 'content' => $comment->getContent(),
                 'author' => [
-                    'id' => (string)$author->getId(),
-                    'firstname' => (string)$author->getFirstName(),
-                    'lastname' => (string)$author->getLastName(),
+                    'id' => (string) $author->getId(),
+                    'firstname' => (string) $author->getFirstName(),
+                    'lastname' => (string) $author->getLastName(),
                 ],
                 'createdAt' => $comment->getCreatedAt(),
                 'replyCount' => $this->commentRepository->countChildrenByParentId($comment->getId()),
@@ -233,7 +232,7 @@ readonly class CommentService
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),
                     'postId' => $reply->getPostId(),
-                    'parent' => (string)$reply->getParentId(),
+                    'parent' => (string) $reply->getParentId(),
                     'createdAt' => $reply->getCreatedAt(),
                 ],
             ], 201);
