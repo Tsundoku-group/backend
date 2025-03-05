@@ -64,7 +64,7 @@ class GroupProfile
         return $this->joinAt;
     }
 
-    public function setJoinAt(DateTimeImmutable $joinAt): void
+    public function setJoinAt(DateTimeImmutable $joinAt): self
     {
         $this->joinAt = $joinAt;
         $this->markAsUpdated();
