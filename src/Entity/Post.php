@@ -40,8 +40,8 @@ class Post
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private string $visibility;
 
-    #[ORM\Column(length: 20)]
-    private string $status;
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $status = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
@@ -51,7 +51,6 @@ class Post
 
     public function __construct()
     {
-        $this->status = 'active';
         $this->createdAt = new DateTimeImmutable();
     }
 

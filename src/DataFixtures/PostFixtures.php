@@ -79,6 +79,56 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
         $article->setSlug($slugger->slug('bienvenue-sur-notre-blog')->lower());
         $manager->persist($article);
 
+        $article1 = new Post();
+        $article1->setTitle('Les bases de Symfony pour débutants');
+        $article1->setType('article');
+        $article1->setContent("Symfony est un puissant framework PHP permettant de développer des applications web robustes. Découvrez dans cet article les bases essentielles pour bien démarrer !");
+        $article1->setCreatedAt(new DateTimeImmutable());
+        $article1->setVisibility('public');
+        $article1->setAuthor($adminProfile);
+        $article1->setSlug($slugger->slug('les-bases-de-symfony-pour-debutants')->lower());
+        $manager->persist($article1);
+
+        $article2 = new Post();
+        $article2->setTitle('Pourquoi utiliser Doctrine avec Symfony ?');
+        $article2->setType('article');
+        $article2->setContent("Doctrine est l'ORM intégré à Symfony qui facilite la gestion des bases de données. Apprenez pourquoi et comment l'utiliser efficacement dans vos projets Symfony.");
+        $article2->setCreatedAt(new DateTimeImmutable());
+        $article2->setVisibility('public');
+        $article2->setAuthor($adminProfile);
+        $article2->setSlug($slugger->slug('pourquoi-utiliser-doctrine-avec-symfony')->lower());
+        $manager->persist($article2);
+
+        $article3 = new Post();
+        $article3->setTitle('Créer une API REST avec Symfony');
+        $article3->setType('article');
+        $article3->setContent("Dans cet article, nous vous guidons étape par étape pour créer une API REST performante avec Symfony et API Platform.");
+        $article3->setCreatedAt(new DateTimeImmutable());
+        $article3->setVisibility('public');
+        $article3->setAuthor($adminProfile);
+        $article3->setSlug($slugger->slug('creer-une-api-rest-avec-symfony')->lower());
+        $manager->persist($article3);
+
+        $article4 = new Post();
+        $article4->setTitle('Optimiser les performances de votre application Symfony');
+        $article4->setType('article');
+        $article4->setContent("Découvrez les meilleures pratiques pour améliorer les performances de votre application Symfony et réduire les temps de chargement.");
+        $article4->setCreatedAt(new DateTimeImmutable());
+        $article4->setVisibility('public');
+        $article4->setAuthor($adminProfile);
+        $article4->setSlug($slugger->slug('optimiser-les-performances-de-votre-application-symfony')->lower());
+        $manager->persist($article4);
+
+        $article5 = new Post();
+        $article5->setTitle('Les nouveautés de Symfony 6');
+        $article5->setType('article');
+        $article5->setContent("Symfony 6 apporte de nombreuses améliorations et nouvelles fonctionnalités. Voici un tour d'horizon des nouveautés à ne pas manquer !");
+        $article5->setCreatedAt(new DateTimeImmutable());
+        $article5->setVisibility('public');
+        $article5->setAuthor($adminProfile);
+        $article5->setSlug($slugger->slug('les-nouveautes-de-symfony-6')->lower());
+        $manager->persist($article5);
+
         $manager->flush();
     }
 

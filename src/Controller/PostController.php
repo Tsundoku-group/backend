@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/api/v1/post')]
 class PostController extends AbstractController
@@ -26,8 +27,8 @@ class PostController extends AbstractController
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
         private readonly ProfileRepository $profileRepository,
-    ) {
-    }
+        private readonly EntityManagerInterface $entityManager
+    ) {}
 
     #[Route('/{profileId}/recent', methods: ['GET'])]
     public function getRecentPosts(string $profileId): JsonResponse
@@ -66,7 +67,7 @@ class PostController extends AbstractController
     public function getArticlesByProfile(int $profileId, SerializerInterface $serializer): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
-        
+
         if (!$profile) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
@@ -92,23 +93,25 @@ class PostController extends AbstractController
     public function createPost(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
+        var_dump($data);
         $dto = new CreatePostDTO(
+            $data['type'] ?? 'post',
             $data['title'] ?? '',
             $data['content'] ?? '',
             $data['authorId'] ?? 0,
             $data['groupId'] ?? 0,
+            $data['status'] ?? '',
             $data['visibility'] ?? 'private'
         );
 
-        if (!isset($dto->authorId, $dto->groupId, $dto->visibility, $dto->title, $dto->content)) {
+        if (!isset($dto->type, $dto->authorId, $dto->groupId, $dto->status, $dto->visibility, $dto->title, $dto->content)) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
-            $post = $this->postService->createPost($dto->authorId, $dto->groupId, $dto->visibility, $dto->title, $dto->content);
+            $post = $this->postService->createPost($dto->type, $dto->authorId, $dto->groupId, $dto->status, $dto->visibility, $dto->title, $dto->content);
 
-            return new JsonResponse(['message' => 'Post créé avec succès', 'postId' => $post->getId()], 201);
+            return new JsonResponse(['message' => 'Post créé avec succès.', 'postId' => $post->getId()], 201);
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
@@ -117,7 +120,7 @@ class PostController extends AbstractController
     }
 
     #[Route('/{postId}', methods: ['PUT'])]
-    public function updatePost(int $postId, Request $request): JsonResponse
+    public function updatePost(int $postId, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $post = $this->postRepository->find($postId);
         if (!$post) {
@@ -126,24 +129,39 @@ class PostController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        $dto = new UpdatePostDTO(
-            $data['title'] ?? '',
-            $data['content'] ?? '',
-            $data['visibility'] ?? 'private'
-        );
-
-        $author = $this->profileRepository->find($data['authorId']);
-        if (!$author) {
+        $editorId = $data['authorId'] ?? $data['editorId'] ?? null;
+        if (!$editorId) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+        }
+        $editor = $this->profileRepository->find($editorId);
+        if (!$editor) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $this->postService->updatePost($post, $dto, $author);
+            // CustomSelect update status
+            if (
+                isset($data['status']) &&
+                !isset($data['title']) &&
+                !isset($data['content']) &&
+                !isset($data['visibility'])
+            ) {
+                $post->setStatus($data['status']);
+                $entityManager->persist($post);
+                $entityManager->flush();
+                return new JsonResponse(['message' => 'Statut mis à jour avec succès.'], 200);
+            } else {
+                $title = array_key_exists('title', $data) ? $data['title'] : $post->getTitle();
+                $content = array_key_exists('content', $data) ? $data['content'] : $post->getContent();
+                $status = array_key_exists('status', $data) ? $data['status'] : $post->getStatus();
+                $visibility = array_key_exists('visibility', $data) ? $data['visibility'] : $post->getVisibility();
 
-            return new JsonResponse(['message' => 'Post mis à jour avec succès']);
-        } catch (RuntimeException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 403);
-        } catch (Exception $e) {
+                $dto = new UpdatePostDTO($title, $content, $status, $visibility);
+                $this->postService->updatePost($post, $dto, $editor);
+                return new JsonResponse(['message' => 'Post mis à jour avec succès.']);
+            }
+        } catch (\Exception $e) {
+            error_log("Error updating post: " . $e->getMessage());
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
