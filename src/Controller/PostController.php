@@ -100,7 +100,7 @@ class PostController extends AbstractController
             $data['content'] ?? '',
             $data['authorId'] ?? 0,
             $data['groupId'] ?? 0,
-            $data['status'] ?? '',
+            $data['status'] ?? 'brouillon',
             $data['visibility'] ?? 'private'
         );
 

@@ -38,7 +38,7 @@ class CreatePostDTO
         $this->content = $content;
         $this->authorId = $authorId;
         $this->groupId = $groupId;
-        $this->status = $status;
+        $this->status = $status ?: 'brouillon';
         $this->visibility = $visibility;
     }
 }
