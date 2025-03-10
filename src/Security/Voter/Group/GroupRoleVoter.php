@@ -51,23 +51,26 @@ final class GroupRoleVoter extends Voter
             return true;
         }
 
-        $profiles = $user->getProfiles();
+        foreach ($user->getProfiles() as $profile) {
+            $groupProfile = $this->groupProfileRepository->findOneBy([
+                'group' => $subject,
+                'profile' => $profile,
+            ]);
 
-        $groupProfile = $this->groupProfileRepository->findOneBy([
-            'group' => $subject,
-            'profile' => $profiles,
-        ]);
+            if ($groupProfile) {
+                $permissions = [
+                    self::DELETE_GROUP => $groupProfile->getRole() === 'admin',
+                    self::MANAGE_MEMBERS => in_array($groupProfile->getRole(), ['admin', 'moderator']),
+                    self::POST_CONTENT => true,
+                    self::VIEW_GROUP => true,
+                ];
 
-        if ($groupProfile) {
-            $permissions = [
-                self::DELETE_GROUP => 'admin' === $groupProfile->getRole(),
-                self::MANAGE_MEMBERS => in_array($groupProfile->getRole(), ['admin', 'moderator']),
-                self::POST_CONTENT => true,
-                self::VIEW_GROUP => true,
-            ];
-
-            return $permissions[$attribute] ?? false;
+                if ($permissions[$attribute] ?? false) {
+                    return true;
+                }
+            }
         }
+
 
         return false;
     }
