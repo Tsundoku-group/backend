@@ -48,9 +48,13 @@ class Group
     #[ORM\OneToMany(targetEntity: Taggable::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $taggables;
 
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'group')]
+    private Collection $posts;
+
     public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
+        $this->posts = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
@@ -190,5 +194,18 @@ class Group
     public function getTags(): array
     {
         return $this->taggables->map(fn (Taggable $taggable) => $taggable->getTag())->toArray();
+    }
+
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): self
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts[] = $post;
+        }
+        return $this;
     }
 }

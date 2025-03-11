@@ -30,7 +30,17 @@ class GroupRepository extends ServiceEntityRepository
             ->leftJoin('g.groupProfiles', 'gp')
             ->leftJoin('g.taggables', 'tg')
             ->leftJoin('tg.tag', 't')
-            ->where('g.visibility = :visibility')
+            ->leftJoin('g.posts', 'p');
+
+        if ($sort === GroupSortOptionEnum::ACTIVE->value) {
+            $qb->addSelect('COALESCE(COUNT(p.id), 0) AS activityScore'); // 🔥 Ici, alias explicite
+            $qb->addSelect('COALESCE(MAX(p.createdAt), g.createdAt) AS lastPostDate'); // 🔥 Alias explicite
+        } else {
+            $qb->addSelect('0 AS activityScore');
+            $qb->addSelect('g.createdAt AS lastPostDate');
+        }
+
+        $qb->where('g.visibility = :visibility')
             ->setParameter('visibility', 'private')
             ->groupBy('g.id, g.createdAt');
 
@@ -58,8 +68,17 @@ class GroupRepository extends ServiceEntityRepository
             $qb->andWhere($conditions);
         }
 
-        $sortQuery = GroupSortOptionEnum::getSortQuery($sort);
-        $qb->orderBy(...explode(' ', $sortQuery));
+        if ($sort === GroupSortOptionEnum::ACTIVE->value) {
+            $qb->having('COALESCE(COUNT(p.id), 0) >= 0');
+        }
+
+        if ($sort === GroupSortOptionEnum::ACTIVE->value) {
+            $qb->orderBy('activityScore', 'DESC')
+                ->addOrderBy('lastPostDate', 'DESC');
+        } else {
+            $sortQuery = GroupSortOptionEnum::getSortQuery($sort);
+            $qb->orderBy(...explode(' ', $sortQuery));
+        }
 
         $qb->setMaxResults($limit)
             ->setFirstResult($offset);
@@ -67,6 +86,7 @@ class GroupRepository extends ServiceEntityRepository
         try {
             return $qb->getQuery()->getResult();
         } catch (Exception $e) {
+            dd($e->getMessage()); // ✅ Vérifier si d'autres erreurs apparaissent
             return [];
         }
     }
