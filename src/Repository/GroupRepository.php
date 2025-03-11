@@ -86,7 +86,6 @@ class GroupRepository extends ServiceEntityRepository
         try {
             return $qb->getQuery()->getResult();
         } catch (Exception $e) {
-            dd($e->getMessage()); // ✅ Vérifier si d'autres erreurs apparaissent
             return [];
         }
     }
