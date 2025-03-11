@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Group;
+use App\Enum\Group\GroupSortOptionEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -20,7 +21,7 @@ class GroupRepository extends ServiceEntityRepository
     public function findPrivateGroups(
         ?string $search = null,
         ?string $tagName = null,
-        string $sort = 'newest',
+        string $sort = GroupSortOptionEnum::NEWEST->value,
         int $limit = 20,
         int $offset = 0,
     ): array {
@@ -57,11 +58,8 @@ class GroupRepository extends ServiceEntityRepository
             $qb->andWhere($conditions);
         }
 
-        $sortOptions = [
-            'members' => 'membersCount DESC',
-            'newest' => 'g.createdAt DESC',
-        ];
-        $qb->orderBy(...explode(' ', $sortOptions[$sort] ?? 'g.createdAt DESC'));
+        $sortQuery = GroupSortOptionEnum::getSortQuery($sort);
+        $qb->orderBy(...explode(' ', $sortQuery));
 
         $qb->setMaxResults($limit)
             ->setFirstResult($offset);

@@ -6,6 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\DTO\Group\CreateGroupDTO;
 use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
+use App\Enum\Group\GroupSortOptionEnum;
 use App\Repository\GroupRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use App\Service\GroupService;
@@ -35,9 +36,11 @@ class GroupController extends AbstractController
         try {
             $search = $request->query->get('search', '');
             $tagName = $request->query->get('tagName', '');
-            $sort = $request->query->get('sort', 'newest');
+            $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
             $page = (int) $request->query->get('page', 1);
             $limit = (int) $request->query->get('limit', 20);
+
+            $sort = GroupSortOptionEnum::tryFrom($sortParam) ?? GroupSortOptionEnum::NEWEST;
 
             $tagFilter = !empty($tagName) ? $tagName : null;
 

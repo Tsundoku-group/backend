@@ -6,6 +6,7 @@ use App\Constant\ErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
+use App\Enum\Group\GroupSortOptionEnum;
 use App\Repository\GroupRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use DateTime;
@@ -27,11 +28,11 @@ readonly class GroupService
     ) {
     }
 
-    public function getPrivateGroups(string $search = '', ?string $tagName = null, string $sort = 'newest', int $page = 1, int $limit = 20): array
+    public function getPrivateGroups(string $search = '', ?string $tagName = null, GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST, int $page = 1, int $limit = 20): array
     {
         $offset = ($page - 1) * $limit;
 
-        $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort, $limit, $offset);
+        $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
 
         return array_map(fn ($result) => $this->formatGroupResult($result), $privateGroups);
     }
