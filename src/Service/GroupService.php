@@ -28,15 +28,28 @@ readonly class GroupService
     ) {
     }
 
-    public function getPrivateGroups(string $search = '', ?string $tagName = null, GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST, int $page = 1, int $limit = 20): array
-    {
+    public function getPrivateGroups(
+        string $search = '',
+        ?string $tagName = null,
+        GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST,
+        int $page = 1,
+        int $limit = 20
+    ): array {
         $offset = ($page - 1) * $limit;
 
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
 
-        return array_map(fn ($result) => $this->formatGroupResult($result), $privateGroups);
-    }
+        return array_map(function ($groupData) {
+            $group = $groupData[0];
 
+            return [
+                'id' => $group->getId(),
+                'name' => $group->getName(),
+                'membersCount' => $groupData['membersCount'] ?? 0,
+                'createdAt' => $group->getCreatedAt(),
+            ];
+        }, $privateGroups);
+    }
     public function createGroup(string $name, ?string $description, Profile $creator, string $visibility, array $tagNames = []): Group
     {
         $this->entityManager->beginTransaction();
