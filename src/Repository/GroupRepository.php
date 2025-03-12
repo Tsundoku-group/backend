@@ -21,10 +21,11 @@ class GroupRepository extends ServiceEntityRepository
     public function findPrivateGroups(
         ?string $search = null,
         ?string $tagName = null,
-        string $sort = GroupSortOptionEnum::NEWEST->value,
-        int $limit = 20,
-        int $offset = 0,
-    ): array {
+        string  $sort = GroupSortOptionEnum::NEWEST->value,
+        int     $limit = 20,
+        int     $offset = 0,
+    ): array
+    {
         $qb = $this->createQueryBuilder('g')
             ->select('g', 'COUNT(DISTINCT gp.profile) AS membersCount')
             ->leftJoin('g.groupProfiles', 'gp')
@@ -33,8 +34,8 @@ class GroupRepository extends ServiceEntityRepository
             ->leftJoin('g.posts', 'p');
 
         if ($sort === GroupSortOptionEnum::ACTIVE->value) {
-            $qb->addSelect('COALESCE(COUNT(p.id), 0) AS activityScore'); // 🔥 Ici, alias explicite
-            $qb->addSelect('COALESCE(MAX(p.createdAt), g.createdAt) AS lastPostDate'); // 🔥 Alias explicite
+            $qb->addSelect('COALESCE(COUNT(p.id), 0) AS activityScore');
+            $qb->addSelect('COALESCE(MAX(p.createdAt), g.createdAt) AS lastPostDate');
         } else {
             $qb->addSelect('0 AS activityScore');
             $qb->addSelect('g.createdAt AS lastPostDate');
