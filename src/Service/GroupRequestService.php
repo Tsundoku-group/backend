@@ -27,7 +27,7 @@ readonly class GroupRequestService
         ]);
 
         if ($existingRequest) {
-            throw new Exception("Une demande est déjà en attente pour ce groupe.");
+            throw new Exception('Une demande est déjà en attente pour ce groupe.');
         }
 
         $request = new GroupRequest($group, $profile);
@@ -41,7 +41,7 @@ readonly class GroupRequestService
     public function updateRequestStatus(GroupRequest $request, RequestStatusEnum $status): void
     {
         if (in_array($request->getStatus(), [RequestStatusEnum::ACCEPTED, RequestStatusEnum::DENIED])) {
-            throw new LogicException("Cette demande a déjà été traitée.");
+            throw new LogicException('Cette demande a déjà été traitée.');
         }
 
         $request->setStatus($status);
@@ -55,7 +55,7 @@ readonly class GroupRequestService
         try {
             $this->entityManager->flush();
         } catch (Exception $e) {
-            throw new RuntimeException("Erreur lors de la mise à jour de la demande : " . $e->getMessage());
+            throw new RuntimeException('Erreur lors de la mise à jour de la demande : ' . $e->getMessage());
         }
     }
 
@@ -63,12 +63,12 @@ readonly class GroupRequestService
     {
         $pendingRequestStatusFound = $this->groupRequestRepository->findBy([
             'group' => $groupId,
-            'status' => RequestStatusEnum::PENDING
+            'status' => RequestStatusEnum::PENDING,
         ]);
 
         try {
             return $pendingRequestStatusFound;
-         } catch (Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
     }

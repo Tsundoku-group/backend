@@ -206,6 +206,7 @@ class Group
         if (!$this->posts->contains($post)) {
             $this->posts[] = $post;
         }
+
         return $this;
     }
 }

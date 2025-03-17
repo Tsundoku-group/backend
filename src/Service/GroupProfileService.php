@@ -20,13 +20,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 readonly class GroupProfileService
 {
     public function __construct(
-        private GroupRepository        $groupRepository,
+        private GroupRepository $groupRepository,
         private GroupProfileRepository $groupProfileRepository,
-        private GroupRequestService    $groupRequestService,
+        private GroupRequestService $groupRequestService,
         private EntityManagerInterface $entityManager,
-        private ProfileValidator       $profileValidator,
-    )
-    {
+        private ProfileValidator $profileValidator,
+    ) {
     }
 
     public function joinGroup(int $groupId, int $profileId, string $role): JsonResponse
@@ -45,8 +44,7 @@ readonly class GroupProfileService
             return new JsonResponse(['error' => ErrorMessagesConstant::USER_ALREADY_IN_GROUP], 400);
         }
         try {
-            if ($group->getVisibility() === 'public') {
-
+            if ('public' === $group->getVisibility()) {
                 $groupProfile = new GroupProfile($group, $profile, GroupRoleVoter::fromString($role));
                 $groupProfile->markAsUpdated();
 
@@ -59,7 +57,6 @@ readonly class GroupProfileService
             $this->groupRequestService->requestToJoinGroup($group, $profile);
 
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
-
         } catch (Exception $e) {
             return new JsonResponse(['message' => $e->getMessage()], 500);
         }

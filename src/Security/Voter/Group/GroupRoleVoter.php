@@ -5,6 +5,7 @@ namespace App\Security\Voter\Group;
 use App\Entity\Group;
 use App\Entity\User;
 use App\Repository\GroupProfileRepository;
+use InvalidArgumentException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -59,7 +60,7 @@ final class GroupRoleVoter extends Voter
 
             if ($groupProfile) {
                 $permissions = [
-                    self::DELETE_GROUP => $groupProfile->getRole() === 'admin',
+                    self::DELETE_GROUP => 'admin' === $groupProfile->getRole(),
                     self::MANAGE_MEMBERS => in_array($groupProfile->getRole(), ['admin', 'moderator']),
                     self::POST_CONTENT => true,
                     self::VIEW_GROUP => true,
@@ -71,7 +72,6 @@ final class GroupRoleVoter extends Voter
             }
         }
 
-
         return false;
     }
 
@@ -80,7 +80,7 @@ final class GroupRoleVoter extends Voter
         $validRoles = ['admin', 'moderator', 'member'];
 
         if (!in_array($role, $validRoles, true)) {
-            throw new \InvalidArgumentException('Rôle invalide.');
+            throw new InvalidArgumentException('Rôle invalide.');
         }
 
         return $role;

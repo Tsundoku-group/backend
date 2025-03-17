@@ -20,8 +20,7 @@ class GroupProfileController extends AbstractController
 {
     public function __construct(
         private readonly GroupProfileService $groupProfileService,
-    )
-    {
+    ) {
     }
 
     #[Route('', methods: ['POST'])]
@@ -36,7 +35,7 @@ class GroupProfileController extends AbstractController
         $dto = new JoinGroupDTO($data['groupId'], $data['profileId'], $data['role']);
 
         try {
-           return $this->groupProfileService->joinGroup($dto->groupId, $dto->profileId, $dto->role);
+            return $this->groupProfileService->joinGroup($dto->groupId, $dto->profileId, $dto->role);
         } catch (ConflictHttpException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 409);
         } catch (NotFoundHttpException $e) {

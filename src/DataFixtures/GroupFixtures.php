@@ -3,9 +3,9 @@
 namespace App\DataFixtures;
 
 use App\Entity\Group;
-use App\Entity\Profile;
-use App\Entity\Post;
 use App\Entity\GroupProfile;
+use App\Entity\Post;
+use App\Entity\Profile;
 use App\Entity\Tag;
 use App\Entity\Taggable;
 use DateTimeImmutable;
@@ -73,14 +73,13 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             $this->addPostsToGroup($manager, $group, $profiles);
         }
 
-        $manager->flush(); 
+        $manager->flush();
         foreach ($groupEntities as $group) {
             $this->addTagsToGroup($manager, $group, $tags);
         }
 
         $manager->flush();
     }
-
 
     private function addMembersToGroup(ObjectManager $manager, Group $group, array $profiles): void
     {
@@ -95,23 +94,23 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
     private function addPostsToGroup(ObjectManager $manager, Group $group, array $profiles): void
     {
         $titles = [
-            "Bienvenue dans le groupe !",
-            "Nos recommandations de lecture",
-            "Derniers avis sur les livres",
-            "Nouveau challenge littéraire",
-            "Discussion autour d'un auteur"
+            'Bienvenue dans le groupe !',
+            'Nos recommandations de lecture',
+            'Derniers avis sur les livres',
+            'Nouveau challenge littéraire',
+            "Discussion autour d'un auteur",
         ];
 
         foreach ($profiles as $member) {
             $randomPostCount = rand(1, 3);
 
-            for ($i = 0; $i < $randomPostCount; $i++) {
+            for ($i = 0; $i < $randomPostCount; ++$i) {
                 $title = $titles[array_rand($titles)];
                 $post = new Post();
                 $post->setAuthor($member);
                 $post->setGroup($group);
                 $post->setTitle($title);
-                $post->setContent("Ceci est un message dans le groupe **" . $group->getName() . "**.");
+                $post->setContent('Ceci est un message dans le groupe **' . $group->getName() . '**.');
                 $post->setSlug($this->slugger->slug($title)->lower());
                 $post->setVisibility($group->getVisibility());
                 $post->setCreatedAt(new DateTimeImmutable('-' . rand(0, 30) . ' days'));

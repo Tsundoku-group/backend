@@ -4,11 +4,11 @@ namespace App\Controller;
 
 use App\Constant\ErrorMessagesConstant;
 use App\Enum\RequestStatusEnum;
+use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
+use App\Repository\ProfileRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use App\Service\GroupRequestService;
-use App\Repository\GroupRepository;
-use App\Repository\ProfileRepository;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,12 +19,11 @@ use Symfony\Component\Routing\Annotation\Route;
 class GroupRequestController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRequestService    $groupRequestService,
+        private readonly GroupRequestService $groupRequestService,
         private readonly GroupRequestRepository $groupRequestRepository,
-        private readonly GroupRepository        $groupRepository,
-        private readonly ProfileRepository      $profileRepository,
-    )
-    {
+        private readonly GroupRepository $groupRepository,
+        private readonly ProfileRepository $profileRepository,
+    ) {
     }
 
     #[Route('/{groupId}', name: 'group_request', methods: ['GET'])]
@@ -43,14 +42,14 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse([
                 'groupId' => $groupId,
-                'pendingRequests' => array_map(fn($request) => [
+                'pendingRequests' => array_map(fn ($request) => [
                     'requestId' => $request->getId(),
                     'profile' => [
                         'id' => $request->getProfile()->getId(),
                         'username' => $request->getProfile()->getUsername(),
                     ],
                     'createdAt' => $request->getCreatedAt(),
-                ], $requests)
+                ], $requests),
             ], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Une erreur est survenue'], 500);
@@ -76,6 +75,7 @@ class GroupRequestController extends AbstractController
 
         try {
             $this->groupRequestService->requestToJoinGroup($group, $profile);
+
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
@@ -106,13 +106,11 @@ class GroupRequestController extends AbstractController
             return new JsonResponse(['error' => 'Demande non trouvée'], 404);
         }
 
-
         $group = $groupRequest->getGroup();
 
         $this->denyAccessUnlessGranted('manage_members', $group);
 
-        $newStatus = ($action === 'approve') ? RequestStatusEnum::ACCEPTED : RequestStatusEnum::DENIED;
-
+        $newStatus = ('approve' === $action) ? RequestStatusEnum::ACCEPTED : RequestStatusEnum::DENIED;
 
         if (!isset($validActions[$action])) {
             return new JsonResponse(['error' => 'Action invalide'], 400);
@@ -120,6 +118,7 @@ class GroupRequestController extends AbstractController
 
         try {
             $this->groupRequestService->updateRequestStatus($groupRequest, $newStatus);
+
             return new JsonResponse(['message' => "Demande $action avec succès"], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => 'Une erreur est survenue'], 500);

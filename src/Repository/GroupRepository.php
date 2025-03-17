@@ -21,11 +21,10 @@ class GroupRepository extends ServiceEntityRepository
     public function findPrivateGroups(
         ?string $search = null,
         ?string $tagName = null,
-        string  $sort = GroupSortOptionEnum::NEWEST->value,
-        int     $limit = 20,
-        int     $offset = 0,
-    ): array
-    {
+        string $sort = GroupSortOptionEnum::NEWEST->value,
+        int $limit = 20,
+        int $offset = 0,
+    ): array {
         $qb = $this->createQueryBuilder('g')
             ->select('g', 'COUNT(DISTINCT gp.profile) AS membersCount')
             ->leftJoin('g.groupProfiles', 'gp')

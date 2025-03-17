@@ -37,8 +37,8 @@ readonly class GroupService
         GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST,
         int $page = 1,
         int $limit = 20,
-        int $profileId = null,
-        bool $myGroups = false
+        ?int $profileId = null,
+        bool $myGroups = false,
     ): array {
         $offset = ($page - 1) * $limit;
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
@@ -91,8 +91,9 @@ readonly class GroupService
                 if ($group['joinStatus'] instanceof RequestStatusEnum) {
                     $status = strtolower(trim($group['joinStatus']->value));
                 } else {
-                    $status = strtolower(trim((string)$group['joinStatus']));
+                    $status = strtolower(trim((string) $group['joinStatus']));
                 }
+
                 return in_array($status, ['member', 'pending'], true);
             });
             $mappedGroups = array_values($mappedGroups);

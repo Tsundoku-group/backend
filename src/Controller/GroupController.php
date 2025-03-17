@@ -23,12 +23,11 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 class GroupController extends AbstractController
 {
     public function __construct(
-        private readonly GroupService                  $groupService,
-        private readonly GroupRepository               $groupRepository,
-        private readonly ProfileValidator              $profileValidator,
+        private readonly GroupService $groupService,
+        private readonly GroupRepository $groupRepository,
+        private readonly ProfileValidator $profileValidator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-    )
-    {
+    ) {
     }
 
     #[Route('', name: 'group_private', methods: ['GET'])]
@@ -37,8 +36,8 @@ class GroupController extends AbstractController
         $search = $request->query->get('search', '');
         $tagName = $request->query->get('tagName', '');
         $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
-        $page = (int)$request->query->get('page', 1);
-        $limit = (int)$request->query->get('limit', 20);
+        $page = (int) $request->query->get('page', 1);
+        $limit = (int) $request->query->get('limit', 20);
         $profileId = $request->query->get('profileId');
         $myGroups = filter_var($request->query->get('myGroups', false), FILTER_VALIDATE_BOOLEAN);
 
@@ -101,7 +100,7 @@ class GroupController extends AbstractController
                     'slug' => $group->getSlug(),
                     'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt(),
-                    'tags' => array_map(fn($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
+                    'tags' => array_map(fn ($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
                 ],
             ], 201);
         } catch (RuntimeException $e) {
