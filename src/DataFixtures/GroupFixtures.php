@@ -73,14 +73,12 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             $this->addPostsToGroup($manager, $group, $profiles);
         }
 
-        $manager->flush(); // ✅ Maintenant les groupes ont un ID
-
-        // 🔥 Deuxième étape : Ajouter les tags après le flush
+        $manager->flush(); 
         foreach ($groupEntities as $group) {
             $this->addTagsToGroup($manager, $group, $tags);
         }
 
-        $manager->flush(); // ✅ Sauvegarde des tags associés
+        $manager->flush();
     }
 
 
