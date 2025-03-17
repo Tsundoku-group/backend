@@ -51,7 +51,6 @@ class GroupController extends AbstractController
 
             return new JsonResponse(['groups' => $privateGroups], 200);
         } catch (Exception $e) {
-            dd($e->getMessage());
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
