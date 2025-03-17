@@ -23,30 +23,46 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 class GroupController extends AbstractController
 {
     public function __construct(
-        private readonly GroupService $groupService,
-        private readonly GroupRepository $groupRepository,
-        private readonly ProfileValidator $profileValidator,
+        private readonly GroupService                  $groupService,
+        private readonly GroupRepository               $groupRepository,
+        private readonly ProfileValidator              $profileValidator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-    ) {
+    )
+    {
     }
 
     #[Route('', name: 'group_private', methods: ['GET'])]
     public function getAllPrivateGroups(Request $request): JsonResponse
     {
+        $search = $request->query->get('search', '');
+        $tagName = $request->query->get('tagName', '');
+        $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
+        $page = (int)$request->query->get('page', 1);
+        $limit = (int)$request->query->get('limit', 20);
+        $profileId = $request->query->get('profileId');
+        $myGroups = filter_var($request->query->get('myGroups', false), FILTER_VALIDATE_BOOLEAN);
+
+        $sort = GroupSortOptionEnum::tryFrom($sortParam) ?? GroupSortOptionEnum::NEWEST;
+
+        $tagFilter = !empty($tagName) ? $tagName : null;
+
         try {
-            $search = $request->query->get('search', '');
-            $tagName = $request->query->get('tagName', '');
-            $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
-            $page = (int) $request->query->get('page', 1);
-            $limit = (int) $request->query->get('limit', 20);
-
-            $sort = GroupSortOptionEnum::tryFrom($sortParam) ?? GroupSortOptionEnum::NEWEST;
-
-            $tagFilter = !empty($tagName) ? $tagName : null;
-
-            $privateGroups = $this->groupService->getPrivateGroups($search, $tagFilter, $sort, $page, $limit);
+            $privateGroups = $this->groupService->getPrivateGroups($search, $tagFilter, $sort, $page, $limit, $profileId, $myGroups);
 
             return new JsonResponse(['groups' => $privateGroups], 200);
+        } catch (Exception $e) {
+            dd($e->getMessage());
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/{slug}', name: 'private_group_slug', methods: ['GET'])]
+    public function getPrivateGroupsBySlug(string $slug): JsonResponse
+    {
+        try {
+            $groupBySlug = $this->groupService->getPrivateGroupBySlug($slug);
+
+            return new JsonResponse(['group' => $groupBySlug], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
@@ -86,7 +102,7 @@ class GroupController extends AbstractController
                     'slug' => $group->getSlug(),
                     'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt(),
-                    'tags' => array_map(fn ($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
+                    'tags' => array_map(fn($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
                 ],
             ], 201);
         } catch (RuntimeException $e) {

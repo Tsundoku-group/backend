@@ -7,7 +7,9 @@ use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
 use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
+use App\Repository\GroupRequestRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use DateTime;
 use DateTimeImmutable;
@@ -24,6 +26,7 @@ readonly class GroupService
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
         private GroupRepository $groupRepository,
+        private GroupRequestRepository $groupRequestRepository,
         private TagService $tagService,
     ) {
     }
@@ -33,23 +36,86 @@ readonly class GroupService
         ?string $tagName = null,
         GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST,
         int $page = 1,
-        int $limit = 20
+        int $limit = 20,
+        int $profileId = null,
+        bool $myGroups = false
     ): array {
         $offset = ($page - 1) * $limit;
-
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
 
-        return array_map(function ($groupData) {
-            $group = $groupData[0];
+        $userGroupIds = [];
+        $userGroupRequests = [];
+        if ($profileId) {
+            $userGroups = $this->groupRepository->findGroupsByProfile($profileId);
+            $userGroupIds = array_column($userGroups, 'id');
+
+            $groupRequests = $this->groupRequestRepository->findPendingRequestsByProfile($profileId);
+
+            foreach ($groupRequests as $request) {
+                $userGroupRequests[$request->getGroup()->getId()] = $request->getStatus();
+            }
+        }
+
+        $mappedGroups = array_map(function ($groupData) use ($userGroupIds, $userGroupRequests) {
+            if (is_array($groupData) && isset($groupData[0]) && is_object($groupData[0])) {
+                $group = $groupData[0];
+                $membersCount = $groupData['membersCount'] ?? 0;
+            } elseif (is_object($groupData)) {
+                $group = $groupData;
+                $membersCount = 0;
+            } else {
+                $group = (object) $groupData;
+                $membersCount = $groupData['membersCount'] ?? 0;
+            }
+
+            if (in_array($group->getId(), $userGroupIds)) {
+                $joinStatus = 'member';
+            } elseif (array_key_exists($group->getId(), $userGroupRequests)) {
+                $joinStatus = $userGroupRequests[$group->getId()];
+            } else {
+                $joinStatus = 'none';
+            }
 
             return [
                 'id' => $group->getId(),
                 'name' => $group->getName(),
-                'membersCount' => $groupData['membersCount'] ?? 0,
+                'membersCount' => $membersCount,
                 'createdAt' => $group->getCreatedAt(),
+                'visibility' => $group->getVisibility(),
+                'joinStatus' => $joinStatus,
             ];
         }, $privateGroups);
+
+        if ($profileId && $myGroups) {
+            $mappedGroups = array_filter($mappedGroups, function ($group) {
+                if ($group['joinStatus'] instanceof RequestStatusEnum) {
+                    $status = strtolower(trim($group['joinStatus']->value));
+                } else {
+                    $status = strtolower(trim((string)$group['joinStatus']));
+                }
+                return in_array($status, ['member', 'pending'], true);
+            });
+            $mappedGroups = array_values($mappedGroups);
+        }
+
+        return $mappedGroups;
     }
+
+    public function getPrivateGroupBySlug(string $slug): Group
+    {
+        try {
+            $oneGroupBySlug = $this->groupRepository->findOneBy(['slug' => $slug]);
+
+            if (!$oneGroupBySlug) {
+                throw new RuntimeException('Group not found');
+            }
+
+            return $oneGroupBySlug;
+        } catch (Exception $e) {
+            throw new RuntimeException('Group not found');
+        }
+    }
+
     public function createGroup(string $name, ?string $description, Profile $creator, string $visibility, array $tagNames = []): Group
     {
         $this->entityManager->beginTransaction();
