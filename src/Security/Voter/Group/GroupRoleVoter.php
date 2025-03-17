@@ -74,4 +74,15 @@ final class GroupRoleVoter extends Voter
 
         return false;
     }
+
+    public static function fromString(string $role): string
+    {
+        $validRoles = ['admin', 'moderator', 'member'];
+
+        if (!in_array($role, $validRoles, true)) {
+            throw new \InvalidArgumentException('Rôle invalide.');
+        }
+
+        return $role;
+    }
 }
