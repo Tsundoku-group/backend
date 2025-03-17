@@ -90,4 +90,15 @@ class GroupRepository extends ServiceEntityRepository
             return [];
         }
     }
+
+    public function findGroupsByProfile(int $profileId): array
+    {
+        return $this->createQueryBuilder('g')
+            ->innerJoin('g.groupProfiles', 'gp')
+            ->where('gp.profile = :profileId')
+            ->setParameter('profileId', $profileId)
+            ->select('g.id AS id, g.name, g.slug, g.visibility')
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
