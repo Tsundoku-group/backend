@@ -55,7 +55,7 @@ class PostRepository extends ServiceEntityRepository
             ->orderBy('p.createdAt', 'DESC');
 
         try {
-            return $articles->getQuery()->getResult();
+            return $articles->getQuery()->getArrayResult();
         } catch (NoResultException $e) {
             return [];
         }

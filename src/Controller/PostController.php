@@ -64,7 +64,7 @@ class PostController extends AbstractController
     }
 
     #[Route('/{profileId}/articles', methods: ['GET'])]
-    public function getArticlesByProfile(int $profileId, SerializerInterface $serializer): JsonResponse
+    public function getArticlesByProfile(int $profileId): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
@@ -74,14 +74,9 @@ class PostController extends AbstractController
 
         try {
             $articles = $this->postRepository->findArticlesByProfile($profile->getId());
-            $serializedArticles = $serializer->serialize($articles, 'json', [
-                AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER => function ($object) {
-                    return $object->getId();
-                },
-            ]);
 
             return new JsonResponse([
-                'articles' => json_decode($serializedArticles),
+                'articles' => $articles,
             ], 200);
         } catch (Exception $e) {
             var_dump($e->getMessage());
@@ -98,18 +93,34 @@ class PostController extends AbstractController
             $data['type'] ?? 'post',
             $data['title'] ?? '',
             $data['content'] ?? '',
-            $data['authorId'] ?? 0,
-            $data['groupId'] ?? 0,
+            $data['authorId'] ?? 1,
+            $data['groupId'] ?? 1,
             $data['status'] ?? 'brouillon',
             $data['visibility'] ?? 'private'
         );
 
-        if (!isset($dto->type, $dto->authorId, $dto->groupId, $dto->status, $dto->visibility, $dto->title, $dto->content)) {
+        if (!isset(
+            $dto->authorId,
+            $dto->groupId,
+            $dto->title,
+            $dto->content,
+            $dto->type,
+            $dto->status,
+            $dto->visibility
+        )) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
-            $post = $this->postService->createPost($dto->type, $dto->authorId, $dto->groupId, $dto->status, $dto->visibility, $dto->title, $dto->content);
+            $post = $this->postService->createPost(
+                $dto->authorId,
+                $dto->groupId,
+                $dto->title,
+                $dto->content,
+                $dto->type,
+                $dto->status,
+                $dto->visibility
+            );
 
             return new JsonResponse(['message' => 'Post créé avec succès.', 'postId' => $post->getId()], 201);
         } catch (RuntimeException $e) {

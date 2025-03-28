@@ -36,14 +36,13 @@ readonly class PostService
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
         private ReactRepository $reactRepository,
-    ) {
-    }
+    ) {}
 
     public function getRecentPosts(int $limit, string $profileId): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -65,7 +64,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
@@ -83,8 +82,15 @@ readonly class PostService
         ], $posts);
     }
 
-    public function createPost(int $authorId, int $groupId, string $visibility, string $title, string $content): Post
-    {
+    public function createPost(
+        int $authorId,
+        int $groupId,
+        string $title,
+        string $content,
+        string $type,
+        string $status,
+        string $visibility
+    ): Post {
         $author = $this->profileRepository->find($authorId);
         if (!$author) {
             throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
@@ -96,12 +102,11 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
-        if (!$this->groupProfileRepository->findOneBy(['group' => $group, 'profile' => $author])) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
-        }
-
         if ('public' === $visibility && 'public' !== $group->getVisibility()) {
-            throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+            $publicGroup = $this->groupRepository->findOneBy(['name' => 'Fil d’actualité', 'visibility' => 'public']);
+            if (!$publicGroup || $group->getId() !== $publicGroup->getId()) {
+                throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+            }
         }
 
         if (!$this->authorizationChecker->isGranted('post_content', $group)) {
@@ -113,6 +118,8 @@ readonly class PostService
             $post = new Post();
             $post->setTitle($title);
             $post->setContent($content);
+            $post->setType($type);          // Affecte le type (ex: "article")
+            $post->setStatus($status);      // Affecte le status (ex: "brouillon")
             $post->setVisibility($visibility);
             $post->setSlug($this->slugger->slug($title)->lower());
             $post->setCreatedAt(new DateTimeImmutable());
@@ -129,6 +136,7 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
+
 
     public function updatePost(Post $post, UpdatePostDTO $dto, Profile $editor): void
     {

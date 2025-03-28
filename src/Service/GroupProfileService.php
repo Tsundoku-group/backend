@@ -7,8 +7,8 @@ use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
+use App\Security\Voter\Group\GroupRoleVoter;
 use App\Validator\Constraints\ProfileValidator;
-use App\ValueObject\Group\GroupRole;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -40,7 +40,7 @@ readonly class GroupProfileService
             throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_IN_GROUP);
         }
 
-        $groupProfile = new GroupProfile($group, $profile, GroupRole::fromString($role));
+        $groupProfile = new GroupProfile($group, $profile, GroupRoleVoter::fromString($role));
         $groupProfile->markAsUpdated();
 
         $this->entityManager->persist($groupProfile);
@@ -59,9 +59,9 @@ readonly class GroupProfileService
 
         $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
 
-        $newRole = GroupRole::fromString($role);
+        $newRole = GroupRoleVoter::fromString($role);
 
-        if ($groupProfile->getRole()->equals($newRole)) {
+        if ($groupProfile->getRole() === $newRole) {
             throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
         }
 
