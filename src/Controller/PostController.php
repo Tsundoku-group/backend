@@ -202,4 +202,20 @@ class PostController extends AbstractController
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
+
+    #[Route('/{postId}', methods: ['GET'])]
+    public function getPost(int $postId): JsonResponse
+    {
+        $post = $this->postRepository->find($postId);
+        if (!$post) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+        }
+
+        try {
+            $postData = $this->postService->formatPost($post);
+            return new JsonResponse($postData, 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
 }

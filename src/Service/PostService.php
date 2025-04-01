@@ -204,4 +204,27 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
+
+    public function formatPost(Post $post): array
+    {
+        return [
+            'id'         => $post->getId(),
+            'type'       => $post->getType(),
+            'title'      => $post->getTitle(),
+            'content'    => $post->getContent(),
+            'slug'       => $post->getSlug(),
+            'visibility' => $post->getVisibility(),
+            'status'     => $post->getStatus(),
+            'createdAt'  => [
+                'date'          => $post->getCreatedAt()->format('Y-m-d H:i:s.u'),
+                'timezone_type' => 3,
+                'timezone'      => $post->getCreatedAt()->getTimezone()->getName(),
+            ],
+            'updatedAt'  => [
+                'date'          => $post->getUpdatedAt()->format('Y-m-d H:i:s.u'),
+                'timezone_type' => 3,
+                'timezone'      => $post->getUpdatedAt()->getTimezone()->getName(),
+            ],
+        ];
+    }
 }
