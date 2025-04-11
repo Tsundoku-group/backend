@@ -64,7 +64,7 @@ class PostController extends AbstractController
     }
 
     #[Route('/{profileId}/articles', methods: ['GET'])]
-    public function getArticlesByProfile(int $profileId): JsonResponse
+    public function getArticlesByProfile(int $profileId, Request $request, SerializerInterface $serializer): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
@@ -72,14 +72,28 @@ class PostController extends AbstractController
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
-        try {
-            $articles = $this->postRepository->findArticlesByProfile($profile->getId());
+        $page = (int) $request->query->get('page', 1);
+        $limit = 15;
+        $sortField = $request->query->get('sortField', 'createdAt');
+        $sortOrder = $request->query->get('sortOrder', 'desc');
 
-            return new JsonResponse([
-                'articles' => $articles,
-            ], 200);
+        try {
+            $result = $this->postRepository->findPaginatedArticlesByProfile(
+                $profile->getId(),
+                $page,
+                $limit,
+                $sortField,
+                $sortOrder
+            );
+
+            $formattedArticles = array_map(function ($article) {
+                return $this->postService->formatPost($article);
+            }, $result['articles']);
+
+            $result['articles'] = $formattedArticles;
+
+            return new JsonResponse($result, 200);
         } catch (Exception $e) {
-            var_dump($e->getMessage());
             return new JsonResponse(['error' => ErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }

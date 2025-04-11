@@ -17,6 +17,7 @@ use App\Security\Voter\Post\PostVisibilityVoter;
 use App\Validator\Constraints\ProfileValidator;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
@@ -118,11 +119,11 @@ readonly class PostService
             $post = new Post();
             $post->setTitle($title);
             $post->setContent($content);
-            $post->setType($type);          // Affecte le type (ex: "article")
-            $post->setStatus($status);      // Affecte le status (ex: "brouillon")
+            $post->setType($type);
+            $post->setStatus($status);
             $post->setVisibility($visibility);
             $post->setSlug($this->slugger->slug($title)->lower());
-            $post->setCreatedAt(new DateTimeImmutable());
+            $post->setCreatedAt(new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
             $post->setGroup($group);
             $post->setAuthor($author);
 
@@ -173,7 +174,7 @@ readonly class PostService
             return;
         }
 
-        $post->setUpdatedAt(new DateTime());
+        $post->setUpdatedAt(new DateTime('now', new DateTimeZone('Europe/Paris')));
 
         try {
             $this->entityManager->flush();
@@ -215,16 +216,8 @@ readonly class PostService
             'slug'       => $post->getSlug(),
             'visibility' => $post->getVisibility(),
             'status'     => $post->getStatus(),
-            'createdAt'  => [
-                'date'          => $post->getCreatedAt()->format('Y-m-d H:i:s.u'),
-                'timezone_type' => 3,
-                'timezone'      => $post->getCreatedAt()->getTimezone()->getName(),
-            ],
-            'updatedAt'  => [
-                'date'          => $post->getUpdatedAt()->format('Y-m-d H:i:s.u'),
-                'timezone_type' => 3,
-                'timezone'      => $post->getUpdatedAt()->getTimezone()->getName(),
-            ],
+            'createdAt'  => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt'  => $post->getUpdatedAt() ? $post->getUpdatedAt()->format('Y-m-d H:i:s') : null,
         ];
     }
 }
