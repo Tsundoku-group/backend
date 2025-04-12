@@ -18,6 +18,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/v1/post')]
 class PostController extends AbstractController
@@ -99,10 +100,10 @@ class PostController extends AbstractController
     }
 
     #[Route('', methods: ['POST'])]
-    public function createPost(Request $request): JsonResponse
+    public function createPost(Request $request, ValidatorInterface $validator): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        var_dump($data);
+
         $dto = new CreatePostDTO(
             $data['type'] ?? 'post',
             $data['title'] ?? '',
@@ -113,16 +114,13 @@ class PostController extends AbstractController
             $data['visibility'] ?? 'private'
         );
 
-        if (!isset(
-            $dto->authorId,
-            $dto->groupId,
-            $dto->title,
-            $dto->content,
-            $dto->type,
-            $dto->status,
-            $dto->visibility
-        )) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+            return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
         }
 
         try {
@@ -136,7 +134,10 @@ class PostController extends AbstractController
                 $dto->visibility
             );
 
-            return new JsonResponse(['message' => 'Post créé avec succès.', 'postId' => $post->getId()], 201);
+            return new JsonResponse([
+                'message' => 'Post créé avec succès.',
+                'postId' => $post->getId()
+            ], 201);
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
@@ -145,8 +146,12 @@ class PostController extends AbstractController
     }
 
     #[Route('/{postId}', methods: ['PUT'])]
-    public function updatePost(int $postId, Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
+    public function updatePost(
+        int $postId,
+        Request $request,
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
         $post = $this->postRepository->find($postId);
         if (!$post) {
             return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
@@ -158,13 +163,13 @@ class PostController extends AbstractController
         if (!$editorId) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
         }
+
         $editor = $this->profileRepository->find($editorId);
         if (!$editor) {
             return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            // CustomSelect update status
             if (
                 isset($data['status']) &&
                 !isset($data['title']) &&
@@ -182,6 +187,16 @@ class PostController extends AbstractController
                 $visibility = array_key_exists('visibility', $data) ? $data['visibility'] : $post->getVisibility();
 
                 $dto = new UpdatePostDTO($title, $content, $status, $visibility);
+
+                $errors = $validator->validate($dto);
+                if (count($errors) > 0) {
+                    $errorMessages = [];
+                    foreach ($errors as $error) {
+                        $errorMessages[] = $error->getMessage();
+                    }
+                    return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
+                }
+
                 $this->postService->updatePost($post, $dto, $editor);
                 return new JsonResponse(['message' => 'Post mis à jour avec succès.']);
             }
