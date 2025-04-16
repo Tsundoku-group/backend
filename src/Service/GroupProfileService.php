@@ -9,7 +9,6 @@ use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use App\Validator\Constraints\ProfileValidator;
-use App\ValueObject\Group\GroupRole;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
@@ -72,9 +71,9 @@ readonly class GroupProfileService
 
         $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
 
-        $newRole = GroupRole::fromString($role);
+        $newRole = GroupRoleVoter::fromString($role);
 
-        if ($groupProfile->getRole()->equals($newRole)) {
+        if ($groupProfile->getRole() === $newRole) {
             throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
         }
 
