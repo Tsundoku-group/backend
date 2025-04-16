@@ -393,7 +393,6 @@ class Profile
     public function removeSentFriendship(Friendship $friendship): self
     {
         if ($this->sentFriendships->removeElement($friendship)) {
-            // Dissocier la relation bidirectionnelle
             if ($friendship->getRequester() === $this) {
                 $friendship->setRequester(null);
             }
