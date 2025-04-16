@@ -13,13 +13,17 @@ class UpdatePostDTO
     #[Assert\NotBlank(message: 'Le contenu est obligatoire.')]
     public string $content;
 
+    #[Assert\Length(max: 20, maxMessage: 'Le statut ne doit pas dépasser 20 caractères.')]
+    public ?string $status;
+
     #[Assert\Choice(choices: ['public', 'private'], message: "La visibilité doit être 'public' ou 'private'.")]
     public string $visibility;
 
-    public function __construct(string $title, string $content, string $visibility)
+    public function __construct(string $title, string $content, ?string $status, string $visibility)
     {
         $this->title = $title;
         $this->content = $content;
+        $this->status = $status;
         $this->visibility = $visibility;
     }
 }

@@ -17,6 +17,7 @@ use App\Security\Voter\Post\PostVisibilityVoter;
 use App\Validator\Constraints\ProfileValidator;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
@@ -35,14 +36,13 @@ readonly class PostService
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
         private ReactRepository $reactRepository,
-    ) {
-    }
+    ) {}
 
     public function getRecentPosts(int $limit, string $profileId): array
     {
         $posts = $this->postRepository->findRecentPosts($limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -64,7 +64,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
@@ -82,8 +82,15 @@ readonly class PostService
         ], $posts);
     }
 
-    public function createPost(int $authorId, int $groupId, string $visibility, string $title, string $content): Post
-    {
+    public function createPost(
+        int $authorId,
+        int $groupId,
+        string $title,
+        string $content,
+        string $type,
+        string $status,
+        string $visibility
+    ): Post {
         $author = $this->profileRepository->find($authorId);
         if (!$author) {
             throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
@@ -111,9 +118,12 @@ readonly class PostService
             $post = new Post();
             $post->setTitle($title);
             $post->setContent($content);
+            $post->setType($type);
+            $post->setStatus($status);
             $post->setVisibility($visibility);
             $post->setSlug($this->slugger->slug($title)->lower());
-            $post->setCreatedAt(new DateTimeImmutable());
+            $post->setCreatedAt(new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
+            $post->setUpdatedAt(new DateTime('now', new DateTimeZone('Europe/Paris')));
             $post->setGroup($group);
             $post->setAuthor($author);
 
@@ -127,6 +137,7 @@ readonly class PostService
             throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
+
 
     public function updatePost(Post $post, UpdatePostDTO $dto, Profile $editor): void
     {
@@ -163,7 +174,7 @@ readonly class PostService
             return;
         }
 
-        $post->setUpdatedAt(new DateTime());
+        $post->setUpdatedAt(new DateTime('now', new DateTimeZone('Europe/Paris')));
 
         try {
             $this->entityManager->flush();
@@ -193,5 +204,20 @@ readonly class PostService
         } catch (Exception $e) {
             throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
+    }
+
+    public function formatPost(Post $post): array
+    {
+        return [
+            'id'         => $post->getId(),
+            'type'       => $post->getType(),
+            'title'      => $post->getTitle(),
+            'content'    => $post->getContent(),
+            'slug'       => $post->getSlug(),
+            'visibility' => $post->getVisibility(),
+            'status'     => $post->getStatus(),
+            'createdAt'  => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt'  => $post->getUpdatedAt() ? $post->getUpdatedAt()->format('Y-m-d H:i:s') : null,
+        ];
     }
 }

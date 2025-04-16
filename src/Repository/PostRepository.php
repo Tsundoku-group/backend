@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Post;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 class PostRepository extends ServiceEntityRepository
@@ -43,6 +44,47 @@ class PostRepository extends ServiceEntityRepository
         } catch (NoResultException $e) {
             return [];
         }
+    }
+
+    public function findPaginatedArticlesByProfile(
+        int $profileId,
+        int $page = 1,
+        int $maxPerPage = 15,
+        string $sortField = 'createdAt',
+        string $sortOrder = 'DESC'
+    ): array {
+        $allowedSortFields = ['status', 'title', 'createdAt', 'updatedAt'];
+        if (!in_array($sortField, $allowedSortFields, true)) {
+            $sortField = 'createdAt';
+        }
+        $sortOrder = strtolower($sortOrder) === 'asc' ? 'ASC' : 'DESC';
+
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.author = :profile')
+            ->andWhere('p.type = :type')
+            ->setParameter('profile', $profileId)
+            ->setParameter('type', 'article')
+            ->orderBy('p.' . $sortField, $sortOrder)
+            ->setFirstResult(($page - 1) * $maxPerPage)
+            ->setMaxResults($maxPerPage);
+
+        $paginator = new Paginator($qb->getQuery(), true);
+        $totalCount = count($paginator);
+
+        $articles = [];
+        foreach ($paginator as $article) {
+            $articles[] = $article;
+        }
+
+        return [
+            'articles' => $articles,
+            'pagination' => [
+                'currentPage'   => $page,
+                'limit'         => $maxPerPage,
+                'totalArticles' => $totalCount,
+                'totalPages'    => ceil($totalCount / $maxPerPage),
+            ],
+        ];
     }
 
     public function findPostWithGroupById(int $postId): ?Post

@@ -3,9 +3,9 @@
 namespace App\Security\Voter\Group;
 
 use App\Entity\Group;
-use App\Entity\Profile;
 use App\Entity\User;
 use App\Repository\GroupProfileRepository;
+use InvalidArgumentException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -48,45 +48,45 @@ final class GroupRoleVoter extends Voter
             return false;
         }
 
-        $profiles = $user->getProfiles();
+        if (1 === $subject->getId() && self::POST_CONTENT === $attribute) {
+            return true;
+        }
 
-        foreach ($profiles as $profile) {
-            if ($this->isGroupAdmin($profile, $subject)) {
-                return match ($attribute) {
-                    self::DELETE_GROUP, self::MANAGE_MEMBERS => true,
+        if (self::VIEW_GROUP === $attribute && 'public' === $subject->getVisibility()) {
+            return true;
+        }
+
+        foreach ($user->getProfiles() as $profile) {
+            $groupProfile = $this->groupProfileRepository->findOneBy([
+                'group' => $subject,
+                'profile' => $profile,
+            ]);
+
+            if ($groupProfile) {
+                $permissions = [
+                    self::DELETE_GROUP => 'admin' === $groupProfile->getRole(),
+                    self::MANAGE_MEMBERS => in_array($groupProfile->getRole(), ['admin', 'moderator']),
                     self::POST_CONTENT => true,
                     self::VIEW_GROUP => true,
-                    default => false,
-                };
-            }
+                ];
 
-            if ($this->isGroupMember($profile, $subject)) {
-                return match ($attribute) {
-                    self::POST_CONTENT => true,
-                    self::VIEW_GROUP => true,
-                    default => false,
-                };
+                if ($permissions[$attribute] ?? false) {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    private function isGroupAdmin(Profile $profile, Group $group): bool
+    public static function fromString(string $role): string
     {
-        $groupProfile = $this->groupProfileRepository->findOneBy([
-            'group' => $group,
-            'profile' => $profile,
-        ]);
+        $validRoles = ['admin', 'moderator', 'member'];
 
-        return $groupProfile && 'admin' === $groupProfile->getRole();
-    }
+        if (!in_array($role, $validRoles, true)) {
+            throw new InvalidArgumentException('Rôle invalide.');
+        }
 
-    private function isGroupMember(Profile $profile, Group $group): bool
-    {
-        return (bool) $this->groupProfileRepository->findOneBy([
-            'group' => $group,
-            'profile' => $profile,
-        ]);
+        return $role;
     }
 }
