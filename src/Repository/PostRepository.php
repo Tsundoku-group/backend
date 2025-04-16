@@ -15,17 +15,24 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
-    public function findRecentPosts(int $limit = 10): array
+    public function findRecentPosts(int $limit = 10, ?int $groupId = null): array
     {
-        $recentPosts = $this->createQueryBuilder('p')
-            ->where('p.visibility = :visibility')
-            ->setParameter('visibility', 'public')
+        $qb = $this->createQueryBuilder('p')
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults($limit);
 
+        if ($groupId) {
+            $qb->innerJoin('p.group', 'g')
+                ->where('g.id = :groupId')
+                ->setParameter('groupId', $groupId);
+        } else {
+            $qb->where('p.visibility = :visibility')
+                ->setParameter('visibility', 'public');
+        }
+
         try {
-            return $recentPosts->getQuery()->getResult();
-        } catch (NoResultException $e) {
+            return $qb->getQuery()->getResult();
+        } catch (NoResultException) {
             return [];
         }
     }

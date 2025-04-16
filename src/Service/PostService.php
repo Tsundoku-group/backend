@@ -37,9 +37,9 @@ readonly class PostService
         private ReactRepository $reactRepository,
     ) {}
 
-    public function getRecentPosts(int $limit, string $profileId): array
+    public function getRecentPosts(int $limit, string $profileId, ?int $groupId = null): array
     {
-        $posts = $this->postRepository->findRecentPosts($limit);
+        $posts = $this->postRepository->findRecentPosts($limit, $groupId);
 
         return array_map(fn($post) => [
             'id' => $post->getId(),
