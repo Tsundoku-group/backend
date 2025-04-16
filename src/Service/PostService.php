@@ -124,6 +124,7 @@ readonly class PostService
             $post->setVisibility($visibility);
             $post->setSlug($this->slugger->slug($title)->lower());
             $post->setCreatedAt(new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')));
+            $post->setUpdatedAt(new DateTime('now', new DateTimeZone('Europe/Paris')));
             $post->setGroup($group);
             $post->setAuthor($author);
 
