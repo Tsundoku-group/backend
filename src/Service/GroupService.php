@@ -10,6 +10,7 @@ use App\Enum\Group\GroupSortOptionEnum;
 use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
+use App\Repository\MarkRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use DateTime;
 use DateTimeImmutable;
@@ -28,6 +29,7 @@ readonly class GroupService
         private GroupRepository $groupRepository,
         private GroupRequestRepository $groupRequestRepository,
         private TagService $tagService,
+        private MarkRepository $markRepository,
     ) {
     }
 
@@ -38,7 +40,7 @@ readonly class GroupService
         int $page = 1,
         int $limit = 20,
         ?int $profileId = null,
-        bool $myGroups = false,
+        bool $myGroups = false
     ): array {
         $offset = ($page - 1) * $limit;
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
@@ -50,13 +52,28 @@ readonly class GroupService
             $userGroupIds = array_column($userGroups, 'id');
 
             $groupRequests = $this->groupRequestRepository->findPendingRequestsByProfile($profileId);
-
             foreach ($groupRequests as $request) {
                 $userGroupRequests[$request->getGroup()->getId()] = $request->getStatus();
             }
         }
 
-        $mappedGroups = array_map(function ($groupData) use ($userGroupIds, $userGroupRequests) {
+        $marksByGroupId = [];
+        if ($profileId) {
+            $marks = $this->markRepository->findBy([
+                'profile' => $profileId,
+                'targetType' => 'group'
+            ]);
+
+            foreach ($marks as $mark) {
+                $marksByGroupId[(int)$mark->getTargetId()] = [
+                    'isFavorite' => $mark->getIsFavorite(),
+                    'isPinned' => $mark->getIsPinned(),
+                    'rating'    => $mark->getRating(),
+                ];
+            }
+        }
+
+        $mappedGroups = array_map(function ($groupData) use ($userGroupIds, $userGroupRequests, $marksByGroupId) {
             if (is_array($groupData) && isset($groupData[0]) && is_object($groupData[0])) {
                 $group = $groupData[0];
                 $membersCount = $groupData['membersCount'] ?? 0;
@@ -64,17 +81,22 @@ readonly class GroupService
                 $group = $groupData;
                 $membersCount = 0;
             } else {
-                $group = (object) $groupData;
+                $group = (object)$groupData;
                 $membersCount = $groupData['membersCount'] ?? 0;
             }
 
-            if (in_array($group->getId(), $userGroupIds)) {
+            $groupId = $group->getId();
+
+            if (in_array($groupId, $userGroupIds)) {
                 $joinStatus = 'member';
-            } elseif (array_key_exists($group->getId(), $userGroupRequests)) {
-                $joinStatus = $userGroupRequests[$group->getId()];
+            } elseif (array_key_exists($groupId, $userGroupRequests)) {
+                $joinStatus = $userGroupRequests[$groupId];
             } else {
                 $joinStatus = 'none';
             }
+
+            $isFavorite = isset($marksByGroupId[$groupId]) ? $marksByGroupId[$groupId]['isFavorite'] : false;
+            $isPinned   = isset($marksByGroupId[$groupId]) ? $marksByGroupId[$groupId]['isPinned'] : false;
 
             return [
                 'id' => $group->getId(),
@@ -82,7 +104,18 @@ readonly class GroupService
                 'membersCount' => $membersCount,
                 'createdAt' => $group->getCreatedAt(),
                 'visibility' => $group->getVisibility(),
+                'slug' => $group->getSlug(),
                 'joinStatus' => $joinStatus,
+                'isFavorite' => $isFavorite,
+                'isPinned'   => $isPinned,
+                'tags' => array_map(fn ($taggable) => [
+                    'name' => $taggable->getTag()->getName(),
+                    'slug' => $taggable->getTag()->getSlug(),
+                    'parent' => $taggable->getTag()->getParentTag() ? [
+                        'name' => $taggable->getTag()->getParentTag()->getName(),
+                        'slug' => $taggable->getTag()->getParentTag()->getSlug(),
+                    ] : null,
+                ], $group->getTaggables()->toArray()),
             ];
         }, $privateGroups);
 
@@ -102,7 +135,7 @@ readonly class GroupService
         return $mappedGroups;
     }
 
-    public function getPrivateGroupBySlug(string $slug): Group
+    public function getPrivateGroupBySlug(string $slug): array
     {
         try {
             $oneGroupBySlug = $this->groupRepository->findOneBy(['slug' => $slug]);
@@ -111,10 +144,36 @@ readonly class GroupService
                 throw new RuntimeException('Group not found');
             }
 
-            return $oneGroupBySlug;
+            return $this->formatGroupResult($oneGroupBySlug);
         } catch (Exception $e) {
             throw new RuntimeException('Group not found');
         }
+    }
+
+    public function getMembersByGroupId(int $groupId): array
+    {
+        $group = $this->groupRepository->find($groupId);
+
+        if (!$group) {
+            throw new RuntimeException('Group not found');
+        }
+
+        $groupProfiles = $group->getGroupProfiles();
+
+        return array_map(function ($groupProfile) {
+            $profile = $groupProfile->getProfile();
+            $activePhotos = $profile->getProfilePhotos()->filter(fn ($photo) => $photo->isActive());
+
+            return [
+                'id' => $profile->getId(),
+                'firstName' => $profile->getFirstName(),
+                'lastName' => $profile->getLastName(),
+                'username' => $profile->getUsername(),
+                'groupRole' => $groupProfile->getRole(),
+                'joinAt' => $groupProfile->getJoinAt(),
+                'imageUrl' => $activePhotos,
+            ];
+        }, $groupProfiles->toArray());
     }
 
     public function createGroup(string $name, ?string $description, Profile $creator, string $visibility, array $tagNames = []): Group
@@ -186,8 +245,15 @@ readonly class GroupService
 
     public function formatGroupResult(array|object $result): array
     {
-        $group = is_array($result) && isset($result[0]) ? $result[0] : $result;
-        $membersCount = is_array($result) && isset($result['membersCount']) ? $result['membersCount'] : 0;
+        if (is_array($result)) {
+            $group = $result[0] ?? $result;
+            $membersCount = $result['membersCount'] ?? 0;
+        } else {
+            $group = $result;
+            $membersCount = method_exists($group, 'getGroupProfiles')
+                ? count($group->getGroupProfiles())
+                : 0;
+        }
 
         return [
             'id' => $group->getId(),
@@ -202,6 +268,11 @@ readonly class GroupService
                 'id' => $group->getCreatedBy()->getId(),
                 'username' => $group->getCreatedBy()->getUsername(),
             ],
+            'membersPreview' => array_slice(array_map(fn($gp) => [
+                'id' => $gp->getProfile()->getId(),
+                'username' => $gp->getProfile()->getUsername(),
+                'profilePhoto' => $gp->getProfile()->getActiveProfile()
+            ], $group->getGroupProfiles()->toArray()), 0, 10),
             'tags' => array_map(fn ($taggable) => [
                 'name' => $taggable->getTag()->getName(),
                 'slug' => $taggable->getTag()->getSlug(),
