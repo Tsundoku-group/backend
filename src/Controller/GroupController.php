@@ -8,8 +8,10 @@ use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
 use App\Enum\Group\GroupSortOptionEnum;
 use App\Repository\GroupRepository;
+use App\Repository\PostRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use App\Service\GroupService;
+use App\Service\PostService;
 use App\Validator\Constraints\ProfileValidator;
 use Exception;
 use RuntimeException;
@@ -19,15 +21,62 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-#[Route('/api/v1/group/private')]
+#[Route('/api/v1/groups')]
 class GroupController extends AbstractController
 {
     public function __construct(
-        private readonly GroupService $groupService,
-        private readonly GroupRepository $groupRepository,
-        private readonly ProfileValidator $profileValidator,
+        private readonly GroupService                  $groupService,
+        private readonly GroupRepository               $groupRepository,
+        private readonly ProfileValidator              $profileValidator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-    ) {
+        private readonly PostService                   $postService,
+        private readonly PostRepository                $postRepository,
+    )
+    {
+    }
+
+    #[Route('/{groupId}/posts/recent', name: "get_recent_posts", methods: ['GET'])]
+    public function getRecentPosts(Request $request, int $groupId): JsonResponse
+    {
+        $profileId = $request->query->get('profileId');
+
+        if (!$profileId) {
+            return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
+        }
+
+        try {
+            $posts = $this->postService->getRecentPosts(10, $profileId, $groupId);
+            return new JsonResponse(['posts' => $posts], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/{groupId}/posts/older',name: "get_oldest_posts", methods: ['GET'])]
+    public function getOlderPosts(Request $request): JsonResponse
+    {
+        $profileId = $request->query->get('profileId');
+
+        if (!$profileId) {
+            return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
+        }
+
+        $page = max((int)$request->query->get('page', 1), 1);
+        $limit = max((int)$request->query->get('limit', 10), 10);
+
+        try {
+            $posts = $this->postService->getOlderPosts($page, $limit, $profileId);
+            $totalPosts = $this->postRepository->countTotalPosts();
+            $remainingPosts = $totalPosts - ($page * $limit);
+            $nextPage = $remainingPosts > 0 ? $page + 1 : null;
+
+            return new JsonResponse([
+                'posts' => $posts,
+                'nextPage' => $nextPage,
+            ], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
     }
 
     #[Route('', name: 'group_private', methods: ['GET'])]
@@ -36,8 +85,8 @@ class GroupController extends AbstractController
         $search = $request->query->get('search', '');
         $tagName = $request->query->get('tagName', '');
         $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
-        $page = (int) $request->query->get('page', 1);
-        $limit = (int) $request->query->get('limit', 20);
+        $page = (int)$request->query->get('page', 1);
+        $limit = (int)$request->query->get('limit', 20);
         $profileId = $request->query->get('profileId');
         $myGroups = filter_var($request->query->get('myGroups', false), FILTER_VALIDATE_BOOLEAN);
 
@@ -60,7 +109,19 @@ class GroupController extends AbstractController
         try {
             $groupBySlug = $this->groupService->getPrivateGroupBySlug($slug);
 
-            return new JsonResponse(['group' => $groupBySlug], 200);
+            return new JsonResponse($groupBySlug, 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
+    #[Route('/{groupId}/members', name: 'group_members', methods: ['GET'])]
+    public function getGroupMembers(int $groupId): JsonResponse
+    {
+        try {
+            $membersByGroupId = $this->groupService->getMembersByGroupId($groupId);
+
+            return new JsonResponse($membersByGroupId, 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
@@ -100,7 +161,7 @@ class GroupController extends AbstractController
                     'slug' => $group->getSlug(),
                     'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt(),
-                    'tags' => array_map(fn ($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
+                    'tags' => array_map(fn($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
                 ],
             ], 201);
         } catch (RuntimeException $e) {
@@ -110,10 +171,10 @@ class GroupController extends AbstractController
         }
     }
 
-    #[Route('/{id}', methods: ['PUT'])]
-    public function updateGroup(int $id, Request $request): JsonResponse
+    #[Route('/{groupId}', methods: ['PUT'])]
+    public function updateGroup(int $groupId, Request $request): JsonResponse
     {
-        $group = $this->groupRepository->find($id);
+        $group = $this->groupRepository->find($groupId);
         if (!$group) {
             return new JsonResponse(['error' => 'Groupe introuvable'], 404);
         }
@@ -145,10 +206,10 @@ class GroupController extends AbstractController
         }
     }
 
-    #[Route('/{id}', methods: ['DELETE'])]
-    public function deleteGroup(int $id, Request $request): JsonResponse
+    #[Route('/{groupId}', methods: ['DELETE'])]
+    public function deleteGroup(int $groupId, Request $request): JsonResponse
     {
-        $group = $this->groupRepository->find($id);
+        $group = $this->groupRepository->find($groupId);
         if (!$group) {
             return new JsonResponse(['error' => 'Groupe introuvable'], 404);
         }
