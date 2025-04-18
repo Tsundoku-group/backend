@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,5 +34,24 @@ class AuthController extends AbstractController
             'token' => $token,
             'isVerified' => $user->isVerified(),
         ]);
+    }
+
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(Request $request, RefreshTokenManagerInterface $refreshTokenManager, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $refreshToken = $data['refresh_token'] ?? null;
+
+        if (!$refreshToken) {
+            return new JsonResponse(['error' => 'Missing refresh_token'], 400);
+        }
+
+        $token = $refreshTokenManager->get($refreshToken);
+        if ($token) {
+            $refreshTokenManager->delete($token);
+            return new JsonResponse(['message' => 'Refresh token deleted'], 200);
+        }
+
+        return new JsonResponse(['message' => 'No refresh token found'], 200);
     }
 }
