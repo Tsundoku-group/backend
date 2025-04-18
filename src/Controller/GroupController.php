@@ -36,7 +36,7 @@ class GroupController extends AbstractController
     }
 
     #[Route('/{groupId}/posts/recent', name: "get_recent_posts", methods: ['GET'])]
-    public function getRecentPosts(Request $request, int $groupId): JsonResponse
+    public function getRecentPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
         $profileId = $request->query->get('profileId');
 
@@ -53,7 +53,7 @@ class GroupController extends AbstractController
     }
 
     #[Route('/{groupId}/posts/older',name: "get_oldest_posts", methods: ['GET'])]
-    public function getOlderPosts(Request $request): JsonResponse
+    public function getOlderPostsByGroupId(Request $request): JsonResponse
     {
         $profileId = $request->query->get('profileId');
 

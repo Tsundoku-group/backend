@@ -92,12 +92,15 @@ class GroupRepository extends ServiceEntityRepository
 
     public function findGroupsByProfile(int $profileId): array
     {
-        return $this->createQueryBuilder('g')
+        $qd = $this->createQueryBuilder('g')
             ->innerJoin('g.groupProfiles', 'gp')
             ->where('gp.profile = :profileId')
             ->setParameter('profileId', $profileId)
-            ->select('g.id AS id, g.name, g.slug, g.visibility')
-            ->getQuery()
-            ->getArrayResult();
+            ->select('g.id AS id, g.name, g.slug, g.visibility');
+        try {
+            return $qd->getQuery()->getArrayResult();
+        } catch (Exception $e) {
+            return [];
+        }
     }
 }

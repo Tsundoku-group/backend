@@ -94,6 +94,7 @@ readonly class PostService
         if (!$author) {
             throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
+
         $this->profileValidator->validateProfile($authorId);
 
         $group = $this->groupRepository->find($groupId);

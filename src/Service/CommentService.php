@@ -161,6 +161,12 @@ readonly class CommentService
                     'postId' => $comment->getPostId(),
                     'parent' => null,
                     'createdAt' => $comment->getCreatedAt(),
+                    'author' => [
+                        'id' => $author->getId(),
+                        'firstname' => $author->getFirstName(),
+                        'lastname' => $author->getLastName(),
+                        'username' => $author->getUsername(),
+                    ],
                 ],
             ], 201);
         } catch (Exception $e) {

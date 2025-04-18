@@ -51,6 +51,18 @@ class Group
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'group')]
     private Collection $posts;
 
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $rules = [];
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $activities = [];
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $whoCanJoin = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $externalLinks = [];
+
     public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
@@ -193,7 +205,7 @@ class Group
 
     public function getTags(): array
     {
-        return $this->taggables->map(fn (Taggable $taggable) => $taggable->getTag())->toArray();
+        return $this->taggables->map(fn(Taggable $taggable) => $taggable->getTag())->toArray();
     }
 
     public function getPosts(): Collection
@@ -207,6 +219,50 @@ class Group
             $this->posts[] = $post;
         }
 
+        return $this;
+    }
+
+    public function getRules(): ?array
+    {
+        return $this->rules;
+    }
+
+    public function setRules(?array $rules): self
+    {
+        $this->rules = $rules;
+        return $this;
+    }
+
+    public function getActivities(): ?array
+    {
+        return $this->activities;
+    }
+
+    public function setActivities(?array $activities): self
+    {
+        $this->activities = $activities;
+        return $this;
+    }
+
+    public function getWhoCanJoin(): ?string
+    {
+        return $this->whoCanJoin;
+    }
+
+    public function setWhoCanJoin(?string $whoCanJoin): self
+    {
+        $this->whoCanJoin = $whoCanJoin;
+        return $this;
+    }
+
+    public function getExternalLinks(): ?array
+    {
+        return $this->externalLinks;
+    }
+
+    public function setExternalLinks(?array $externalLinks): self
+    {
+        $this->externalLinks = $externalLinks;
         return $this;
     }
 }
