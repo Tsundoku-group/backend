@@ -158,7 +158,7 @@ class Notification
 
     public function incrementActorCount(): void
     {
-        $this->actorCount++;
+        ++$this->actorCount;
     }
 
     public function getActorCount(): int

@@ -39,10 +39,6 @@ final class GroupRoleVoter extends Voter
             return false;
         }
 
-        if ($subject->getId() === 1 && $attribute === self::POST_CONTENT) {
-            return true;
-        }
-
         $user = $token->getUser();
         if (!$user instanceof User) {
             return false;

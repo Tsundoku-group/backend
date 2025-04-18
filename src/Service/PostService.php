@@ -7,7 +7,6 @@ use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
 use App\Repository\CommentRepository;
-use App\Repository\GroupProfileRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
@@ -38,9 +37,9 @@ readonly class PostService
         private ReactRepository $reactRepository,
     ) {}
 
-    public function getRecentPosts(int $limit, string $profileId): array
+    public function getRecentPosts(int $limit, string $profileId, ?int $groupId = null): array
     {
-        $posts = $this->postRepository->findRecentPosts($limit);
+        $posts = $this->postRepository->findRecentPosts($limit, $groupId);
 
         return array_map(fn($post) => [
             'id' => $post->getId(),
@@ -95,6 +94,7 @@ readonly class PostService
         if (!$author) {
             throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
+
         $this->profileValidator->validateProfile($authorId);
 
         $group = $this->groupRepository->find($groupId);

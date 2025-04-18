@@ -11,6 +11,8 @@ use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/v1/group/profile')]
@@ -21,7 +23,7 @@ class GroupProfileController extends AbstractController
     ) {
     }
 
-    #[Route('/join', methods: ['POST'])]
+    #[Route('', methods: ['POST'])]
     public function joinGroup(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -33,22 +35,17 @@ class GroupProfileController extends AbstractController
         $dto = new JoinGroupDTO($data['groupId'], $data['profileId'], $data['role']);
 
         try {
-            $groupProfile = $this->groupProfileService->joinGroup($dto->groupId, $dto->profileId, $dto->role);
-
-            return new JsonResponse([
-                'message' => 'Membre ajouté au groupe avec succès.',
-                'groupProfile' => [
-                    'groupId' => $groupProfile->getGroup()->getId(),
-                    'profileId' => $groupProfile->getProfile()->getId(),
-                    'role' => $groupProfile->getRole()->getValue(),
-                ],
-            ], 201);
+            return $this->groupProfileService->joinGroup($dto->groupId, $dto->profileId, $dto->role);
+        } catch (ConflictHttpException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 409);
+        } catch (NotFoundHttpException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 404);
         } catch (Exception $e) {
             return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/update/role', methods: ['PUT'])]
+    #[Route('', methods: ['PUT'])]
     public function updateMemberRole(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -68,7 +65,7 @@ class GroupProfileController extends AbstractController
         }
     }
 
-    #[Route('/remove', methods: ['DELETE'])]
+    #[Route('', methods: ['DELETE'])]
     public function removeMember(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

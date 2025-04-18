@@ -30,7 +30,6 @@ class ReactRepository extends ServiceEntityRepository
 
     public function hasUserLikedComment(int $profileId, string $commentId): bool
     {
-
         return (bool) $this->createQueryBuilder('r')
                 ->select('COUNT(r.id)')
                 ->where('r.actor = :profileId')

@@ -10,7 +10,9 @@ use App\Repository\GroupRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
 use App\Validator\Constraints\ProfileValidator;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -19,17 +21,18 @@ readonly class GroupProfileService
     public function __construct(
         private GroupRepository $groupRepository,
         private GroupProfileRepository $groupProfileRepository,
+        private GroupRequestService $groupRequestService,
         private EntityManagerInterface $entityManager,
         private ProfileValidator $profileValidator,
     ) {
     }
 
-    public function joinGroup(int $groupId, int $profileId, string $role): GroupProfile
+    public function joinGroup(int $groupId, int $profileId, string $role): JsonResponse
     {
         $group = $this->groupRepository->find($groupId);
 
         if (!$group) {
-            throw new NotFoundHttpException(ErrorMessagesConstant::GROUP_NOT_FOUND);
+            return new JsonResponse(['error' => ErrorMessagesConstant::GROUP_NOT_FOUND], 404);
         }
 
         $profile = $this->profileValidator->validateProfile($profileId);
@@ -37,16 +40,25 @@ readonly class GroupProfileService
         $existingGroupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
 
         if ($existingGroupProfile) {
-            throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_IN_GROUP);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_ALREADY_IN_GROUP], 400);
         }
+        try {
+            if ('public' === $group->getVisibility()) {
+                $groupProfile = new GroupProfile($group, $profile, GroupRoleVoter::fromString($role));
+                $groupProfile->markAsUpdated();
 
-        $groupProfile = new GroupProfile($group, $profile, GroupRoleVoter::fromString($role));
-        $groupProfile->markAsUpdated();
+                $this->entityManager->persist($groupProfile);
+                $this->entityManager->flush();
 
-        $this->entityManager->persist($groupProfile);
-        $this->entityManager->flush();
+                return new JsonResponse(['message' => 'Membre ajouté au groupe avec succès.'], 201);
+            }
 
-        return $groupProfile;
+            $this->groupRequestService->requestToJoinGroup($group, $profile);
+
+            return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
+        } catch (Exception $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 500);
+        }
     }
 
     public function updateMemberRole(int $groupId, int $profileId, string $role, int $adminId): void

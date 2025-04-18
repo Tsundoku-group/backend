@@ -80,3 +80,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-76] Tests unitaires [#76](https://trello.com/c/N4Y2LM11/76-t-76-tests-unitaires)
 - [t-77] Corrections likes & notifications [#77](https://trello.com/c/brG0Q5bS/77-t-77-corrections-likes-notifications)
 - [t-78] Corrections Majeures backend [#78](https://trello.com/c/Adzj8u2j/78-t-78-corrections-majeures-backend)
+- [t-79] Récupération des groupes privés [#79](https://trello.com/c/4b4QL3pG/79-t-79-r%C3%A9cup%C3%A9ration-des-groupes-priv%C3%A9s)

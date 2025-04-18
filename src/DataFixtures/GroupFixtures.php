@@ -27,6 +27,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
     public function load(ObjectManager $manager): void
     {
         $profiles = $manager->getRepository(Profile::class)->findAll();
+        $tags = $manager->getRepository(Tag::class)->findAll();
 
         if (empty($profiles)) {
             throw new RuntimeException('Aucun profil trouvé. Ajoutez des profils avant de charger les groupes.');
@@ -39,6 +40,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             $publicGroup->setName('Fil d’actualité');
             $publicGroup->setSlug($this->slugger->slug('Fil d’actualité')->lower());
             $publicGroup->setVisibility('public');
+            $publicGroup->setDescription("Ce groupe est le fil d'actualité principal. Tous les membres peuvent y publier leurs réflexions, annonces ou critiques littéraires. Il représente la place publique de la plateforme.");
             $manager->persist($publicGroup);
         }
 
@@ -64,12 +66,41 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             $group->setName($groupName);
             $group->setSlug($this->slugger->slug($groupName)->lower());
             $group->setVisibility('private');
+            $group->setDescription("Bienvenue dans le groupe \"$groupName\". Ici, les membres échangent autour de leurs passions communes avec bienveillance et respect. Rejoignez les discussions et découvrez des contenus exclusifs !");
+
+            $group->setRules([
+                'Respect mutuel entre membres',
+                'Pas de spoilers sans avertissement',
+                'Interdiction de contenus offensants ou discriminatoires',
+                'Pas de promotion personnelle ou publicitaire',
+                'Participation régulière aux discussions',
+            ]);
+
+            $group->setActivities([
+                'Échanges autour des lectures récentes',
+                'Organisation de lectures communes',
+                'Défis littéraires mensuels',
+                'Partage de critiques et recommandations',
+                'Rencontres virtuelles entre membres',
+            ]);
+
+            $group->setWhoCanJoin('Uniquement sur invitation d’un membre ou après approbation d’un modérateur');
+            $group->setExternalLinks([
+                'https://example.com/regles-groupe-' . strtolower(str_replace(' ', '-', $groupName)),
+                'https://example.com/evenements-groupe-' . strtolower(str_replace(' ', '-', $groupName)),
+            ]);
 
             $manager->persist($group);
             $groupEntities[] = $group;
 
             $this->addMembersToGroup($manager, $group, $profiles);
             $this->addPostsToGroup($manager, $group, $profiles);
+        }
+
+        $manager->flush();
+
+        foreach ($groupEntities as $group) {
+            $this->addTagsToGroup($manager, $group, $tags);
         }
 
         $manager->flush();
@@ -111,6 +142,20 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
 
                 $manager->persist($post);
             }
+        }
+    }
+
+    private function addTagsToGroup(ObjectManager $manager, Group $group, array $tags): void
+    {
+        if (empty($tags)) {
+            return;
+        }
+
+        $randomTags = array_slice($tags, 0, rand(1, 3));
+
+        foreach ($randomTags as $tag) {
+            $taggable = new Taggable($tag, 'group', $group->getId(), $group);
+            $manager->persist($taggable);
         }
     }
 

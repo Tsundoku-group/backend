@@ -40,17 +40,37 @@ class Group
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?DateTimeImmutable $createdAt = null;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTime $updatedAt = null;
 
+    #[ORM\OneToMany(targetEntity: Taggable::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $taggables;
+
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'group')]
+    private Collection $posts;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $rules = [];
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $activities = [];
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $whoCanJoin = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $externalLinks = [];
+
     public function __construct(Profile $createdBy)
     {
         $this->groupProfiles = new ArrayCollection();
+        $this->posts = new ArrayCollection();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTime();
         $this->createdBy = $createdBy;
+        $this->taggables = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -58,9 +78,6 @@ class Group
         return $this->id;
     }
 
-    /**
-     * @return Collection|GroupProfile[]
-     */
     public function getGroupProfiles(): Collection
     {
         return $this->groupProfiles;
@@ -135,7 +152,7 @@ class Group
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): DateTimeInterface
     {
         return $this->createdAt;
     }
@@ -147,7 +164,7 @@ class Group
         return $this;
     }
 
-    public function getUpdatedAt(): ?DateTimeInterface
+    public function getUpdatedAt(): ?DateTime
     {
         return $this->updatedAt;
     }
@@ -156,6 +173,96 @@ class Group
     {
         $this->updatedAt = $updatedAt;
 
+        return $this;
+    }
+
+    public function getTaggables(): Collection
+    {
+        return $this->taggables;
+    }
+
+    public function addTag(Tag $tag): self
+    {
+        $taggable = new Taggable($tag, 'group', $this->id);
+        if (!$this->taggables->contains($taggable)) {
+            $this->taggables->add($taggable);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): self
+    {
+        foreach ($this->taggables as $taggable) {
+            if ($taggable->getTag() === $tag) {
+                $this->taggables->removeElement($taggable);
+                break;
+            }
+        }
+
+        return $this;
+    }
+
+    public function getTags(): array
+    {
+        return $this->taggables->map(fn(Taggable $taggable) => $taggable->getTag())->toArray();
+    }
+
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): self
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts[] = $post;
+        }
+
+        return $this;
+    }
+
+    public function getRules(): ?array
+    {
+        return $this->rules;
+    }
+
+    public function setRules(?array $rules): self
+    {
+        $this->rules = $rules;
+        return $this;
+    }
+
+    public function getActivities(): ?array
+    {
+        return $this->activities;
+    }
+
+    public function setActivities(?array $activities): self
+    {
+        $this->activities = $activities;
+        return $this;
+    }
+
+    public function getWhoCanJoin(): ?string
+    {
+        return $this->whoCanJoin;
+    }
+
+    public function setWhoCanJoin(?string $whoCanJoin): self
+    {
+        $this->whoCanJoin = $whoCanJoin;
+        return $this;
+    }
+
+    public function getExternalLinks(): ?array
+    {
+        return $this->externalLinks;
+    }
+
+    public function setExternalLinks(?array $externalLinks): self
+    {
+        $this->externalLinks = $externalLinks;
         return $this;
     }
 }
