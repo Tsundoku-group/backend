@@ -19,11 +19,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class GroupRequestController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRequestService $groupRequestService,
+        private readonly GroupRequestService    $groupRequestService,
         private readonly GroupRequestRepository $groupRequestRepository,
-        private readonly GroupRepository $groupRepository,
-        private readonly ProfileRepository $profileRepository,
-    ) {
+        private readonly GroupRepository        $groupRepository,
+        private readonly ProfileRepository      $profileRepository,
+    )
+    {
     }
 
     #[Route('/{groupId}', name: 'group_request', methods: ['GET'])]
@@ -42,7 +43,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse([
                 'groupId' => $groupId,
-                'pendingRequests' => array_map(fn ($request) => [
+                'pendingRequests' => array_map(fn($request) => [
                     'requestId' => $request->getId(),
                     'profile' => [
                         'id' => $request->getProfile()->getId(),
@@ -56,8 +57,8 @@ class GroupRequestController extends AbstractController
         }
     }
 
-    #[Route('/{id}/join', methods: ['POST'])]
-    public function requestToJoinGroup(int $id, Request $request): JsonResponse
+    #[Route('/{groupId}', methods: ['POST'])]
+    public function requestToJoinGroup(int $groupId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $profileId = $data['profileId'] ?? null;
@@ -66,7 +67,7 @@ class GroupRequestController extends AbstractController
             return new JsonResponse(['error' => 'Profile ID manquant.'], 400);
         }
 
-        $group = $this->groupRepository->find($id);
+        $group = $this->groupRepository->find($groupId);
         $profile = $this->profileRepository->find($profileId);
 
         if (!$group || !$profile) {
@@ -82,8 +83,8 @@ class GroupRequestController extends AbstractController
         }
     }
 
-    #[Route('/{requestId}', methods: ['POST'])]
-    public function updateRequestStatus(int $requestId, Request $request): JsonResponse
+    #[Route('', methods: ['PUT'])]
+    public function updateRequestStatus(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 

@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/v1/post')]
+#[Route('/api/v1/posts')]
 class PostController extends AbstractController
 {
     public function __construct(

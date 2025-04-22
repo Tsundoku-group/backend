@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/conversation')]
+#[Route('/api/v1/conversations')]
 class ConversationController extends AbstractController
 {
     public function __construct(
@@ -24,7 +24,7 @@ class ConversationController extends AbstractController
     ) {
     }
 
-    #[Route('/create', name: 'create_conversation', methods: ['POST'])]
+    #[Route('', name: 'create_conversation', methods: ['POST'])]
     public function createConversation(Request $request): JsonResponse
     {
         try {
@@ -46,11 +46,11 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{id}/all', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
-    public function getAllConversationsWithLastMessages(int $id, Request $request): JsonResponse
+    #[Route('/{profileId}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
+    public function getAllConversationsByProfileIdWithLastMessages(int $profileId, Request $request): JsonResponse
     {
         try {
-            $user = $this->userRepository->findOneUserById($id);
+            $user = $this->userRepository->findOneUserById($profileId);
             if (!$user) {
                 return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
@@ -84,7 +84,7 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{id}/delete', name: 'delete_conversation', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete_conversation', methods: ['DELETE'])]
     public function deleteConversationById(int $id): JsonResponse
     {
         try {

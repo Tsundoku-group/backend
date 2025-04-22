@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/message')]
+#[Route('/api/v1/messages')]
 class MessageController extends AbstractController
 {
     public function __construct(

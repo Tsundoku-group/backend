@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/profile')]
+#[Route('/api/v1/profiles')]
 class ProfileController extends AbstractController
 {
     public function __construct(
@@ -57,7 +57,7 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/new', name: 'create_profile', methods: ['POST'])]
+    #[Route('', name: 'create_profile', methods: ['POST'])]
     public function createNewProfile(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -82,8 +82,8 @@ class ProfileController extends AbstractController
         }
     }
 
-    #[Route('/{id}/edit', name: 'profile_edit', methods: ['PUT'])]
-    public function update(Request $request, int $id): JsonResponse
+    #[Route('/{profileId}', name: 'profile_edit', methods: ['PUT'])]
+    public function update(Request $request, int $profileId): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -94,7 +94,7 @@ class ProfileController extends AbstractController
         $dto = new ProfileDTO($data);
 
         try {
-            $updatedProfile = $this->profileService->updateProfile($id, (array) $dto);
+            $updatedProfile = $this->profileService->updateProfile($profileId, (array) $dto);
 
             if (isset($updatedProfile['error'])) {
                 return new JsonResponse(['error' => $updatedProfile['error']], $updatedProfile['status']);

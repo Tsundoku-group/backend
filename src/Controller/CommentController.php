@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/comment')]
+#[Route('/api/v1/comments')]
 class CommentController extends AbstractController
 {
     public function __construct(
@@ -40,10 +40,16 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{postId}/{profileId}/comments', methods: ['GET'])]
-    public function getCommentsForPost(int $postId, int $profileId): JsonResponse
+    #[Route('/post/{postId}', methods: ['GET'])]
+    public function getCommentsForPost(int $postId, Request $request): JsonResponse
     {
         try {
+            $profileId = (int) $request->query->get('profileId');
+
+            if (!$profileId) {
+                return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
+            }
+
             $dto = new GetCommentDTO($postId);
 
             $post = $this->postRepository->findPostWithGroupById($dto->postId);
@@ -59,11 +65,13 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{commentId}/{profileId}/children', methods: ['GET'])]
-    public function getCommentWithChildren(string $commentId, int $profileId): JsonResponse
+    #[Route('/{commentId}/children', methods: ['GET'])]
+    public function getCommentWithChildren(string $commentId, Request $request): JsonResponse
     {
+        $profileId = (int) $request->query->get('profileId');
+
         if (!$profileId) {
-            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], 404);
+            return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
         }
 
         try {
@@ -75,7 +83,7 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/add/post', name: 'add_comment_to_post', methods: ['POST'])]
+    #[Route('', name: 'add_comment_to_post', methods: ['POST'])]
     public function addCommentToPost(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -103,7 +111,7 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{commentId}/update', name: 'update_comment', methods: ['PUT'])]
+    #[Route('/{commentId}', name: 'update_comment', methods: ['PUT'])]
     public function updateComment(string $commentId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -126,7 +134,7 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{commentId}/delete', name: 'delete_comment', methods: ['DELETE'])]
+    #[Route('/{commentId}', name: 'delete_comment', methods: ['DELETE'])]
     public function deleteComment(string $commentId, Request $request): JsonResponse
     {
         try {
@@ -156,7 +164,7 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/add/reply', name: 'reply_to_comment', methods: ['POST'])]
+    #[Route('/{commentId}/replies', name: 'reply_to_comment', methods: ['POST'])]
     public function replyToComment(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

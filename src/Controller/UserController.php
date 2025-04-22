@@ -50,7 +50,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/new', name: 'user_new', methods: ['POST'])]
+    #[Route('', name: 'user_new', methods: ['POST'])]
     public function new(Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
@@ -94,7 +94,7 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/{id}/edit', name: 'user_edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'user_edit', methods: ['PUT'])]
     public function update(Request $request, User $user): Response
     {
         $data = json_decode($request->getContent(), true);

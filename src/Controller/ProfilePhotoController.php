@@ -29,7 +29,7 @@ class ProfilePhotoController extends AbstractController
     ) {
     }
 
-    #[Route('/upload', name: 'add_profile_photo', methods: 'POST')]
+    #[Route('', name: 'add_profile_photo', methods: 'POST')]
     public function uploadProfilePhoto(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -73,7 +73,7 @@ class ProfilePhotoController extends AbstractController
         }
     }
 
-    #[Route('/remove', name: 'delete_profile_photo', methods: 'DELETE')]
+    #[Route('', name: 'delete_profile_photo', methods: 'DELETE')]
     public function removeProfilePhoto(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
