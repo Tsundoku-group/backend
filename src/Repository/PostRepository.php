@@ -19,11 +19,9 @@ class PostRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('p')
             ->orderBy('p.createdAt', 'DESC')
-            ->setMaxResults($limit)
-            ->where('p.visibility = :visibility')
-            ->setParameter('visibility', 'public');
+            ->setMaxResults($limit);
 
-        if ($groupId) {
+        if ($groupId !== null) {
             $qb->innerJoin('p.group', 'g')
                 ->andWhere('g.id = :groupId')
                 ->setParameter('groupId', $groupId);
@@ -53,12 +51,13 @@ class PostRepository extends ServiceEntityRepository
     }
 
     public function findPaginatedArticlesByProfile(
-        int $profileId,
-        int $page = 1,
-        int $maxPerPage = 15,
+        int    $profileId,
+        int    $page = 1,
+        int    $maxPerPage = 15,
         string $sortField = 'createdAt',
         string $sortOrder = 'DESC'
-    ): array {
+    ): array
+    {
         $allowedSortFields = ['status', 'title', 'createdAt', 'updatedAt'];
         if (!in_array($sortField, $allowedSortFields, true)) {
             $sortField = 'createdAt';
@@ -85,10 +84,10 @@ class PostRepository extends ServiceEntityRepository
         return [
             'articles' => $articles,
             'pagination' => [
-                'currentPage'   => $page,
-                'limit'         => $maxPerPage,
+                'currentPage' => $page,
+                'limit' => $maxPerPage,
                 'totalArticles' => $totalCount,
-                'totalPages'    => ceil($totalCount / $maxPerPage),
+                'totalPages' => ceil($totalCount / $maxPerPage),
             ],
         ];
     }
