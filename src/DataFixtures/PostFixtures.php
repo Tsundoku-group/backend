@@ -141,6 +141,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             ProfileFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

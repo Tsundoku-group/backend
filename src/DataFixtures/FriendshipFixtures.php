@@ -56,6 +56,7 @@ class FriendshipFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             ProfileFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

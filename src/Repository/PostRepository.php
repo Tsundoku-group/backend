@@ -19,20 +19,19 @@ class PostRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('p')
             ->orderBy('p.createdAt', 'DESC')
-            ->setMaxResults($limit);
+            ->setMaxResults($limit)
+            ->where('p.visibility = :visibility')
+            ->setParameter('visibility', 'public');
 
         if ($groupId) {
             $qb->innerJoin('p.group', 'g')
-                ->where('g.id = :groupId')
+                ->andWhere('g.id = :groupId')
                 ->setParameter('groupId', $groupId);
-        } else {
-            $qb->where('p.visibility = :visibility')
-                ->setParameter('visibility', 'public');
         }
 
         try {
             return $qb->getQuery()->getResult();
-        } catch (NoResultException) {
+        } catch (NoResultException $e) {
             return [];
         }
     }

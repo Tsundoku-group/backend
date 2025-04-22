@@ -53,6 +53,7 @@ class FollowerFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             ProfileFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

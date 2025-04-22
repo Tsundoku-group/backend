@@ -115,6 +115,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             UserFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

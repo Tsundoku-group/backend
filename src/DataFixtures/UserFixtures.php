@@ -20,9 +20,6 @@ class UserFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $connection = $manager->getConnection();
-        $connection->executeStatement('ALTER SEQUENCE user_id_seq RESTART WITH 1');
-
         $user = new User();
         $user->setEmail('admin@admin.com');
         $user->setPassword($this->passwordHasher->hashPassword($user, 'testtest'));
@@ -54,5 +51,12 @@ class UserFixtures extends Fixture
         }
 
         $manager->flush();
+    }
+
+    public function getDependencies(): array
+    {
+        return [
+            ResetAutoIncrementFixtures::class,
+        ];
     }
 }
