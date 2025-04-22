@@ -29,7 +29,7 @@ class Post
     private Profile $author;
 
     #[ORM\Column(length: 255)]
-    private string $title;
+    private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     private string $content;

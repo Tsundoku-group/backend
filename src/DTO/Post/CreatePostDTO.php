@@ -10,9 +10,8 @@ class CreatePostDTO
     #[Assert\Length(max: 255, maxMessage: 'Le type ne doit pas dépasser 255 caractères.')]
     public string $type;
 
-    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
     #[Assert\Length(max: 255, maxMessage: 'Le titre ne doit pas dépasser 255 caractères.')]
-    public string $title;
+    public ?string $title = null;
 
     #[Assert\NotBlank(message: 'Le contenu est obligatoire.')]
     public string $content;
@@ -31,7 +30,7 @@ class CreatePostDTO
     #[Assert\Choice(choices: ['public', 'private'], message: "La visibilité doit être 'public' ou 'private'.")]
     public string $visibility;
 
-    public function __construct(string $type, string $title, string $content, int $authorId, int $groupId, ?string $status, string $visibility)
+    public function __construct(string $type, ?string $title, string $content, int $authorId, int $groupId, ?string $status, string $visibility)
     {
         $this->type = $type;
         $this->title = $title;

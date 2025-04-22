@@ -14,9 +14,7 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -28,44 +26,10 @@ class PostController extends AbstractController
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
         private readonly ProfileRepository $profileRepository,
-        private readonly EntityManagerInterface $entityManager
     ) {}
 
-    #[Route('/{profileId}/recent', methods: ['GET'])]
-    public function getRecentPosts(string $profileId): JsonResponse
-    {
-        try {
-            $posts = $this->postService->getRecentPosts(10, $profileId);
-
-            return new JsonResponse(['posts' => $posts], 200);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
-    }
-
-    #[Route('/{profileId}/older', methods: ['GET'])]
-    public function getOlderPosts(string $profileId, Request $request): JsonResponse
-    {
-        $page = max((int) $request->query->get('page', 1), 1);
-        $limit = max((int) $request->query->get('limit', 10), 10);
-
-        try {
-            $posts = $this->postService->getOlderPosts($page, $limit, $profileId);
-            $totalPosts = $this->postRepository->countTotalPosts();
-            $remainingPosts = $totalPosts - ($page * $limit);
-            $nextPage = $remainingPosts > 0 ? $page + 1 : null;
-
-            return new JsonResponse([
-                'posts' => $posts,
-                'nextPage' => $nextPage,
-            ], 200);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
-    }
-
     #[Route('/{profileId}/articles', methods: ['GET'])]
-    public function getArticlesByProfile(int $profileId, Request $request, SerializerInterface $serializer): JsonResponse
+    public function getArticlesByProfile(int $profileId, Request $request): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
