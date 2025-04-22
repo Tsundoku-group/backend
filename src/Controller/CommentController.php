@@ -36,7 +36,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Argument non valide : ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Erreur de serveur interne' , 'détails' => $e->getMessage()], 500);
+            return $this->json(['error' => 'Erreur de serveur interne', 'détails' => $e->getMessage()], 500);
         }
     }
 

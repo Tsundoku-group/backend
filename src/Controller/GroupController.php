@@ -27,17 +27,16 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 class GroupController extends AbstractController
 {
     public function __construct(
-        private readonly GroupService                  $groupService,
-        private readonly GroupRepository               $groupRepository,
-        private readonly ProfileValidator              $profileValidator,
+        private readonly GroupService $groupService,
+        private readonly GroupRepository $groupRepository,
+        private readonly ProfileValidator $profileValidator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-        private readonly PostService                   $postService,
-        private readonly PostRepository                $postRepository,
-    )
-    {
+        private readonly PostService $postService,
+        private readonly PostRepository $postRepository,
+    ) {
     }
 
-    #[Route('/{groupId}/posts/recent', name: "get_recent_posts", methods: ['GET'])]
+    #[Route('/{groupId}/posts/recent', name: 'get_recent_posts', methods: ['GET'])]
     public function getRecentPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
         $profileId = $request->query->get('profileId');
@@ -53,13 +52,14 @@ class GroupController extends AbstractController
 
         try {
             $posts = $this->postService->getRecentPosts(10, $profileId, $groupId);
+
             return new JsonResponse(['posts' => $posts], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/{groupId}/posts/older',name: "get_oldest_posts", methods: ['GET'])]
+    #[Route('/{groupId}/posts/older', name: 'get_oldest_posts', methods: ['GET'])]
     public function getOlderPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
         $profileId = $request->query->get('profileId');
@@ -73,8 +73,8 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
         }
 
-        $page = max((int)$request->query->get('page', 1), 1);
-        $limit = max((int)$request->query->get('limit', 10), 10);
+        $page = max((int) $request->query->get('page', 1), 1);
+        $limit = max((int) $request->query->get('limit', 10), 10);
 
         try {
             $posts = $this->postService->getOlderPosts($page, $limit, $profileId, $groupId);
@@ -97,8 +97,8 @@ class GroupController extends AbstractController
         $search = $request->query->get('search', '');
         $tagName = $request->query->get('tagName', '');
         $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
-        $page = (int)$request->query->get('page', 1);
-        $limit = (int)$request->query->get('limit', 20);
+        $page = (int) $request->query->get('page', 1);
+        $limit = (int) $request->query->get('limit', 20);
         $profileId = $request->query->get('profileId');
         $myGroups = filter_var($request->query->get('myGroups', false), FILTER_VALIDATE_BOOLEAN);
 
@@ -173,7 +173,7 @@ class GroupController extends AbstractController
                     'slug' => $group->getSlug(),
                     'visibility' => $group->getVisibility(),
                     'createdAt' => $group->getCreatedAt(),
-                    'tags' => array_map(fn($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
+                    'tags' => array_map(fn ($taggable) => $taggable->getTag()->getName(), $group->getTaggables()->toArray()),
                 ],
             ], 201);
         } catch (RuntimeException $e) {

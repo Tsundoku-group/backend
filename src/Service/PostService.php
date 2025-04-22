@@ -39,13 +39,14 @@ readonly class PostService
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
         private ReactRepository $reactRepository,
-    ) {}
+    ) {
+    }
 
     public function getRecentPosts(int $limit, string $profileId, ?int $groupId = null): array
     {
         $posts = $this->postRepository->findRecentPosts($limit, $groupId);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -67,7 +68,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId);
 
-        return array_map(fn($post) => [
+        return array_map(fn ($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
@@ -92,7 +93,7 @@ readonly class PostService
         string $content,
         string $type,
         string $status,
-        string $visibility
+        string $visibility,
     ): Post {
         $author = $this->profileRepository->find($authorId);
         if (!$author) {
@@ -141,7 +142,6 @@ readonly class PostService
             throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public function updatePost(Post $post, UpdatePostDTO $dto, Profile $editor): void
     {
@@ -213,15 +213,15 @@ readonly class PostService
     public function formatPost(Post $post): array
     {
         return [
-            'id'         => $post->getId(),
-            'type'       => $post->getType(),
-            'title'      => $post->getTitle(),
-            'content'    => $post->getContent(),
-            'slug'       => $post->getSlug(),
+            'id' => $post->getId(),
+            'type' => $post->getType(),
+            'title' => $post->getTitle(),
+            'content' => $post->getContent(),
+            'slug' => $post->getSlug(),
             'visibility' => $post->getVisibility(),
-            'status'     => $post->getStatus(),
-            'createdAt'  => $post->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt'  => $post->getUpdatedAt()?->format('Y-m-d H:i:s'),
+            'status' => $post->getStatus(),
+            'createdAt' => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $post->getUpdatedAt()?->format('Y-m-d H:i:s'),
         ];
     }
 }

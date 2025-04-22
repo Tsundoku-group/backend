@@ -12,24 +12,24 @@ use App\DTO\Post\UpdatePostDTO;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\PostService;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/v1/post')]
 class PostController extends AbstractController
 {
-
     public function __construct(
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
         private readonly ProfileRepository $profileRepository,
-    ) {}
+    ) {
+    }
 
     #[Route('/{profileId}/articles', methods: ['GET'])]
     public function getArticlesByProfile(int $profileId, Request $request): JsonResponse
@@ -87,6 +87,7 @@ class PostController extends AbstractController
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
+
             return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
         }
 
@@ -103,7 +104,7 @@ class PostController extends AbstractController
 
             return new JsonResponse([
                 'message' => 'Post créé avec succès.',
-                'postId' => $post->getId()
+                'postId' => $post->getId(),
             ], 201);
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
@@ -117,7 +118,7 @@ class PostController extends AbstractController
         int $postId,
         Request $request,
         ValidatorInterface $validator,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
     ): JsonResponse {
         $post = $this->postRepository->find($postId);
         if (!$post) {
@@ -138,14 +139,15 @@ class PostController extends AbstractController
 
         try {
             if (
-                isset($data['status']) &&
-                !isset($data['title']) &&
-                !isset($data['content']) &&
-                !isset($data['visibility'])
+                isset($data['status'])
+                && !isset($data['title'])
+                && !isset($data['content'])
+                && !isset($data['visibility'])
             ) {
                 $post->setStatus($data['status']);
                 $entityManager->persist($post);
                 $entityManager->flush();
+
                 return new JsonResponse(['message' => 'Statut mis à jour avec succès.'], 200);
             } else {
                 $title = array_key_exists('title', $data) ? $data['title'] : $post->getTitle();
@@ -161,14 +163,17 @@ class PostController extends AbstractController
                     foreach ($errors as $error) {
                         $errorMessages[] = $error->getMessage();
                     }
+
                     return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
                 }
 
                 $this->postService->updatePost($post, $dto, $editor);
+
                 return new JsonResponse(['message' => 'Post mis à jour avec succès.']);
             }
-        } catch (\Exception $e) {
-            error_log("Error updating post: " . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('Error updating post: ' . $e->getMessage());
+
             return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
@@ -209,6 +214,7 @@ class PostController extends AbstractController
 
         try {
             $postData = $this->postService->formatPost($post);
+
             return new JsonResponse($postData, 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);

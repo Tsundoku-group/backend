@@ -22,12 +22,11 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProfilePhotoController extends AbstractController
 {
     public function __construct(
-        private readonly ProfileRepository         $profileRepository,
-        private readonly ProfilePhotoService       $profilePhotoService,
-        private readonly ProfilePhotoRepository    $profilePhotoRepository,
+        private readonly ProfileRepository $profileRepository,
+        private readonly ProfilePhotoService $profilePhotoService,
+        private readonly ProfilePhotoRepository $profilePhotoRepository,
         private readonly ProfilePhotoDataValidator $profilePhotoDataValidator,
-    )
-    {
+    ) {
     }
 
     #[Route('/upload', name: 'add_profile_photo', methods: 'POST')]
@@ -52,7 +51,7 @@ class ProfilePhotoController extends AbstractController
             return new JsonResponse(['error' => "Le profil n'a pas d'utilisateur associé"], Response::HTTP_BAD_REQUEST);
         }
 
-        if ($profile->getUser()->getId() !== (int)$data['id']) {
+        if ($profile->getUser()->getId() !== (int) $data['id']) {
             return new JsonResponse(['error' => "Le profil n'appartient pas à cet utilisateur"], Response::HTTP_BAD_REQUEST);
         }
 
@@ -84,7 +83,7 @@ class ProfilePhotoController extends AbstractController
             return $testingPhotoData;
         }
 
-        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
 
         if (!$profile) {
             return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
@@ -134,7 +133,7 @@ class ProfilePhotoController extends AbstractController
         }
 
         try {
-            $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
+            $activePhotos = $profile->getProfilePhotos()->filter(fn ($photo) => $photo->isActive());
 
             $result = [];
             foreach ($activePhotos as $photo) {
@@ -161,7 +160,7 @@ class ProfilePhotoController extends AbstractController
             return $testingPhotoData;
         }
 
-        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
         if (!$profile) {
             return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }

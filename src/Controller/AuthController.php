@@ -49,6 +49,7 @@ class AuthController extends AbstractController
         $token = $refreshTokenManager->get($refreshToken);
         if ($token) {
             $refreshTokenManager->delete($token);
+
             return new JsonResponse(['message' => 'Jeton de rafraîchissement supprimé'], 200);
         }
 

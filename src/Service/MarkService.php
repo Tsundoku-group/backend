@@ -6,6 +6,7 @@ use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\Mark;
 use App\Repository\MarkRepository;
 use App\Repository\ProfileRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 
@@ -18,7 +19,7 @@ class MarkService
     public function __construct(
         MarkRepository $markRepository,
         ProfileRepository $profileRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
     ) {
         $this->markRepository = $markRepository;
         $this->profileRepository = $profileRepository;
@@ -31,32 +32,33 @@ class MarkService
         string $targetType,
         ?float $rating = null,
         bool $isPinned = false,
-        bool $isFavorite = false
+        bool $isFavorite = false,
     ): Mark {
         $profile = $this->profileRepository->find($profileId);
         if (!$profile) {
-            throw new \Exception(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
+            throw new Exception(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
 
         $existingMark = $this->markRepository->findOneBy([
             'profile' => $profile,
             'targetId' => $targetId,
-            'targetType' => $targetType
+            'targetType' => $targetType,
         ]);
 
         if ($existingMark) {
             $existingMark->setIsFavorite($isFavorite);
             $existingMark->setIsPinned($isPinned);
-            if ($rating !== null) {
+            if (null !== $rating) {
                 $existingMark->setRating($rating);
             }
-            $existingMark->setUpdatedAt(new \DateTimeImmutable());
+            $existingMark->setUpdatedAt(new DateTimeImmutable());
             $this->entityManager->flush();
+
             return $existingMark;
         }
 
         $mark = new Mark($profile, $targetId, $targetType);
-        if ($rating !== null) {
+        if (null !== $rating) {
             $mark->setRating($rating);
         }
         $mark->setIsFavorite($isFavorite);
@@ -71,7 +73,7 @@ class MarkService
     {
         $mark = $this->markRepository->find($id);
         if (!$mark) {
-            throw new Exception("Mark non trouvé.");
+            throw new Exception('Mark non trouvé.');
         }
 
         $this->entityManager->remove($mark);

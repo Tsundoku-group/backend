@@ -201,7 +201,7 @@ readonly class FriendshipService
         $statusMessage = $isInverse ? ' (inverse)' : '';
 
         if (Friendship::STATUS_PENDING === $friendship->getStatus()) {
-            return ['error' => "Demande déjà envoyée. Statut : en attente" . $statusMessage, 'status' => 409];
+            return ['error' => 'Demande déjà envoyée. Statut : en attente' . $statusMessage, 'status' => 409];
         }
 
         if (Friendship::STATUS_REJECTED === $friendship->getStatus()) {

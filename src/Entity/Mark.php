@@ -5,39 +5,38 @@ namespace App\Entity;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
-
 #[ORM\Entity]
-#[ORM\Table(name: "marks")]
+#[ORM\Table(name: 'marks')]
 class Mark
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Profile $profile;
 
-    #[ORM\Column(type: "integer")]
+    #[ORM\Column(type: 'integer')]
     private int $targetId;
 
-    #[ORM\Column(type: "string", length: 50)]
+    #[ORM\Column(type: 'string', length: 50)]
     private string $targetType;
 
-    #[ORM\Column(type: "decimal", precision: 3, scale: 1, nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 3, scale: 1, nullable: true)]
     private ?string $rating = null;
 
-    #[ORM\Column(type: "boolean")]
+    #[ORM\Column(type: 'boolean')]
     private bool $isPinned = false;
 
-    #[ORM\Column(type: "boolean")]
+    #[ORM\Column(type: 'boolean')]
     private bool $isFavorite = false;
 
-    #[ORM\Column(type: "datetime_immutable")]
+    #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $updatedAt;
 
     public function __construct(Profile $profile, int $targetId, string $targetType)
@@ -85,17 +84,19 @@ class Mark
     public function setTargetType(string $targetType): self
     {
         $this->targetType = $targetType;
+
         return $this;
     }
 
     public function getRating(): ?float
     {
-        return $this->rating !== null ? (float)$this->rating : null;
+        return null !== $this->rating ? (float) $this->rating : null;
     }
 
     public function setRating(?float $rating): self
     {
-        $this->rating = $rating !== null ? (string)$rating : null;
+        $this->rating = null !== $rating ? (string) $rating : null;
+
         return $this;
     }
 
@@ -107,6 +108,7 @@ class Mark
     public function setIsPinned(bool $isPinned): self
     {
         $this->isPinned = $isPinned;
+
         return $this;
     }
 
@@ -118,6 +120,7 @@ class Mark
     public function setIsFavorite(bool $isFavorite): self
     {
         $this->isFavorite = $isFavorite;
+
         return $this;
     }
 
@@ -129,6 +132,7 @@ class Mark
     public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -140,6 +144,7 @@ class Mark
     public function setUpdatedAt(DateTimeImmutable $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 }

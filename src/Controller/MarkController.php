@@ -30,7 +30,8 @@ class MarkController extends AbstractController
         }
 
         try {
-            $marks = $this->markService->getMarksByTarget((int)$targetId, $targetType);
+            $marks = $this->markService->getMarksByTarget((int) $targetId, $targetType);
+
             return new JsonResponse(['marks' => $marks], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
@@ -48,12 +49,12 @@ class MarkController extends AbstractController
 
         try {
             $mark = $this->markService->createOrUpdateMark(
-                (int)$data['profileId'],
-                (int)$data['targetId'],
+                (int) $data['profileId'],
+                (int) $data['targetId'],
                 $data['targetType'],
-                isset($data['rating']) ? (float)$data['rating'] : null,
-                isset($data['isPinned']) && (bool)$data['isPinned'],
-                isset($data['isFavorite']) && (bool)$data['isFavorite']
+                isset($data['rating']) ? (float) $data['rating'] : null,
+                isset($data['isPinned']) && (bool) $data['isPinned'],
+                isset($data['isFavorite']) && (bool) $data['isFavorite']
             );
 
             return new JsonResponse([
@@ -66,7 +67,7 @@ class MarkController extends AbstractController
                     'targetId' => $mark->getTargetId(),
                     'targetType' => $mark->getTargetType(),
                     'createdAt' => $mark->getCreatedAt()->format('c'),
-                ]
+                ],
             ], 201);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
@@ -78,6 +79,7 @@ class MarkController extends AbstractController
     {
         try {
             $this->markService->deleteMark($id);
+
             return new JsonResponse(['message' => 'Mark supprimé avec succès.'], 200);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);

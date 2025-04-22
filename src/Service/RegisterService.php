@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;

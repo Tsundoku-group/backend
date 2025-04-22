@@ -82,7 +82,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
         $article1 = new Post();
         $article1->setTitle('Les bases de Symfony pour débutants');
         $article1->setType('article');
-        $article1->setContent("Symfony est un puissant framework PHP permettant de développer des applications web robustes. Découvrez dans cet article les bases essentielles pour bien démarrer !");
+        $article1->setContent('Symfony est un puissant framework PHP permettant de développer des applications web robustes. Découvrez dans cet article les bases essentielles pour bien démarrer !');
         $article1->setCreatedAt(new DateTimeImmutable());
         $article1->setVisibility('public');
         $article1->setStatus('brouillon');
@@ -104,7 +104,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
         $article3 = new Post();
         $article3->setTitle('Créer une API REST avec Symfony');
         $article3->setType('article');
-        $article3->setContent("Dans cet article, nous vous guidons étape par étape pour créer une API REST performante avec Symfony et API Platform.");
+        $article3->setContent('Dans cet article, nous vous guidons étape par étape pour créer une API REST performante avec Symfony et API Platform.');
         $article3->setCreatedAt(new DateTimeImmutable());
         $article3->setVisibility('public');
         $article3->setStatus('brouillon');
@@ -115,7 +115,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
         $article4 = new Post();
         $article4->setTitle('Optimiser les performances de votre application Symfony');
         $article4->setType('article');
-        $article4->setContent("Découvrez les meilleures pratiques pour améliorer les performances de votre application Symfony et réduire les temps de chargement.");
+        $article4->setContent('Découvrez les meilleures pratiques pour améliorer les performances de votre application Symfony et réduire les temps de chargement.');
         $article4->setCreatedAt(new DateTimeImmutable());
         $article4->setVisibility('public');
         $article4->setStatus('brouillon');

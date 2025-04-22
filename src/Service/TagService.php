@@ -11,7 +11,7 @@ use Exception;
 readonly class TagService
 {
     public function __construct(
-        private TagRepository          $tagRepository,
+        private TagRepository $tagRepository,
         private EntityManagerInterface $entityManager,
     ) {
     }

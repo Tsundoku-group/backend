@@ -21,12 +21,11 @@ readonly class ProfileService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private ProfileRepository      $profileRepository,
-        private UserRepository         $userRepository,
-        private FriendshipRepository   $friendshipRepository,
-        private FollowerRepository     $followerRepository,
-    )
-    {
+        private ProfileRepository $profileRepository,
+        private UserRepository $userRepository,
+        private FriendshipRepository $friendshipRepository,
+        private FollowerRepository $followerRepository,
+    ) {
     }
 
     public function getProfileWithStats(int $profileId): ?array

@@ -205,7 +205,7 @@ class Group
 
     public function getTags(): array
     {
-        return $this->taggables->map(fn(Taggable $taggable) => $taggable->getTag())->toArray();
+        return $this->taggables->map(fn (Taggable $taggable) => $taggable->getTag())->toArray();
     }
 
     public function getPosts(): Collection
@@ -230,6 +230,7 @@ class Group
     public function setRules(?array $rules): self
     {
         $this->rules = $rules;
+
         return $this;
     }
 
@@ -241,6 +242,7 @@ class Group
     public function setActivities(?array $activities): self
     {
         $this->activities = $activities;
+
         return $this;
     }
 
@@ -252,6 +254,7 @@ class Group
     public function setWhoCanJoin(?string $whoCanJoin): self
     {
         $this->whoCanJoin = $whoCanJoin;
+
         return $this;
     }
 
@@ -263,6 +266,7 @@ class Group
     public function setExternalLinks(?array $externalLinks): self
     {
         $this->externalLinks = $externalLinks;
+
         return $this;
     }
 }
