@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
@@ -52,7 +52,7 @@ class GroupRequestController extends AbstractController
                 ], $requests),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -78,7 +78,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -97,7 +97,7 @@ class GroupRequestController extends AbstractController
         }
 
         if (!$profileId || !$groupId || !$status) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 403);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 403);
         }
 
         $groupRequest = $this->groupRequestRepository->find($groupId);
@@ -121,7 +121,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse(['message' => "Demande $action avec succès"], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\User\NewUserDTO;
 use App\DTO\User\UpdateUserDTO;
 use App\DTO\User\VerifyPasswordDTO;
@@ -39,13 +40,13 @@ class UserController extends AbstractController
         $users = $this->userRepository->findAllUsersByUsername();
 
         if (empty($users)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
             return $this->json($users);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -55,7 +56,7 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -73,7 +74,7 @@ class UserController extends AbstractController
 
             return $this->json($user, 201);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -83,13 +84,13 @@ class UserController extends AbstractController
         $user = $this->userRepository->findUserProfileById($id);
 
         if (empty($user)) {
-            return $this->json(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return $this->json(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
             return $this->json($user);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -99,7 +100,7 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -123,7 +124,7 @@ class UserController extends AbstractController
                 'email' => $user->getEmail(),
             ], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -133,13 +134,13 @@ class UserController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $user = $this->getUser();
 
         if (!$user) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         try {
@@ -151,7 +152,7 @@ class UserController extends AbstractController
 
             return $this->json(['message' => 'Password verified'], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -163,7 +164,7 @@ class UserController extends AbstractController
         $captchaToken = $data['captchaToken'];
 
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         if (empty($data['newPassword'])) {
@@ -186,7 +187,7 @@ class UserController extends AbstractController
 
             return $this->json($user, 200);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -196,7 +197,7 @@ class UserController extends AbstractController
         $user = $this->userRepository->findOneUserById($id);
 
         if (empty($user)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         if (null !== $user['accountDeletionDate']) {
@@ -214,7 +215,7 @@ class UserController extends AbstractController
 
             return new JsonResponse(['message' => 'Demande de suppression de compte', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 

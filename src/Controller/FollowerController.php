@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Service\FollowerService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,7 +31,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -47,7 +47,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -63,7 +63,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse(['message' => $response['message']], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -79,7 +79,7 @@ class FollowerController extends AbstractController
 
             return new JsonResponse(['message' => $response['message']], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

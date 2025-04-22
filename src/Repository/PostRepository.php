@@ -34,17 +34,18 @@ class PostRepository extends ServiceEntityRepository
         }
     }
 
-    public function findOlderPosts(int $page, int $limit): array
+    public function findOlderPosts(int $page, int $limit, int $groupId): array
     {
-        $olderPosts = $this->createQueryBuilder('p')
-            ->where('p.visibility = :visibility')
-            ->setParameter('visibility', 'public')
+        $qb = $this->createQueryBuilder('p')
+            ->innerJoin('p.group', 'g')
+            ->where('g.id = :groupId')
+            ->setParameter('groupId', $groupId)
             ->orderBy('p.createdAt', 'DESC')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         try {
-            return $olderPosts->getQuery()->getResult();
+            return $qb->getQuery()->getResult();
         } catch (NoResultException $e) {
             return [];
         }

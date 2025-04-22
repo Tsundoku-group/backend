@@ -2,7 +2,8 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
@@ -37,7 +38,7 @@ class MessageController extends AbstractController
 
             return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -46,7 +47,7 @@ class MessageController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $queryParams = $request->query->all();

@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\DTO\GroupProfile\JoinGroupDTO;
 use App\DTO\GroupProfile\RemoveMemberDTO;
 use App\DTO\GroupProfile\UpdateMemberRoleDTO;
@@ -29,7 +29,7 @@ class GroupProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['groupId'], $data['profileId'], $data['role'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new JoinGroupDTO($data['groupId'], $data['profileId'], $data['role']);
@@ -41,7 +41,7 @@ class GroupProfileController extends AbstractController
         } catch (NotFoundHttpException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 404);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -51,7 +51,7 @@ class GroupProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['groupId'], $data['memberId'], $data['newRole'], $data['adminId'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new UpdateMemberRoleDTO($data['groupId'], $data['memberId'], $data['newRole'], $data['adminId']);
@@ -61,7 +61,7 @@ class GroupProfileController extends AbstractController
 
             return new JsonResponse(['message' => 'Rôle mis à jour avec succès.']);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -71,7 +71,7 @@ class GroupProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['groupId'], $data['profileId'], $data['adminId'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new RemoveMemberDTO($data['groupId'], $data['profileId'], $data['adminId']);
@@ -81,7 +81,7 @@ class GroupProfileController extends AbstractController
 
             return new JsonResponse(['message' => 'Membre supprimé du groupe avec succès.']);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

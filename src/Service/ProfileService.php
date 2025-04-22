@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Profile\SetActiveProfileDTO;
 use App\DTO\Profile\UpdateProfileStatusDTO;
 use App\Entity\Profile;
@@ -19,11 +21,12 @@ readonly class ProfileService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private ProfileRepository $profileRepository,
-        private UserRepository $userRepository,
-        private FriendshipRepository $friendshipRepository,
-        private FollowerRepository $followerRepository,
-    ) {
+        private ProfileRepository      $profileRepository,
+        private UserRepository         $userRepository,
+        private FriendshipRepository   $friendshipRepository,
+        private FollowerRepository     $followerRepository,
+    )
+    {
     }
 
     public function getProfileWithStats(int $profileId): ?array
@@ -54,7 +57,7 @@ readonly class ProfileService
         if (empty($profiles)) {
             $user = $this->userRepository->find($userId);
             if (!$user) {
-                return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+                return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
             }
 
             return [
@@ -103,7 +106,7 @@ readonly class ProfileService
                 'status' => 'offline',
             ];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -135,7 +138,7 @@ readonly class ProfileService
 
             return ['success' => 'Profile updated successfully'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -195,12 +198,12 @@ readonly class ProfileService
     {
         $user = $this->userRepository->find($dto->userId);
         if (!$user) {
-            return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
         }
 
         $profile = $this->profileRepository->find($dto->profileId);
         if (!$profile || $user !== $profile->getUser()) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 400];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 400];
         }
 
         if ($profile->getActiveProfile()) {
@@ -224,7 +227,7 @@ readonly class ProfileService
                 'status' => $profile->getStatus(),
             ];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -241,7 +244,7 @@ readonly class ProfileService
 
             return ['success' => true, 'newStatus' => $profile->getStatus()];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 }

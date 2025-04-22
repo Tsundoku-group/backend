@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Entity\Profile;
 use App\Entity\ProfilePhoto;
 use Doctrine\ORM\EntityManagerInterface;
@@ -143,7 +143,7 @@ class ProfilePhotoService
         } catch (Exception $e) {
             return [
                 'status' => 'error',
-                'message' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage(),
+                'message' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage(),
             ];
         }
     }

@@ -2,10 +2,9 @@
 
 namespace App\Tests\Controller;
 
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Controller\FollowerController;
-use App\Constant\ErrorMessagesConstant;
 use App\Service\FollowerService;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,7 +50,7 @@ class FollowerControllerTest extends TestCase
 
         $this->followerService->method('getFollowersPaginated')
             ->with($profileId, $request)
-            ->willReturn(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+            ->willReturn(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
 
         $response = $this->controller->getFollowersPaginated($profileId, $request);
 
@@ -81,7 +80,7 @@ class FollowerControllerTest extends TestCase
 
         $this->followerService->method('followProfile')
             ->with($profileId, $request)
-            ->willReturn(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+            ->willReturn(['error' =>ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
 
         $response = $this->controller->followProfile($profileId, $request);
 

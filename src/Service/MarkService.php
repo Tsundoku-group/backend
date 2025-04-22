@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\Mark;
 use App\Repository\MarkRepository;
 use App\Repository\ProfileRepository;
@@ -34,7 +35,7 @@ class MarkService
     ): Mark {
         $profile = $this->profileRepository->find($profileId);
         if (!$profile) {
-            throw new \Exception("Profil non trouvé.");
+            throw new \Exception(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
 
         $existingMark = $this->markRepository->findOneBy([

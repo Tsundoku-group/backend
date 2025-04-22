@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\Friendship;
 use App\Repository\FriendshipRepository;
 use App\Repository\ProfileRepository;
@@ -56,7 +57,7 @@ readonly class FriendshipService
 
             return ['message' => "Demande d'amitié envoyée"];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -78,7 +79,7 @@ readonly class FriendshipService
 
             return ['message' => "Demande d'amitié acceptée"];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -100,7 +101,7 @@ readonly class FriendshipService
 
             return ['message' => "Demande d'ami rejetée"];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -129,7 +130,7 @@ readonly class FriendshipService
 
             return ['message' => 'Ami supprimé'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -138,7 +139,7 @@ readonly class FriendshipService
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         try {
@@ -153,7 +154,7 @@ readonly class FriendshipService
 
             return $friendships;
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -162,7 +163,7 @@ readonly class FriendshipService
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         try {
@@ -191,7 +192,7 @@ readonly class FriendshipService
                 ];
             }, $friendRequests);
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 

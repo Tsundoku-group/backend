@@ -2,7 +2,10 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\GroupErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Repository\GroupProfileRepository;
@@ -32,7 +35,7 @@ readonly class GroupProfileService
         $group = $this->groupRepository->find($groupId);
 
         if (!$group) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::GROUP_NOT_FOUND], 404);
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 404);
         }
 
         $profile = $this->profileValidator->validateProfile($profileId);
@@ -40,7 +43,7 @@ readonly class GroupProfileService
         $existingGroupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
 
         if ($existingGroupProfile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_ALREADY_IN_GROUP], 400);
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::USER_ALREADY_IN_GROUP], 400);
         }
         try {
             if ('public' === $group->getVisibility()) {
@@ -57,7 +60,7 @@ readonly class GroupProfileService
 
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['message' => $e->getMessage()], 500);
+            return new JsonResponse(['message' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage()], 500);
         }
     }
 
@@ -66,7 +69,7 @@ readonly class GroupProfileService
         $groupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
 
         if (!$groupProfile) {
-            throw new NotFoundHttpException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+            throw new NotFoundHttpException(GroupErrorMessagesConstant::USER_NOT_IN_GROUP);
         }
 
         $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
@@ -74,7 +77,7 @@ readonly class GroupProfileService
         $newRole = GroupRoleVoter::fromString($role);
 
         if ($groupProfile->getRole() === $newRole) {
-            throw new RuntimeException(ErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
+            throw new RuntimeException(UserErrorMessagesConstant::USER_ALREADY_HAS_ROLE);
         }
 
         $groupProfile->setRole($newRole);
@@ -87,7 +90,7 @@ readonly class GroupProfileService
         $groupProfile = $this->groupProfileRepository->findOneGroupProfile($groupId, $profileId);
 
         if (!$groupProfile) {
-            throw new NotFoundHttpException(ErrorMessagesConstant::USER_NOT_IN_GROUP);
+            throw new NotFoundHttpException(GroupErrorMessagesConstant::USER_NOT_IN_GROUP);
         }
 
         $this->ensureUserIsAdminOfGroup($groupProfile->getGroup(), $adminId);
@@ -101,7 +104,7 @@ readonly class GroupProfileService
         $groupProfile = $this->groupProfileRepository->findOneGroupProfile($group->getId(), $profileId);
 
         if (!$groupProfile || !$groupProfile->isAdmin()) {
-            throw new AccessDeniedHttpException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new AccessDeniedHttpException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
     }
 }

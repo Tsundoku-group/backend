@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\Conversation;
 use App\Entity\Profile;
 use App\Entity\User;
@@ -36,12 +38,12 @@ readonly class MessageService
 
         $user = $this->userRepository->findOneUserByEmail($data['userEmail']);
         if (!$user) {
-            return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
         }
 
         $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
         if (!$createdBy) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
@@ -75,7 +77,7 @@ readonly class MessageService
 
             return ['success' => 'Message envoyé à la conversation'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -107,7 +109,7 @@ readonly class MessageService
                 'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
             ], $pagedMessages);
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -117,7 +119,7 @@ readonly class MessageService
             $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
 
             if (!$user) {
-                return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+                return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
             }
 
             $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
@@ -134,7 +136,7 @@ readonly class MessageService
 
             return ['success' => 'Tous les messages sont marqués comme lus'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 }

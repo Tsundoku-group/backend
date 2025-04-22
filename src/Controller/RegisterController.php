@@ -2,7 +2,8 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Register\RegisterUserDTO;
 use App\Service\RegisterService;
 use Exception;
@@ -26,7 +27,7 @@ class RegisterController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'], $data['password'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
         $dto = new RegisterUserDTO($data['email'], $data['password']);
 
@@ -35,7 +36,7 @@ class RegisterController extends AbstractController
 
             return new JsonResponse($response, $response['status'] ?? Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -45,7 +46,7 @@ class RegisterController extends AbstractController
         $token = $request->query->get('token');
 
         if (!$token) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_TOKEN], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => SecurityErrorMessagesConstant::INVALID_TOKEN], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -62,7 +63,7 @@ class RegisterController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!$data || !isset($data['email'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         try {

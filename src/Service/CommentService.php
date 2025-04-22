@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Document\Comment;
 use App\Enum\NotificationTypeEnum;
 use App\Enum\ResourceTypeEnum;
@@ -48,7 +50,7 @@ readonly class CommentService
                 'createdAt' => $comment->getCreatedAt(),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -81,7 +83,7 @@ readonly class CommentService
 
             return new JsonResponse($formattedComments, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -90,7 +92,7 @@ readonly class CommentService
         try {
             $findPost = $this->postRepository->findOneBy(['id' => $postId]);
             if (!$findPost) {
-                return new JsonResponse(['error' => 'Poste non trouvé'], 404);
+                return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             if (!$postId) {
@@ -122,7 +124,7 @@ readonly class CommentService
 
             return new JsonResponse(['comments' => $formattedComments], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -131,12 +133,12 @@ readonly class CommentService
         try {
             $post = $this->postRepository->find($postId);
             if (!$post) {
-                return new JsonResponse(['error' => 'Poste non trouvé'], 404);
+                return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             $author = $this->profileRepository->find($authorId);
             if (!$author) {
-                return new JsonResponse(['error' => 'Auteur introuvable'], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }
 
             $receiver = $post->getAuthor();
@@ -170,7 +172,7 @@ readonly class CommentService
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -200,7 +202,7 @@ readonly class CommentService
                 ],
             ], JsonResponse::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
         }
     }
 
@@ -243,7 +245,7 @@ readonly class CommentService
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

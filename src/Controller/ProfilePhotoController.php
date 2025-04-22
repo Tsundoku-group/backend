@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\ProfilePhoto\ProfilePhotoDTO;
 use App\Entity\User;
 use App\Repository\ProfilePhotoRepository;
@@ -20,11 +22,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProfilePhotoController extends AbstractController
 {
     public function __construct(
-        private readonly ProfileRepository $profileRepository,
-        private readonly ProfilePhotoService $profilePhotoService,
-        private readonly ProfilePhotoRepository $profilePhotoRepository,
+        private readonly ProfileRepository         $profileRepository,
+        private readonly ProfilePhotoService       $profilePhotoService,
+        private readonly ProfilePhotoRepository    $profilePhotoRepository,
         private readonly ProfilePhotoDataValidator $profilePhotoDataValidator,
-    ) {
+    )
+    {
     }
 
     #[Route('/upload', name: 'add_profile_photo', methods: 'POST')]
@@ -42,14 +45,14 @@ class ProfilePhotoController extends AbstractController
         $profile = $this->profileRepository->findProfileWithPhotos($dto->profileId, $dto->userId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }
 
         if (null === $profile->getUser()) {
             return new JsonResponse(['error' => "Le profil n'a pas d'utilisateur associé"], Response::HTTP_BAD_REQUEST);
         }
 
-        if ($profile->getUser()->getId() !== (int) $data['id']) {
+        if ($profile->getUser()->getId() !== (int)$data['id']) {
             return new JsonResponse(['error' => "Le profil n'appartient pas à cet utilisateur"], Response::HTTP_BAD_REQUEST);
         }
 
@@ -67,7 +70,7 @@ class ProfilePhotoController extends AbstractController
 
             return new JsonResponse(['success' => 'Photo de profil téléchargée'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -81,10 +84,10 @@ class ProfilePhotoController extends AbstractController
             return $testingPhotoData;
         }
 
-        $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -96,7 +99,7 @@ class ProfilePhotoController extends AbstractController
 
             return new JsonResponse(['success' => 'Suppression de la photo de profil'], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -105,7 +108,7 @@ class ProfilePhotoController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_UNAUTHORIZED);
         }
 
         $userId = $user->getId();
@@ -117,7 +120,7 @@ class ProfilePhotoController extends AbstractController
         $profile = $this->profileRepository->findProfileWithPhotos($profileId, $userId);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         if ($profile->getUser()->getId() !== $userId) {
@@ -131,7 +134,7 @@ class ProfilePhotoController extends AbstractController
         }
 
         try {
-            $activePhotos = $profile->getProfilePhotos()->filter(fn ($photo) => $photo->isActive());
+            $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
 
             $result = [];
             foreach ($activePhotos as $photo) {
@@ -144,7 +147,7 @@ class ProfilePhotoController extends AbstractController
 
             return new JsonResponse($result, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -158,9 +161,9 @@ class ProfilePhotoController extends AbstractController
             return $testingPhotoData;
         }
 
-        $profile = $this->profileRepository->findProfileByIdAndUserId((int) $data['profileId'], (int) $data['id']);
+        $profile = $this->profileRepository->findProfileByIdAndUserId((int)$data['profileId'], (int)$data['id']);
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -172,7 +175,7 @@ class ProfilePhotoController extends AbstractController
 
             return new JsonResponse(['success' => $activePhoto['message']], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

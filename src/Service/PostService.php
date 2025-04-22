@@ -2,7 +2,11 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\GroupErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
@@ -59,9 +63,9 @@ readonly class PostService
         ], $posts);
     }
 
-    public function getOlderPosts(int $page, int $limit, string $profileId): array
+    public function getOlderPosts(int $page, int $limit, string $profileId, int $groupId): array
     {
-        $posts = $this->postRepository->findOlderPosts($page, $limit);
+        $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId);
 
         return array_map(fn($post) => [
             'id' => $post->getId(),
@@ -92,25 +96,25 @@ readonly class PostService
     ): Post {
         $author = $this->profileRepository->find($authorId);
         if (!$author) {
-            throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
+            throw new RuntimeException(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
 
         $this->profileValidator->validateProfile($authorId);
 
         $group = $this->groupRepository->find($groupId);
         if (!$group) {
-            throw new RuntimeException(ErrorMessagesConstant::GROUP_NOT_FOUND);
+            throw new RuntimeException(GroupErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
         if ('public' === $visibility && 'public' !== $group->getVisibility()) {
             $publicGroup = $this->groupRepository->findOneBy(['name' => 'Fil d’actualité', 'visibility' => 'public']);
             if (!$publicGroup || $group->getId() !== $publicGroup->getId()) {
-                throw new RuntimeException(ErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
+                throw new RuntimeException(PostErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);
             }
         }
 
         if (!$this->authorizationChecker->isGranted('post_content', $group)) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         $this->entityManager->beginTransaction();
@@ -134,7 +138,7 @@ readonly class PostService
             return $post;
         } catch (Exception $e) {
             $this->entityManager->rollback();
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -142,11 +146,11 @@ readonly class PostService
     public function updatePost(Post $post, UpdatePostDTO $dto, Profile $editor): void
     {
         if ($post->getAuthor()->getId() !== $editor->getId()) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         if (!$this->authorizationChecker->isGranted(PostStatusVoter::EDIT_POST, $post)) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         $changesMade = false;
@@ -164,7 +168,7 @@ readonly class PostService
 
         if (!empty($dto->visibility) && $dto->visibility !== $post->getVisibility()) {
             if (!$this->authorizationChecker->isGranted(PostVisibilityVoter::CHANGE_VISIBILITY, $post)) {
-                throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+                throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
             }
             $post->setVisibility($dto->visibility);
             $changesMade = true;
@@ -179,7 +183,7 @@ readonly class PostService
         try {
             $this->entityManager->flush();
         } catch (Exception $e) {
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR);
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -187,22 +191,22 @@ readonly class PostService
     {
         $post = $this->postRepository->findPostWithGroupById($postId);
         if (!$post) {
-            throw new RuntimeException(ErrorMessagesConstant::POST_NOT_FOUND);
+            throw new RuntimeException(PostErrorMessagesConstant::POST_NOT_FOUND);
         }
 
         if ($post->getAuthor()->getId() !== $editor->getId()) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         if (!$this->authorizationChecker->isGranted('delete_post', $post)) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         try {
             $this->entityManager->remove($post);
             $this->entityManager->flush();
         } catch (Exception $e) {
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 

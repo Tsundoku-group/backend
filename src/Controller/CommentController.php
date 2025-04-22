@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\DTO\Comment\GetCommentDTO;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
@@ -46,14 +48,14 @@ class CommentController extends AbstractController
 
             $post = $this->postRepository->findPostWithGroupById($dto->postId);
             if (!$post) {
-                return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+                return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             return $this->commentService->getCommentsForPost($dto->postId, $profileId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -61,7 +63,7 @@ class CommentController extends AbstractController
     public function getCommentWithChildren(string $commentId, string $profileId): JsonResponse
     {
         if (!$profileId) {
-            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 404);
+            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], 404);
         }
 
         try {
@@ -69,7 +71,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -79,17 +81,17 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'])) {
-            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
         if (!$post) {
-            return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -97,7 +99,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -107,12 +109,12 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['authorId']) || empty($data['content'])) {
-            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -120,7 +122,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -133,7 +135,7 @@ class CommentController extends AbstractController
 
             $author = $this->profileRepository->findProfileById($data['authorId']);
             if (!$author) {
-                return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }
 
             $comment = $this->commentRepository->find($commentId);
@@ -150,7 +152,7 @@ class CommentController extends AbstractController
 
             return $this->json(['message' => 'Commentaire supprimé avec succès'], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -160,17 +162,17 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'], $data['parentId'])) {
-            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
         if (!$post) {
-            return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         $parentComment = $this->commentRepository->find($data['parentId']);
@@ -183,7 +185,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

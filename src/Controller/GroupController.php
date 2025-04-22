@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\GroupErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Group\CreateGroupDTO;
 use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
@@ -44,16 +46,21 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
         }
 
+        $group = $this->groupRepository->find($groupId);
+        if (!$group) {
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
+        }
+
         try {
             $posts = $this->postService->getRecentPosts(10, $profileId, $groupId);
             return new JsonResponse(['posts' => $posts], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
     #[Route('/{groupId}/posts/older',name: "get_oldest_posts", methods: ['GET'])]
-    public function getOlderPostsByGroupId(Request $request): JsonResponse
+    public function getOlderPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
         $profileId = $request->query->get('profileId');
 
@@ -61,11 +68,16 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
         }
 
+        $group = $this->groupRepository->find($groupId);
+        if (!$group) {
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
+        }
+
         $page = max((int)$request->query->get('page', 1), 1);
         $limit = max((int)$request->query->get('limit', 10), 10);
 
         try {
-            $posts = $this->postService->getOlderPosts($page, $limit, $profileId);
+            $posts = $this->postService->getOlderPosts($page, $limit, $profileId, $groupId);
             $totalPosts = $this->postRepository->countTotalPosts();
             $remainingPosts = $totalPosts - ($page * $limit);
             $nextPage = $remainingPosts > 0 ? $page + 1 : null;
@@ -75,7 +87,7 @@ class GroupController extends AbstractController
                 'nextPage' => $nextPage,
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -99,7 +111,7 @@ class GroupController extends AbstractController
 
             return new JsonResponse(['groups' => $privateGroups], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -111,7 +123,7 @@ class GroupController extends AbstractController
 
             return new JsonResponse($groupBySlug, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -123,7 +135,7 @@ class GroupController extends AbstractController
 
             return new JsonResponse($membersByGroupId, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -135,13 +147,13 @@ class GroupController extends AbstractController
         $dto = new CreateGroupDTO($data['name'], $data['description'] ?? null, $data['visibility'], $data['profileId']);
         $tagNames = $data['tags'] ?? [];
         if (!isset($dto->name, $dto->description)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
 
         if ('public' === $dto->visibility && $this->groupRepository->findOneBy(['visibility' => 'public'])) {
-            throw new RuntimeException(ErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
+            throw new RuntimeException(GroupErrorMessagesConstant::ONLY_ONE_PUBLIC_GROUP_ALLOWED);
         }
 
         try {
@@ -167,7 +179,7 @@ class GroupController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -176,19 +188,19 @@ class GroupController extends AbstractController
     {
         $group = $this->groupRepository->find($groupId);
         if (!$group) {
-            return new JsonResponse(['error' => 'Groupe introuvable'], 404);
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 404);
         }
 
         $data = json_decode($request->getContent(), true);
         $dto = new UpdateGroupDTO($group->getId(), $data['name'], $data['description'], $data['profileId']);
 
         if (!isset($dto->profileId, $dto->name, $dto->description)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
         $this->profileValidator->validateProfile($dto->profileId);
 
         if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::ACCESS_DENIED], 403);
+            return new JsonResponse(['error' => SecurityErrorMessagesConstant::ACCESS_DENIED], 403);
         }
 
         try {
@@ -202,7 +214,7 @@ class GroupController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -211,7 +223,7 @@ class GroupController extends AbstractController
     {
         $group = $this->groupRepository->find($groupId);
         if (!$group) {
-            return new JsonResponse(['error' => 'Groupe introuvable'], 404);
+            return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 404);
         }
 
         if ('public' === $group->getVisibility()) {
@@ -221,7 +233,7 @@ class GroupController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $dto = new DeleteGroupDTO($data['profileId'], $group->getId());
         if (!isset($dto->profileId, $dto->groupId)) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
@@ -232,7 +244,7 @@ class GroupController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use DateInterval;
@@ -30,7 +32,7 @@ readonly class ResetPasswordService
         $userData = $this->userRepository->findOneUserByEmail($email);
 
         if (!$userData) {
-            return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => JsonResponse::HTTP_NOT_FOUND];
+            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => JsonResponse::HTTP_NOT_FOUND];
         }
 
         $cooldownPeriod = new DateInterval('PT15M');
@@ -49,7 +51,7 @@ readonly class ResetPasswordService
         try {
             $this->updatePasswordResetToken($userData['id'], $resetToken, $tokenExpiration, $now);
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
 
         $resetUrl = $_ENV['FRONT_URL'] . '/(auth)/reset-password?token=' . $resetToken;
@@ -66,7 +68,7 @@ readonly class ResetPasswordService
 
             return ['success' => true, 'resetToken' => $resetToken];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -75,11 +77,11 @@ readonly class ResetPasswordService
         $user = $this->userRepository->findOneByResetPwdToken($token);
 
         if (!$user) {
-            return ['error' => ErrorMessagesConstant::INVALID_TOKEN, 'status' => Response::HTTP_NOT_FOUND];
+            return ['error' => SecurityErrorMessagesConstant::INVALID_TOKEN, 'status' => Response::HTTP_NOT_FOUND];
         }
 
         if (new DateTime() > $user->getResetPwdTokenLifetime()) {
-            return ['error' => ErrorMessagesConstant::TOKEN_EXPIRED, 'status' => Response::HTTP_BAD_REQUEST];
+            return ['error' => SecurityErrorMessagesConstant::TOKEN_EXPIRED, 'status' => Response::HTTP_BAD_REQUEST];
         }
 
         try {
@@ -106,7 +108,7 @@ readonly class ResetPasswordService
 
             return ['success' => 'Le mot de passe a été réinitialisé avec succès'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 

@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
@@ -205,7 +206,7 @@ readonly class GroupService
             return $group;
         } catch (Exception $e) {
             $this->entityManager->rollback();
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 
@@ -234,14 +235,14 @@ readonly class GroupService
     public function deleteGroup(Group $group): void
     {
         if (!$this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $group)) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         try {
             $this->entityManager->remove($group);
             $this->entityManager->flush();
         } catch (Exception $e) {
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 

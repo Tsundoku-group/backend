@@ -4,7 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Controller\FriendshipController;
 use App\Service\FriendshipService;
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Conversation\CreateConversationDTO;
 use App\Entity\Conversation;
 use App\Entity\Profile;
@@ -32,7 +33,7 @@ class ConversationService
     {
         $createdBy = $this->profileRepository->findProfileByEmail($dto->email);
         if (!$createdBy) {
-            return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
         }
 
         try {
@@ -66,7 +67,7 @@ class ConversationService
 
             return ['message' => 'Conversation créée', 'conversationId' => $conversation->getId(), 'status' => 201];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -127,7 +128,7 @@ class ConversationService
 
             return ['conversations' => $conversationData, 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -142,7 +143,7 @@ class ConversationService
 
             $createdBy = $conversation->getCreatedBy();
             if (!$createdBy || !$createdBy->getUser()) {
-                return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $conversationData = [
@@ -171,7 +172,7 @@ class ConversationService
 
             return ['conversation' => $conversationData, 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -189,7 +190,7 @@ class ConversationService
 
             return ['message' => 'Conversation supprimée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -251,7 +252,7 @@ class ConversationService
 
             return ['conversations' => $conversationData, 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -273,7 +274,7 @@ class ConversationService
 
             return ['message' => 'Conversation archivée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -295,7 +296,7 @@ class ConversationService
 
             return ['message' => 'Conversation non archivée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -304,7 +305,7 @@ class ConversationService
         try {
             $user = $this->userRepository->find($userId);
             if (!$user) {
-                return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $conversations = $this->conversationRepository->findBy(['isArchived' => true]);
@@ -322,7 +323,7 @@ class ConversationService
 
             return ['message' => 'Toutes les conversations ont été désarchivées avec succès.', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -360,7 +361,7 @@ class ConversationService
 
             return ['duration' => $muteUntil->format('Y-m-d H:i:s'), 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -381,7 +382,7 @@ class ConversationService
 
             return ['message' => 'La sourdine de la conversation a été annulée avec succès.', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Validator\Constraints;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -11,7 +11,7 @@ class ProfilePhotoDataValidator
     public function validate(array $data): ?JsonResponse
     {
         if (!isset($data['id'], $data['profileId'], $data['type'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         if (array_key_exists('url', $data)) {

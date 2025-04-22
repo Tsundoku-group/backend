@@ -2,7 +2,7 @@
 
 namespace App\Tests\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
@@ -99,7 +99,7 @@ class RegisterServiceTest extends TestCase
         $this->userRepository->method('findOneByRegistrationToken')->willReturn(null);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage(ErrorMessagesConstant::USER_NOT_FOUND);
+        $this->expectExceptionMessage(UserErrorMessagesConstant::USER_NOT_FOUND);
         $this->expectExceptionCode(404);
 
         $this->service->confirmUser($token);

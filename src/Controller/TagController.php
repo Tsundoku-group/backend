@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Exception\InvalidCredentialsException;
 use App\Service\TagService;
 use Exception;
@@ -30,7 +30,7 @@ class TagController extends AbstractController
         } catch (InvalidCredentialsException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -40,7 +40,7 @@ class TagController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['entityType'], $data['entityId'], $data['tags'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -50,7 +50,7 @@ class TagController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -60,7 +60,7 @@ class TagController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['entityType'], $data['entityId'], $data['tags'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         try {
@@ -70,7 +70,7 @@ class TagController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

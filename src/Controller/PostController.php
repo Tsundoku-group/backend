@@ -2,7 +2,10 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
@@ -34,7 +37,7 @@ class PostController extends AbstractController
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         $page = (int) $request->query->get('page', 1);
@@ -59,7 +62,7 @@ class PostController extends AbstractController
 
             return new JsonResponse($result, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+            return new JsonResponse(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 
@@ -105,7 +108,7 @@ class PostController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -118,19 +121,19 @@ class PostController extends AbstractController
     ): JsonResponse {
         $post = $this->postRepository->find($postId);
         if (!$post) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $data = json_decode($request->getContent(), true);
 
         $editorId = $data['authorId'] ?? $data['editorId'] ?? null;
         if (!$editorId) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $editor = $this->profileRepository->find($editorId);
         if (!$editor) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -166,7 +169,7 @@ class PostController extends AbstractController
             }
         } catch (\Exception $e) {
             error_log("Error updating post: " . $e->getMessage());
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -175,14 +178,14 @@ class PostController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['editorId'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new DeletePostDTO($data['editorId'], $postId);
 
         $editor = $this->profileRepository->find($dto->editorId);
         if (!$editor) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -192,7 +195,7 @@ class PostController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -201,14 +204,14 @@ class PostController extends AbstractController
     {
         $post = $this->postRepository->find($postId);
         if (!$post) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         try {
             $postData = $this->postService->formatPost($post);
             return new JsonResponse($postData, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

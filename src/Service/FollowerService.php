@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\Follower;
 use App\Enum\NotificationTypeEnum;
 use App\Enum\ResourceTypeEnum;
@@ -28,7 +29,7 @@ readonly class FollowerService
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         try {
@@ -43,7 +44,7 @@ readonly class FollowerService
 
             return $followers;
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -52,7 +53,7 @@ readonly class FollowerService
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         try {
@@ -62,12 +63,12 @@ readonly class FollowerService
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 
             if (empty($followed)) {
-                return ['error' => "Aucun suivi n'a été trouvé", 'status' => 404];
+                return ['error' => "Aucun follow n'a été trouvé", 'status' => 404];
             }
 
             return $followed;
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -77,7 +78,7 @@ readonly class FollowerService
         $followingId = $data['followingId'] ?? null;
 
         if (!$profileId || !$followingId) {
-            return ['error' => ErrorMessagesConstant::INVALID_DATA, 'status' => 400];
+            return ['error' => GenericErrorMessagesConstant::INVALID_DATA, 'status' => 400];
         }
 
         $follower = $this->profileRepository->find($profileId);
@@ -114,7 +115,7 @@ readonly class FollowerService
 
             return ['message' => 'Le profil a été suivi avec succès', 'status' => 201];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -141,7 +142,7 @@ readonly class FollowerService
 
             return ['message' => 'Le profil a été supprimé avec succès'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 }
