@@ -36,7 +36,7 @@ readonly class CommentService
             $comment = $this->commentRepository->findCommentById($commentId);
 
             if (!$comment) {
-                return new JsonResponse(['error' => 'Comment not found'], 404);
+                return new JsonResponse(['error' => 'Commentaire non trouvé'], 404);
             }
 
             return new JsonResponse([
@@ -90,17 +90,17 @@ readonly class CommentService
         try {
             $findPost = $this->postRepository->findOneBy(['id' => $postId]);
             if (!$findPost) {
-                return new JsonResponse(['error' => 'Post not found'], 404);
+                return new JsonResponse(['error' => 'Poste non trouvé'], 404);
             }
 
             if (!$postId) {
-                return new JsonResponse(['error' => 'Post ID is required'], 400);
+                return new JsonResponse(['error' => "L'identifiant du poste est requis"], 400);
             }
 
             $comments = $this->commentRepository->getMainComments($postId, $limit);
 
             if (empty($comments)) {
-                return new JsonResponse(['message' => 'No comments found'], 200);
+                return new JsonResponse(['message' => "Aucun commentaire n'a été trouvé"], 200);
             }
 
             $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
@@ -131,12 +131,12 @@ readonly class CommentService
         try {
             $post = $this->postRepository->find($postId);
             if (!$post) {
-                return new JsonResponse(['error' => 'Post not found'], 404);
+                return new JsonResponse(['error' => 'Poste non trouvé'], 404);
             }
 
             $author = $this->profileRepository->find($authorId);
             if (!$author) {
-                return new JsonResponse(['error' => 'Author not found'], 404);
+                return new JsonResponse(['error' => 'Auteur introuvable'], 404);
             }
 
             $receiver = $post->getAuthor();
@@ -154,7 +154,7 @@ readonly class CommentService
             );
 
             return new JsonResponse([
-                'message' => 'Comment successfully added to post',
+                'message' => "Commentaire ajouté avec succès à l'article",
                 'comment' => [
                     'id' => $comment->getId(),
                     'content' => $comment->getContent(),
@@ -179,11 +179,11 @@ readonly class CommentService
         $comment = $this->commentRepository->findCommentById($commentId);
 
         if (!$comment) {
-            return new JsonResponse(['error' => 'Comment not found'], 404);
+            return new JsonResponse(['error' => 'Commentaire non trouvé'], 404);
         }
 
         if ($comment->getAuthorId() !== $authorId) {
-            return new JsonResponse(['error' => 'Author id does not match'], 400);
+            return new JsonResponse(['error' => "L'identifiant de l'auteur ne correspond pas"], 400);
         }
         try {
             $comment->setContent($content);
@@ -209,19 +209,19 @@ readonly class CommentService
         $this->dm->remove($comment);
         $this->dm->flush();
 
-        return new JsonResponse(['message' => 'Comment deleted successfully'], 200);
+        return new JsonResponse(['message' => 'Commentaire supprimé avec succès'], 200);
     }
 
     public function replyToComment(string $postId, string $authorId, string $content, string $parentId): JsonResponse
     {
         try {
             if (empty($postId) || empty($authorId) || empty($content) || empty($parentId)) {
-                return new JsonResponse(['error' => 'Missing parameters: postId, authorId, content, and parentId are required'], 400);
+                return new JsonResponse(['error' => 'Paramètres manquants : postId, authorId, content et parentId sont obligatoires.'], 400);
             }
 
             $parentComment = $this->dm->getRepository(Comment::class)->find($parentId);
             if (!$parentComment) {
-                return new JsonResponse(['error' => 'Parent comment not found'], 404);
+                return new JsonResponse(['error' => "Le commentaire du parent n'a pas été trouvé"], 404);
             }
 
             $reply = new Comment($postId, $authorId, $content, $parentId);
@@ -233,7 +233,7 @@ readonly class CommentService
             $this->dm->flush();
 
             return new JsonResponse([
-                'message' => 'Reply successfully added',
+                'message' => 'Réponse ajoutée avec succès',
                 'comment' => [
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),

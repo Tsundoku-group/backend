@@ -29,7 +29,7 @@ class MailService
         try {
             $this->mailerInterface->send($email);
         } catch (TransportExceptionInterface $e) {
-            throw new RuntimeException(sprintf('Failed to send email: %s', $e->getMessage()), 0, $e);
+            throw new RuntimeException(sprintf("Échec de l'envoi du courrier électronique: %s", $e->getMessage()), 0, $e);
         }
     }
 }

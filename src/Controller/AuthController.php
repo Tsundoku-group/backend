@@ -25,7 +25,7 @@ class AuthController extends AbstractController
         $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
         if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
-            return new JsonResponse(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => "Informations d'identification invalides"], Response::HTTP_UNAUTHORIZED);
         }
 
         $token = $jwtManager->create($user);
@@ -43,15 +43,15 @@ class AuthController extends AbstractController
         $refreshToken = $data['refresh_token'] ?? null;
 
         if (!$refreshToken) {
-            return new JsonResponse(['error' => 'Missing refresh_token'], 400);
+            return new JsonResponse(['error' => 'Jeton de rafraîchissement manquant'], 400);
         }
 
         $token = $refreshTokenManager->get($refreshToken);
         if ($token) {
             $refreshTokenManager->delete($token);
-            return new JsonResponse(['message' => 'Refresh token deleted'], 200);
+            return new JsonResponse(['message' => 'Jeton de rafraîchissement supprimé'], 200);
         }
 
-        return new JsonResponse(['message' => 'No refresh token found'], 200);
+        return new JsonResponse(['message' => 'Aucun jeton de rafraîchissement trouvé'], 200);
     }
 }

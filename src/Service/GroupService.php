@@ -143,12 +143,12 @@ readonly class GroupService
             $oneGroupBySlug = $this->groupRepository->findOneBy(['slug' => $slug]);
 
             if (!$oneGroupBySlug) {
-                throw new RuntimeException('Group not found');
+                throw new RuntimeException('Groupe non trouvé');
             }
 
             return $this->formatGroupResult($oneGroupBySlug);
         } catch (Exception $e) {
-            throw new RuntimeException('Group not found');
+            throw new RuntimeException('Groupe non trouvé');
         }
     }
 

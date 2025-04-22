@@ -163,7 +163,7 @@ class UserController extends AbstractController
         $captchaToken = $data['captchaToken'];
 
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Utilisateur non trouvé'], 404);
+            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 
         if (empty($data['newPassword'])) {
@@ -200,19 +200,19 @@ class UserController extends AbstractController
         }
 
         if (null !== $user['accountDeletionDate']) {
-            return new JsonResponse(['error' => 'Deletion already requested'], 400);
+            return new JsonResponse(['error' => 'Suppression déjà demandée'], 400);
         }
 
         try {
             $deletionDate = $this->userService->scheduleAccountDeletion($id);
 
             if (!$deletionDate) {
-                return new JsonResponse(['error' => 'Account deletion could not be scheduled.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+                return new JsonResponse(['error' => "La suppression du compte n'a pas pu être programmée."], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
             $this->sendAccountDeletionEmail($user['email']);
 
-            return new JsonResponse(['message' => 'Account deletion requested', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
+            return new JsonResponse(['message' => 'Demande de suppression de compte', 'deletionDate' => $deletionDate->format('Y-m-d')], 200);
         } catch (Exception $e) {
             return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }

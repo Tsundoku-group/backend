@@ -52,7 +52,7 @@ class GroupRequestController extends AbstractController
                 ], $requests),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Une erreur est survenue'], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -78,7 +78,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -121,7 +121,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse(['message' => "Demande $action avec succès"], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Une erreur est survenue'], 500);
+            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

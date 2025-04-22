@@ -64,7 +64,7 @@ class ConversationService
             $this->entityManager->persist($conversation);
             $this->entityManager->flush();
 
-            return ['message' => 'Conversation created', 'conversationId' => $conversation->getId(), 'status' => 201];
+            return ['message' => 'Conversation créée', 'conversationId' => $conversation->getId(), 'status' => 201];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -137,7 +137,7 @@ class ConversationService
             $conversation = $this->conversationRepository->find($id);
 
             if (!$conversation) {
-                return ['error' => 'Conversation not found', 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => 'Conversation introuvable', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $createdBy = $conversation->getCreatedBy();
@@ -181,13 +181,13 @@ class ConversationService
             $conversation = $this->conversationRepository->find($id);
 
             if (!$conversation) {
-                return ['error' => 'Conversation not found', 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => 'Conversation introuvable', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $this->entityManager->remove($conversation);
             $this->entityManager->flush();
 
-            return ['message' => 'Conversation deleted', 'status' => Response::HTTP_OK];
+            return ['message' => 'Conversation supprimée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
@@ -199,7 +199,7 @@ class ConversationService
             $conversations = $this->conversationRepository->findArchivedConversationsByUserId($userId);
 
             if (empty($conversations)) {
-                return ['error' => 'No archived conversations found for this user', 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => "Aucune conversation archivée n'a été trouvée pour cet utilisateur", 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $lastMessages = [];
@@ -261,17 +261,17 @@ class ConversationService
             $conversation = $this->conversationRepository->find($conversationId);
 
             if (!$conversation) {
-                return ['error' => 'Conversation not found', 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => 'Conversation introuvable', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             if ($conversation->getIsArchived()) {
-                return ['error' => 'Conversation is already archived', 'status' => Response::HTTP_FORBIDDEN];
+                return ['error' => 'La conversation est déjà archivée', 'status' => Response::HTTP_FORBIDDEN];
             }
 
             $conversation->setIsArchived(true);
             $this->entityManager->flush();
 
-            return ['message' => 'Conversation archived', 'status' => Response::HTTP_OK];
+            return ['message' => 'Conversation archivée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
@@ -283,17 +283,17 @@ class ConversationService
             $conversation = $this->conversationRepository->find($conversationId);
 
             if (!$conversation) {
-                return ['error' => 'Conversation not found', 'status' => Response::HTTP_NOT_FOUND];
+                return ['error' => 'Conversation introuvable', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             if (!$conversation->getIsArchived()) {
-                return ['error' => 'Conversation is already unarchived', 'status' => Response::HTTP_CONFLICT];
+                return ['error' => 'La conversation est déjà désarchivée', 'status' => Response::HTTP_CONFLICT];
             }
 
             $conversation->setIsArchived(false);
             $this->entityManager->flush();
 
-            return ['message' => 'Conversation unarchived', 'status' => Response::HTTP_OK];
+            return ['message' => 'Conversation non archivée', 'status' => Response::HTTP_OK];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }

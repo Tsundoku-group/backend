@@ -66,7 +66,7 @@ class MessageController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['userEmail'])) {
-            return new JsonResponse(['error' => 'User email is required.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => "L'adresse électronique de l'utilisateur est requise."], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new MarkMessageReadDTO($data);

@@ -32,9 +32,9 @@ class CommentController extends AbstractController
         try {
             return $this->commentService->getCommentById($commentId);
         } catch (InvalidArgumentException $e) {
-            return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
+            return $this->json(['error' => 'Argument non valide : ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => 'Erreur de serveur interne' , 'détails' => $e->getMessage()], 500);
         }
     }
 
@@ -61,7 +61,7 @@ class CommentController extends AbstractController
     public function getCommentWithChildren(string $commentId, string $profileId): JsonResponse
     {
         if (!$profileId) {
-            return $this->json(['error' => 'data is missing'], 404);
+            return $this->json(['error' => ErrorMessagesConstant::INVALID_DATA], 404);
         }
 
         try {
@@ -69,7 +69,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -79,7 +79,7 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
@@ -107,7 +107,7 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['authorId']) || empty($data['content'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
@@ -139,18 +139,18 @@ class CommentController extends AbstractController
             $comment = $this->commentRepository->find($commentId);
 
             if (!$comment) {
-                return $this->json(['error' => 'comment not found'], 404);
+                return $this->json(['error' => 'commentaire non trouvé'], 404);
             }
 
             if ($comment->getAuthorId() !== (string) $authorId) {
-                return $this->json(['error' => 'Unauthorized action'], 403);
+                return $this->json(['error' => 'Action non autorisée'], 403);
             }
 
             $this->commentService->deleteComment($comment);
 
-            return $this->json(['message' => 'Comment deleted successfully'], 200);
+            return $this->json(['message' => 'Commentaire supprimé avec succès'], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal Server Error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -160,7 +160,7 @@ class CommentController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'], $data['parentId'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => ErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
@@ -175,7 +175,7 @@ class CommentController extends AbstractController
 
         $parentComment = $this->commentRepository->find($data['parentId']);
         if (!$parentComment) {
-            return $this->json(['error' => 'Parent comment not found'], 404);
+            return $this->json(['error' => "Le commentaire du parent n'a pas été trouvé"], 404);
         }
 
         try {
@@ -183,7 +183,7 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

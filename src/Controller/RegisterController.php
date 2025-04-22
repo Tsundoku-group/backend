@@ -51,7 +51,7 @@ class RegisterController extends AbstractController
         try {
             $this->registerService->confirmUser($token);
 
-            return new JsonResponse(['success' => 'Account confirmed'], Response::HTTP_OK);
+            return new JsonResponse(['success' => 'Compte confirmé'], Response::HTTP_OK);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -68,7 +68,7 @@ class RegisterController extends AbstractController
         try {
             $this->registerService->resendConfirmationEmail($data['email']);
 
-            return new JsonResponse(['success' => 'Confirmation email resent successfully'], Response::HTTP_OK);
+            return new JsonResponse(['success' => 'Courriel de confirmation envoyé avec succès'], Response::HTTP_OK);
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
         }

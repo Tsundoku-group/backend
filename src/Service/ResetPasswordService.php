@@ -40,7 +40,7 @@ readonly class ResetPasswordService
         $nextAllowedRequestTime = $lastRequest ? (clone $lastRequest)->add($cooldownPeriod) : null;
 
         if ($nextAllowedRequestTime && $now < $nextAllowedRequestTime) {
-            return ['error' => 'You can only request a password reset once every 15 minutes.', 'status' => JsonResponse::HTTP_TOO_MANY_REQUESTS];
+            return ['error' => "Vous ne pouvez demander la réinitialisation de votre mot de passe qu'une fois toutes les 15 minutes", 'status' => JsonResponse::HTTP_TOO_MANY_REQUESTS];
         }
 
         $resetToken = $this->tokenGenerator->generateToken();
@@ -49,7 +49,7 @@ readonly class ResetPasswordService
         try {
             $this->updatePasswordResetToken($userData['id'], $resetToken, $tokenExpiration, $now);
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
 
         $resetUrl = $_ENV['FRONT_URL'] . '/(auth)/reset-password?token=' . $resetToken;
@@ -66,7 +66,7 @@ readonly class ResetPasswordService
 
             return ['success' => true, 'resetToken' => $resetToken];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR];
+            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
@@ -104,7 +104,7 @@ readonly class ResetPasswordService
                 ['user' => $user->getEmail()]
             );
 
-            return ['success' => 'Password has been reset successfully'];
+            return ['success' => 'Le mot de passe a été réinitialisé avec succès'];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR];
         }

@@ -217,7 +217,7 @@ readonly class PostService
             'visibility' => $post->getVisibility(),
             'status'     => $post->getStatus(),
             'createdAt'  => $post->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt'  => $post->getUpdatedAt() ? $post->getUpdatedAt()->format('Y-m-d H:i:s') : null,
+            'updatedAt'  => $post->getUpdatedAt()?->format('Y-m-d H:i:s'),
         ];
     }
 }

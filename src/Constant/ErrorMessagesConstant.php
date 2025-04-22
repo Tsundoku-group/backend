@@ -24,4 +24,5 @@ class ErrorMessagesConstant
     public const USER_ALREADY_HAS_ROLE = 'L\'utilisateur a déjà ce rôle';
     public const POST_NOT_FOUND = 'Publication non trouvée';
     public const CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP = 'Impossible de publier publiquement dans un groupe privé';
+    public const MISSING_PARAMETERS = 'Paramètres manquants';
 }

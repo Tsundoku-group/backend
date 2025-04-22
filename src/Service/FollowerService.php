@@ -38,7 +38,7 @@ readonly class FollowerService
             $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
             if (empty($followers)) {
-                return ['error' => 'No followers found.', 'status' => 404];
+                return ['error' => "Aucun suiveur n'a été trouvé", 'status' => 404];
             }
 
             return $followers;
@@ -62,7 +62,7 @@ readonly class FollowerService
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 
             if (empty($followed)) {
-                return ['error' => 'No followed found.', 'status' => 404];
+                return ['error' => "Aucun suivi n'a été trouvé", 'status' => 404];
             }
 
             return $followed;
@@ -84,7 +84,7 @@ readonly class FollowerService
         $following = $this->profileRepository->find($followingId);
 
         if (!$follower || !$following) {
-            return ['error' => 'Follower profile or following profile not found.', 'status' => 404];
+            return ['error' => "Le profil du suiveur ou du suiveur n'a pas été trouvé", 'status' => 404];
         }
 
         $existingFollow = $this->followerRepository->findOneBy([
@@ -93,7 +93,7 @@ readonly class FollowerService
         ]);
 
         if ($existingFollow) {
-            return ['error' => 'Already following this profile.', 'status' => 409];
+            return ['error' => 'Profil déjà suivi', 'status' => 409];
         }
 
         try {
@@ -112,7 +112,7 @@ readonly class FollowerService
                 resourceTypeEnum: ResourceTypeEnum::FOLLOW->value,
             );
 
-            return ['message' => 'Successfully followed the profile.', 'status' => 201];
+            return ['message' => 'Le profil a été suivi avec succès', 'status' => 201];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -127,19 +127,19 @@ readonly class FollowerService
         $friendship = $this->followerRepository->find($id);
 
         if (!$friendship || !$followerId || !$followingId) {
-            return ['error' => 'Followers not found.', 'status' => 404];
+            return ['error' => 'Followers introuvables', 'status' => 404];
         }
 
         if (($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followerId)
             || ($friendship->getFollower()->getId() !== $followerId && $friendship->getFollowing()->getId() !== $followingId)) {
-            return ['error' => 'You are not authorized to unfollow this profile.', 'status' => 403];
+            return ['error' => "Vous n'êtes pas autorisé à supprimer ce profil", 'status' => 403];
         }
 
         try {
             $this->entityManager->remove($friendship);
             $this->entityManager->flush();
 
-            return ['message' => 'Successfully unfollowed the profile.'];
+            return ['message' => 'Le profil a été supprimé avec succès'];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }

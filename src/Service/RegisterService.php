@@ -27,7 +27,7 @@ readonly class RegisterService
     {
         $existingUser = $this->userRepository->findOneUserByEmail($email);
         if ($existingUser) {
-            return ['error' => 'Email already in use', 'status' => 409];
+            return ['error' => 'Email déjà utilisé', 'status' => 409];
         }
 
         $user = new User();
@@ -61,7 +61,7 @@ readonly class RegisterService
     {
         $user = $this->userRepository->findOneUserByEmailAndIsVerified($email);
         if (!$user) {
-            throw new Exception('User not found', 404);
+            throw new Exception(ErrorMessagesConstant::USER_NOT_FOUND, 404);
         }
 
         $tokenRegistration = $this->tokenGenerator->generateToken();

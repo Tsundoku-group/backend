@@ -25,7 +25,7 @@ class BookController extends AbstractController
 
         if ($limit > 40) {
             return $this->json([
-                'error' => "Google Books API doesn't allow fetching more than 40 books at a time.",
+                'error' => "L'API Google Books ne permet pas de récupérer plus de 40 livres à la fois.",
             ], Response::HTTP_BAD_REQUEST);
         }
 

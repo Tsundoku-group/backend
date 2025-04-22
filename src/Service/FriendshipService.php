@@ -24,7 +24,7 @@ readonly class FriendshipService
         $receiverProfileUser = $this->profileRepository->find($friendId);
 
         if (!$requesterProfileUser || !$receiverProfileUser) {
-            return ['error' => 'Requester or receiver not found.', 'status' => 404];
+            return ['error' => "Le demandeur ou le destinataire n'a pas été trouvé", 'status' => 404];
         }
 
         $existingFriendship = $this->entityManager->getRepository(Friendship::class)->findOneBy([
@@ -54,7 +54,7 @@ readonly class FriendshipService
             $this->entityManager->persist($friendship);
             $this->entityManager->flush();
 
-            return ['message' => 'Friend request sent'];
+            return ['message' => "Demande d'amitié envoyée"];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -65,18 +65,18 @@ readonly class FriendshipService
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($friendshipId);
 
         if (!$friendship) {
-            return ['error' => 'Friend request not found.', 'status' => 404];
+            return ['error' => "Demande d'ami non trouvée", 'status' => 404];
         }
 
         if (Friendship::STATUS_PENDING !== $friendship->getStatus()) {
-            return ['error' => 'Friend request already processed.', 'status' => 409];
+            return ['error' => "Demande d'ami déjà traitée", 'status' => 409];
         }
 
         try {
             $friendship->setStatus(Friendship::STATUS_ACCEPTED);
             $this->entityManager->flush();
 
-            return ['message' => 'Friend request accepted.'];
+            return ['message' => "Demande d'amitié acceptée"];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -87,18 +87,18 @@ readonly class FriendshipService
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($friendshipId);
 
         if (!$friendship) {
-            return ['error' => 'Friend request not found.', 'status' => 404];
+            return ['error' => "Demande d'ami non trouvée", 'status' => 404];
         }
 
         if (Friendship::STATUS_PENDING !== $friendship->getStatus()) {
-            return ['error' => 'Friend request already processed.', 'status' => 409];
+            return ['error' => "Demande d'ami déjà traitée", 'status' => 409];
         }
 
         try {
             $friendship->setStatus(Friendship::STATUS_REJECTED);
             $this->entityManager->flush();
 
-            return ['message' => 'Friend request rejected.'];
+            return ['message' => "Demande d'ami rejetée"];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -109,25 +109,25 @@ readonly class FriendshipService
         $friendship = $this->entityManager->getRepository(Friendship::class)->find($friendshipId);
 
         if (!$friendship) {
-            return ['error' => 'Friendship not found.', 'status' => 404];
+            return ['error' => "L'amitié n'a pas été trouvée", 'status' => 404];
         }
 
         if (Friendship::STATUS_ACCEPTED !== $friendship->getStatus()) {
-            return ['error' => 'Friendship not accepted.', 'status' => 409];
+            return ['error' => "L'amitié n'est pas acceptée", 'status' => 409];
         }
 
         if (
             ($friendship->getRequester()->getId() !== $dto->requesterId && $friendship->getReceiver()->getId() !== $dto->requesterId)
             || ($friendship->getRequester()->getId() !== $dto->receiverId && $friendship->getReceiver()->getId() !== $dto->receiverId)
         ) {
-            return ['error' => 'You are not authorized to remove this friendship.', 'status' => 403];
+            return ['error' => "Vous n'êtes pas autorisé à supprimer cette amitié", 'status' => 403];
         }
 
         try {
             $this->entityManager->remove($friendship);
             $this->entityManager->flush();
 
-            return ['message' => 'Friend removed.'];
+            return ['message' => 'Ami supprimé'];
         } catch (Exception $e) {
             return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
@@ -148,7 +148,7 @@ readonly class FriendshipService
             $friendships = $this->friendshipRepository->findFriendshipUserProfileId($profileId, $limit, $offset);
 
             if (empty($friendships)) {
-                return ['message' => 'No friends found.', 'status' => 404];
+                return ['message' => "Aucun ami n'a été trouvé", 'status' => 404];
             }
 
             return $friendships;
@@ -172,7 +172,7 @@ readonly class FriendshipService
             ]);
 
             if (empty($friendRequests)) {
-                return ['message' => 'No friend requests found.', 'status' => 200];
+                return ['message' => "Aucune demande d'ami n'a été trouvée", 'status' => 200];
             }
 
             return array_map(function ($friendship) {
@@ -200,21 +200,21 @@ readonly class FriendshipService
         $statusMessage = $isInverse ? ' (inverse)' : '';
 
         if (Friendship::STATUS_PENDING === $friendship->getStatus()) {
-            return ['error' => 'Request already sent. Status: pending' . $statusMessage, 'status' => 409];
+            return ['error' => "Demande déjà envoyée. Statut : en attente" . $statusMessage, 'status' => 409];
         }
 
         if (Friendship::STATUS_REJECTED === $friendship->getStatus()) {
             $friendship->setStatus(Friendship::STATUS_PENDING);
             $this->entityManager->flush();
 
-            return ['message' => 'Friend request resent after rejection' . $statusMessage];
+            return ['message' => "Demande d'ami renvoyée après avoir été rejetée" . $statusMessage];
         }
 
         if (Friendship::STATUS_ACCEPTED === $friendship->getStatus()) {
-            return ['error' => 'Friendship already exists' . $statusMessage, 'status' => 409];
+            return ['error' => "L'amitié existe déjà" . $statusMessage, 'status' => 409];
         }
 
-        return ['error' => 'Unexpected status', 'status' => 500];
+        return ['error' => 'Statut inattendu', 'status' => 500];
     }
 
     public function getSuggestionsFriendsByProfile(int $profileId, int $limit, int $offset): array

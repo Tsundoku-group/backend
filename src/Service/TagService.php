@@ -8,11 +8,11 @@ use App\Repository\TagRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 
-class TagService
+readonly class TagService
 {
     public function __construct(
-        private readonly TagRepository $tagRepository,
-        private readonly EntityManagerInterface $entityManager,
+        private TagRepository          $tagRepository,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
