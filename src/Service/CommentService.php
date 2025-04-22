@@ -18,6 +18,7 @@ use DateTime;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 readonly class CommentService
 {
@@ -54,7 +55,7 @@ readonly class CommentService
         }
     }
 
-    public function getCommentChildren(string $commentId, string $profileId): JsonResponse
+    public function getCommentChildren(string $commentId, int $profileId): JsonResponse
     {
         try {
             $childComments = $this->commentRepository->findChildrenByParentId($commentId);
@@ -87,7 +88,7 @@ readonly class CommentService
         }
     }
 
-    public function getCommentsForPost(string $postId, string $profileId, int $limit = 5): JsonResponse
+    public function getCommentsForPost(int $postId, int $profileId, int $limit = 5): JsonResponse
     {
         try {
             $findPost = $this->postRepository->findOneBy(['id' => $postId]);
@@ -128,7 +129,7 @@ readonly class CommentService
         }
     }
 
-    public function addCommentToPost(string $postId, string $authorId, string $content): JsonResponse
+    public function addCommentToPost(int $postId, int $authorId, string $content): JsonResponse
     {
         try {
             $post = $this->postRepository->find($postId);
@@ -184,9 +185,10 @@ readonly class CommentService
             return new JsonResponse(['error' => 'Commentaire non trouvé'], 404);
         }
 
-        if ($comment->getAuthorId() !== $authorId) {
+        if ($comment->getAuthorId() != $authorId) {
             return new JsonResponse(['error' => "L'identifiant de l'auteur ne correspond pas"], 400);
         }
+
         try {
             $comment->setContent($content);
             $comment->setUpdatedAt(new DateTime());
@@ -200,7 +202,7 @@ readonly class CommentService
                     'content' => $comment->getContent(),
                     'updatedAt' => $comment->getUpdatedAt()->format('Y-m-d H:i:s'),
                 ],
-            ], JsonResponse::HTTP_OK);
+            ], Response::HTTP_OK);
         } catch (Exception $e) {
             return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
         }
@@ -214,7 +216,7 @@ readonly class CommentService
         return new JsonResponse(['message' => 'Commentaire supprimé avec succès'], 200);
     }
 
-    public function replyToComment(string $postId, string $authorId, string $content, string $parentId): JsonResponse
+    public function replyToComment(int $postId, int $authorId, string $content, int $parentId): JsonResponse
     {
         try {
             if (empty($postId) || empty($authorId) || empty($content) || empty($parentId)) {

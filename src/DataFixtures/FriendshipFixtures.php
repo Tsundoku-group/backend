@@ -13,9 +13,6 @@ class FriendshipFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        $connection = $manager->getConnection();
-        $connection->executeStatement('ALTER SEQUENCE friendship_id_seq RESTART WITH 1');
-
         $statuses = [
             Friendship::STATUS_PENDING,
             Friendship::STATUS_ACCEPTED,

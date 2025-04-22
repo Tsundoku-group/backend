@@ -112,10 +112,6 @@ class GroupRequestController extends AbstractController
 
         $newStatus = ('approve' === $action) ? RequestStatusEnum::ACCEPTED : RequestStatusEnum::DENIED;
 
-        if (!isset($validActions[$action])) {
-            return new JsonResponse(['error' => 'Action invalide'], 400);
-        }
-
         try {
             $this->groupRequestService->updateRequestStatus($groupRequest, $newStatus);
 

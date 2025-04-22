@@ -9,6 +9,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'marks')]
 class Mark
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -37,7 +40,7 @@ class Mark
     private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?DateTimeImmutable $updatedAt;
+    private ?DateTimeImmutable $updatedAt = null;
 
     public function __construct(Profile $profile, int $targetId, string $targetType)
     {

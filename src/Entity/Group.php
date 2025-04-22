@@ -15,10 +15,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: '`group`')]
 class Group
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $groupProfiles;
@@ -34,7 +37,7 @@ class Group
     private ?string $description = null;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
-    private ?string $visibility;
+    private ?string $visibility = null;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;

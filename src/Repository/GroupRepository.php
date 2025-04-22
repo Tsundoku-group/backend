@@ -58,10 +58,9 @@ class GroupRepository extends ServiceEntityRepository
 
         if (!empty($tagName)) {
             $tagsArray = array_map('trim', explode(',', strtolower($tagName)));
-            if (!empty($tagsArray)) {
-                $conditions->add($qb->expr()->in('LOWER(t.name)', ':tags'));
-                $qb->setParameter('tags', $tagsArray);
-            }
+
+            $conditions->add($qb->expr()->in('LOWER(t.name)', ':tags'));
+            $qb->setParameter('tags', $tagsArray);
         }
 
         if ($conditions->count() > 0) {

@@ -3,15 +3,22 @@
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectManager;
 
 class ResetAutoIncrementFixtures extends Fixture
 {
+    /**
+     * @throws Exception
+     */
     public function load(ObjectManager $manager): void
     {
-        $connection = $manager->getConnection();
+        /** @var EntityManagerInterface $em */
+        $em = $manager;
+        $connection = $em->getConnection();
         $platform = $connection->getDatabasePlatform();
 
         if ($platform instanceof PostgreSQLPlatform) {

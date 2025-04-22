@@ -19,11 +19,12 @@ use Exception;
 readonly class MessageService
 {
     public function __construct(
-        private RedisMessageService $redisMessageService,
+        private RedisMessageService    $redisMessageService,
         private EntityManagerInterface $entityManager,
         private ConversationRepository $conversationRepository,
-        private UserRepository $userRepository,
-    ) {
+        private UserRepository         $userRepository,
+    )
+    {
     }
 
     public function sendMessage(int $conversationId, array $data): array
@@ -89,7 +90,7 @@ readonly class MessageService
         }
 
         try {
-            $allMessages = $this->redisMessageService->getMessagesFromConversation((string) $conversationId);
+            $allMessages = $this->redisMessageService->getMessagesFromConversation((string)$conversationId);
             if (empty($allMessages)) {
                 return [];
             }
@@ -98,7 +99,7 @@ readonly class MessageService
             $startIndex = max($totalMessages - ($queryParams['page'] ?? 1) * ($queryParams['limit'] ?? 10), 0);
             $pagedMessages = array_slice($allMessages, $startIndex, $queryParams['limit'] ?? 10);
 
-            return array_map(fn ($message) => [
+            return array_map(fn($message) => [
                 'id' => $message['id'],
                 'content' => $message['content'],
                 'sender_id' => $message['sender_id'],
@@ -122,13 +123,19 @@ readonly class MessageService
                 return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
             }
 
+            $profile = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
+
+            if (!$profile) {
+                return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            }
+
             $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
 
             if (!$conversation) {
                 return ['error' => 'Conversation introuvable', 'status' => 404];
             }
 
-            if (!$this->conversationRepository->isUserParticipant($conversationId, $user)) {
+            if (!$this->conversationRepository->isUserParticipant($conversationId, $profile)) {
                 return ['error' => "L'utilisateur ne participe pas à cette conversation", 'status' => 403];
             }
 

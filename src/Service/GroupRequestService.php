@@ -61,15 +61,9 @@ readonly class GroupRequestService
 
     public function getPendingRequestsForGroup(int $groupId): array
     {
-        $pendingRequestStatusFound = $this->groupRequestRepository->findBy([
+        return $this->groupRequestRepository->findBy([
             'group' => $groupId,
             'status' => RequestStatusEnum::PENDING,
         ]);
-
-        try {
-            return $pendingRequestStatusFound;
-        } catch (Exception $e) {
-            return [];
-        }
     }
 }

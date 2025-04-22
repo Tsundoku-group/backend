@@ -33,8 +33,8 @@ readonly class FollowerService
         }
 
         try {
-            $limit = max((int) $request->query->get('limit', 20), 1);
-            $offset = max((int) $request->query->get('offset', 0), 0);
+            $limit = max((int) $request->query->get('limit', '20'), 1);
+            $offset = max((int) $request->query->get('offset', '0'), 0);
 
             $followers = $this->followerRepository->findFollowersWithPagination($profileId, $limit, $offset);
 
@@ -57,8 +57,8 @@ readonly class FollowerService
         }
 
         try {
-            $limit = max((int) $request->query->get('limit', 20), 1);
-            $offset = max((int) $request->query->get('offset', 0), 0);
+            $limit = max((int) $request->query->get('limit', '20'), 1);
+            $offset = max((int) $request->query->get('offset', '0'), 0);
 
             $followed = $this->followerRepository->findFollowedWithPagination($profileId, $limit, $offset);
 

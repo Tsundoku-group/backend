@@ -120,17 +120,9 @@ readonly class GroupService
             ];
         }, $privateGroups);
 
-        if ($profileId && $myGroups) {
-            $mappedGroups = array_filter($mappedGroups, function ($group) {
-                if ($group['joinStatus'] instanceof RequestStatusEnum) {
-                    $status = strtolower(trim($group['joinStatus']->value));
-                } else {
-                    $status = strtolower(trim((string) $group['joinStatus']));
-                }
 
-                return in_array($status, ['member', 'pending'], true);
-            });
-            $mappedGroups = array_values($mappedGroups);
+        if ($profileId && $myGroups) {
+            $mappedGroups = $this->filterGroupsByMembership($mappedGroups);
         }
 
         return $mappedGroups;
@@ -287,5 +279,20 @@ readonly class GroupService
                 ] : null,
             ], $group->getTaggables()->toArray()),
         ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $groups
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterGroupsByMembership(array $groups): array
+    {
+        return array_values(array_filter($groups, function ($group): bool {
+            $status = $group['joinStatus'] instanceof RequestStatusEnum
+                ? strtolower(trim($group['joinStatus']->value))
+                : strtolower(trim((string) $group['joinStatus']));
+
+            return in_array($status, ['member', 'pending'], true);
+        }));
     }
 }

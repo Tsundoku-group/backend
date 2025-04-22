@@ -39,7 +39,7 @@ class GroupController extends AbstractController
     #[Route('/{groupId}/posts/recent', name: 'get_recent_posts', methods: ['GET'])]
     public function getRecentPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
-        $profileId = $request->query->get('profileId');
+        $profileId = (int) $request->query->get('profileId');
 
         if (!$profileId) {
             return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
@@ -62,7 +62,7 @@ class GroupController extends AbstractController
     #[Route('/{groupId}/posts/older', name: 'get_oldest_posts', methods: ['GET'])]
     public function getOlderPostsByGroupId(Request $request, int $groupId): JsonResponse
     {
-        $profileId = $request->query->get('profileId');
+        $profileId = (int) $request->query->get('profileId');
 
         if (!$profileId) {
             return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
@@ -73,8 +73,8 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
         }
 
-        $page = max((int) $request->query->get('page', 1), 1);
-        $limit = max((int) $request->query->get('limit', 10), 10);
+        $page = max((int) $request->query->get('page', '1'), 1);
+        $limit = max((int) $request->query->get('limit', '10'), 10);
 
         try {
             $posts = $this->postService->getOlderPosts($page, $limit, $profileId, $groupId);
@@ -97,10 +97,10 @@ class GroupController extends AbstractController
         $search = $request->query->get('search', '');
         $tagName = $request->query->get('tagName', '');
         $sortParam = $request->query->get('sort', GroupSortOptionEnum::NEWEST->value);
-        $page = (int) $request->query->get('page', 1);
-        $limit = (int) $request->query->get('limit', 20);
-        $profileId = $request->query->get('profileId');
-        $myGroups = filter_var($request->query->get('myGroups', false), FILTER_VALIDATE_BOOLEAN);
+        $page = max((int) $request->query->get('page', '1'), 1);
+        $limit = max((int) $request->query->get('limit', '10'), 10);
+        $profileId = (int) $request->query->get('profileId');
+        $myGroups = filter_var($request->query->get('myGroups', 'false'), FILTER_VALIDATE_BOOLEAN);
 
         $sort = GroupSortOptionEnum::tryFrom($sortParam) ?? GroupSortOptionEnum::NEWEST;
 
@@ -199,7 +199,7 @@ class GroupController extends AbstractController
         }
         $this->profileValidator->validateProfile($dto->profileId);
 
-        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group) || !$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
+        if (!$this->authorizationChecker->isGranted(GroupRoleVoter::MANAGE_MEMBERS, $group)) {
             return new JsonResponse(['error' => SecurityErrorMessagesConstant::ACCESS_DENIED], 403);
         }
 
@@ -238,7 +238,7 @@ class GroupController extends AbstractController
 
         $creator = $this->profileValidator->validateProfile($dto->profileId);
         try {
-            $this->groupService->deleteGroup($group, $creator->getId());
+            $this->groupService->deleteGroup($group);
 
             return new JsonResponse(['message' => 'Groupe supprimé avec succès']);
         } catch (RuntimeException $e) {

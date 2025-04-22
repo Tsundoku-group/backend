@@ -14,6 +14,9 @@ use Doctrine\ORM\Mapping as ORM;
 ])]
 class Follower
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

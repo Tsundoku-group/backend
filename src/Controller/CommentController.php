@@ -41,7 +41,7 @@ class CommentController extends AbstractController
     }
 
     #[Route('/{postId}/{profileId}/comments', methods: ['GET'])]
-    public function getCommentsForPost(string $postId, string $profileId): JsonResponse
+    public function getCommentsForPost(int $postId, int $profileId): JsonResponse
     {
         try {
             $dto = new GetCommentDTO($postId);
@@ -60,7 +60,7 @@ class CommentController extends AbstractController
     }
 
     #[Route('/{commentId}/{profileId}/children', methods: ['GET'])]
-    public function getCommentWithChildren(string $commentId, string $profileId): JsonResponse
+    public function getCommentWithChildren(string $commentId, int $profileId): JsonResponse
     {
         if (!$profileId) {
             return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], 404);
@@ -181,7 +181,7 @@ class CommentController extends AbstractController
         }
 
         try {
-            return $this->commentService->replyToComment($data['postId'], $data['authorId'], $data['content'], $data['parentId']);
+            return $this->commentService->replyToComment((int) $data['postId'],(int) $data['authorId'], $data['content'],(int) $data['parentId']);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {

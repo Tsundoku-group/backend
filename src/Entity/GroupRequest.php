@@ -10,10 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'group_request')]
 class GroupRequest
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Group::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

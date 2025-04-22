@@ -18,7 +18,7 @@ class RedisClientConfig
             $this->client = new Client($_ENV['REDIS_URL']);
             $this->client->connect();
         } catch (Exception $e) {
-            throw new Exception('Erreur de connexion à Redis', $e->getMessage(), 500);
+            throw new Exception('Erreur de connexion à Redis', 500, $e);
         }
     }
 

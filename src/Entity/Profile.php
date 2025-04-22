@@ -15,6 +15,9 @@ use InvalidArgumentException;
 #[ORM\Table(name: '`profile`')]
 class Profile
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

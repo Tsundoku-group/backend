@@ -40,7 +40,7 @@ class PostController extends AbstractController
             return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
-        $page = (int) $request->query->get('page', 1);
+        $page = (int) $request->query->get('page', '1');
         $limit = 15;
         $sortField = $request->query->get('sortField', 'createdAt');
         $sortOrder = $request->query->get('sortOrder', 'desc');

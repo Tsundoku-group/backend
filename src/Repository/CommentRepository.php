@@ -8,6 +8,7 @@ use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Doctrine\ODM\MongoDB\Repository\DocumentRepository;
 use Doctrine\ODM\MongoDB\UnitOfWork;
 use Exception;
+use Doctrine\ODM\MongoDB\Iterator\Iterator;
 
 class CommentRepository extends DocumentRepository
 {
@@ -27,7 +28,7 @@ class CommentRepository extends DocumentRepository
         return $this->dm->getRepository(Comment::class)->find($commentId);
     }
 
-    public function getMainComments(string $postId, int $limit = 20): array
+    public function getMainComments(int $postId, int $limit = 20): array
     {
         $queryBuilder = $this->createQueryBuilder()
             ->field('postId')->equals($postId)
@@ -35,7 +36,10 @@ class CommentRepository extends DocumentRepository
             ->limit($limit);
 
         try {
-            return $queryBuilder->getQuery()->execute()->toArray();
+            /** @var Iterator $results */
+            $results = $queryBuilder->getQuery()->execute();
+
+            return iterator_to_array($results);
         } catch (Exception $e) {
             return [];
         }
@@ -48,7 +52,10 @@ class CommentRepository extends DocumentRepository
             ->sort('createdAt', 'asc');
 
         try {
-            return $commentChildren->getQuery()->execute()->toArray();
+            /** @var Iterator $results */
+            $results = $commentChildren->getQuery()->execute();
+
+            return iterator_to_array($results);
         } catch (Exception $e) {
             return [];
         }

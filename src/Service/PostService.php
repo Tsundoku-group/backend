@@ -42,7 +42,7 @@ readonly class PostService
     ) {
     }
 
-    public function getRecentPosts(int $limit, string $profileId, ?int $groupId = null): array
+    public function getRecentPosts(int $limit, int $profileId, ?int $groupId = null): array
     {
         $posts = $this->postRepository->findRecentPosts($limit, $groupId);
 
@@ -64,7 +64,7 @@ readonly class PostService
         ], $posts);
     }
 
-    public function getOlderPosts(int $page, int $limit, string $profileId, int $groupId): array
+    public function getOlderPosts(int $page, int $limit, int $profileId, int $groupId): array
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId);
 
