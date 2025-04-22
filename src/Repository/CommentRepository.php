@@ -4,11 +4,11 @@ namespace App\Repository;
 
 use App\Document\Comment;
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\Iterator\Iterator;
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Doctrine\ODM\MongoDB\Repository\DocumentRepository;
 use Doctrine\ODM\MongoDB\UnitOfWork;
 use Exception;
-use Doctrine\ODM\MongoDB\Iterator\Iterator;
 
 class CommentRepository extends DocumentRepository
 {

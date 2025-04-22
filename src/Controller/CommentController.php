@@ -164,7 +164,7 @@ class CommentController extends AbstractController
         }
     }
 
-    #[Route('/{commentId}/replies', name: 'reply_to_comment', methods: ['POST'])]
+    #[Route('/replies', name: 'reply_to_comment', methods: ['POST'])]
     public function replyToComment(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -189,7 +189,7 @@ class CommentController extends AbstractController
         }
 
         try {
-            return $this->commentService->replyToComment((int) $data['postId'],(int) $data['authorId'], $data['content'],(int) $data['parentId']);
+            return $this->commentService->replyToComment((int) $data['postId'], (int) $data['authorId'], $data['content'], (int) $data['parentId']);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {

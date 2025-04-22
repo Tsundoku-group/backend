@@ -19,12 +19,11 @@ use Exception;
 readonly class MessageService
 {
     public function __construct(
-        private RedisMessageService    $redisMessageService,
+        private RedisMessageService $redisMessageService,
         private EntityManagerInterface $entityManager,
         private ConversationRepository $conversationRepository,
-        private UserRepository         $userRepository,
-    )
-    {
+        private UserRepository $userRepository,
+    ) {
     }
 
     public function sendMessage(int $conversationId, array $data): array
@@ -90,7 +89,7 @@ readonly class MessageService
         }
 
         try {
-            $allMessages = $this->redisMessageService->getMessagesFromConversation((string)$conversationId);
+            $allMessages = $this->redisMessageService->getMessagesFromConversation((string) $conversationId);
             if (empty($allMessages)) {
                 return [];
             }
@@ -99,7 +98,7 @@ readonly class MessageService
             $startIndex = max($totalMessages - ($queryParams['page'] ?? 1) * ($queryParams['limit'] ?? 10), 0);
             $pagedMessages = array_slice($allMessages, $startIndex, $queryParams['limit'] ?? 10);
 
-            return array_map(fn($message) => [
+            return array_map(fn ($message) => [
                 'id' => $message['id'],
                 'content' => $message['content'],
                 'sender_id' => $message['sender_id'],

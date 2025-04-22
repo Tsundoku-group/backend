@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/group/profile')]
+#[Route('/api/v1/groups/profile')]
 class GroupProfileController extends AbstractController
 {
     public function __construct(

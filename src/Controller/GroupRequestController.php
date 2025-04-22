@@ -19,12 +19,11 @@ use Symfony\Component\Routing\Annotation\Route;
 class GroupRequestController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRequestService    $groupRequestService,
+        private readonly GroupRequestService $groupRequestService,
         private readonly GroupRequestRepository $groupRequestRepository,
-        private readonly GroupRepository        $groupRepository,
-        private readonly ProfileRepository      $profileRepository,
-    )
-    {
+        private readonly GroupRepository $groupRepository,
+        private readonly ProfileRepository $profileRepository,
+    ) {
     }
 
     #[Route('/{groupId}', name: 'group_request', methods: ['GET'])]
@@ -43,7 +42,7 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse([
                 'groupId' => $groupId,
-                'pendingRequests' => array_map(fn($request) => [
+                'pendingRequests' => array_map(fn ($request) => [
                     'requestId' => $request->getId(),
                     'profile' => [
                         'id' => $request->getProfile()->getId(),

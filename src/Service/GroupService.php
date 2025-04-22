@@ -120,7 +120,6 @@ readonly class GroupService
             ];
         }, $privateGroups);
 
-
         if ($profileId && $myGroups) {
             $mappedGroups = $this->filterGroupsByMembership($mappedGroups);
         }
@@ -283,6 +282,7 @@ readonly class GroupService
 
     /**
      * @param array<int, array<string, mixed>> $groups
+     *
      * @return array<int, array<string, mixed>>
      */
     private function filterGroupsByMembership(array $groups): array
