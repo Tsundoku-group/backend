@@ -4,11 +4,13 @@ namespace App\Controller;
 
 use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\GroupErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Group\CreateGroupDTO;
 use App\DTO\Group\DeleteGroupDTO;
 use App\DTO\Group\UpdateGroupDTO;
-use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\GroupSortOptionEnum;
+use App\Enum\PostTypeEnum;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
 use App\Security\Voter\Group\GroupRoleVoter;
@@ -50,8 +52,14 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
         }
 
+        $type = PostTypeEnum::tryFrom((string) $request->query->get('type'));
+
+        if ($type !== PostTypeEnum::POST) {
+            return new JsonResponse(['error' => 'Le type doit être "post".'], 400);
+        }
+
         try {
-            $posts = $this->postService->getRecentPosts(10, $profileId, $groupId);
+            $posts = $this->postService->getRecentPosts($type,10, $profileId, $groupId );
 
             return new JsonResponse(['posts' => $posts], 200);
         } catch (Exception $e) {
@@ -73,11 +81,17 @@ class GroupController extends AbstractController
             return new JsonResponse(['error' => GroupErrorMessagesConstant::GROUP_NOT_FOUND], 400);
         }
 
+        $type = PostTypeEnum::tryFrom((string) $request->query->get('type'));
+
+        if ($type !== PostTypeEnum::POST) {
+            return new JsonResponse(['error' => 'Le type doit être "post".'], 400);
+        }
+
         $page = max((int) $request->query->get('page', '1'), 1);
         $limit = max((int) $request->query->get('limit', '10'), 10);
 
         try {
-            $posts = $this->postService->getOlderPosts($page, $limit, $profileId, $groupId);
+            $posts = $this->postService->getOlderPosts($page, $limit, $profileId, $groupId, $type);
             $totalPosts = $this->postRepository->countTotalPosts();
             $remainingPosts = $totalPosts - ($page * $limit);
             $nextPage = $remainingPosts > 0 ? $page + 1 : null;

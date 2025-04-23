@@ -9,6 +9,7 @@ use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
+use App\Enum\PostTypeEnum;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\PostService;
@@ -44,6 +45,11 @@ class PostController extends AbstractController
         $limit = 15;
         $sortField = $request->query->get('sortField', 'createdAt');
         $sortOrder = $request->query->get('sortOrder', 'desc');
+        $type = PostTypeEnum::tryFrom($request->query->get('type', 'article'));
+
+        if ($type !== PostTypeEnum::ARTICLE) {
+            return new JsonResponse(['error' => 'Type attendu: article.'], 400);
+        }
 
         try {
             $result = $this->postRepository->findPaginatedArticlesByProfile(
@@ -51,7 +57,8 @@ class PostController extends AbstractController
                 $page,
                 $limit,
                 $sortField,
-                $sortOrder
+                $sortOrder,
+                $type
             );
 
             $formattedArticles = array_map(function ($article) {
@@ -71,8 +78,14 @@ class PostController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        $type = PostTypeEnum::tryFrom($data['type'] ?? 'post');
+
+        if (!$type) {
+            return new JsonResponse(['error' => 'Type de post invalide.'], 400);
+        }
+
         $dto = new CreatePostDTO(
-            $data['type'] ?? 'post',
+            $type,
             $data['title'] ?? '',
             $data['content'] ?? '',
             $data['authorId'] ?? 1,
@@ -208,6 +221,7 @@ class PostController extends AbstractController
     public function getPost(int $postId): JsonResponse
     {
         $post = $this->postRepository->find($postId);
+
         if (!$post) {
             return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }

@@ -10,6 +10,7 @@ use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Post\UpdatePostDTO;
 use App\Entity\Post;
 use App\Entity\Profile;
+use App\Enum\PostTypeEnum;
 use App\Repository\CommentRepository;
 use App\Repository\GroupRepository;
 use App\Repository\PostRepository;
@@ -42,9 +43,9 @@ readonly class PostService
     ) {
     }
 
-    public function getRecentPosts(int $limit, int $profileId, ?int $groupId = null): array
+    public function getRecentPosts(PostTypeEnum $type, int $limit, int $profileId, ?int $groupId = null): array
     {
-        $posts = $this->postRepository->findRecentPosts($limit, $groupId);
+        $posts = $this->postRepository->findRecentPosts($type, $limit, $groupId);
 
         return array_map(fn ($post) => [
             'id' => $post->getId(),
@@ -64,9 +65,9 @@ readonly class PostService
         ], $posts);
     }
 
-    public function getOlderPosts(int $page, int $limit, int $profileId, int $groupId): array
+    public function getOlderPosts(int $page, int $limit, int $profileId, int $groupId, PostTypeEnum $type): array
     {
-        $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId);
+        $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId, $type);
 
         return array_map(fn ($post) => [
             'id' => $post->getId(),
@@ -91,7 +92,7 @@ readonly class PostService
         int $groupId,
         string $title,
         string $content,
-        string $type,
+        PostTypeEnum $type,
         string $status,
         string $visibility,
     ): Post {
@@ -107,7 +108,7 @@ readonly class PostService
             throw new RuntimeException(GroupErrorMessagesConstant::GROUP_NOT_FOUND);
         }
 
-        if ('public' === $visibility && 'public' !== $group->getVisibility()) {
+        if ('public' === $visibility && 'public' !== $group->getVisibility() && $type === PostTypeEnum::POST) {
             $publicGroup = $this->groupRepository->findOneBy(['name' => 'Fil d’actualité', 'visibility' => 'public']);
             if (!$publicGroup || $group->getId() !== $publicGroup->getId()) {
                 throw new RuntimeException(PostErrorMessagesConstant::CANNOT_POST_PUBLIC_IN_PRIVATE_GROUP);

@@ -3,7 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Group;
-use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\GroupSortOptionEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;

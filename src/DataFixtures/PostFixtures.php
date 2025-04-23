@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Post;
 use App\Entity\Profile;
+use App\Enum\PostTypeEnum;
 use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -46,21 +47,19 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
             'Top 5 des livres à lire absolument en 2025 !',
         ];
 
-        $slugger = new AsciiSlugger(); // Utilisé pour générer des slugs uniques
+        $slugger = new AsciiSlugger();
 
         for ($i = 0; $i < 100; ++$i) {
             $post = new Post();
             $title = $titles[$i % count($titles)];
             $post->setTitle($title);
+            $post->setType(PostTypeEnum::POST);
             $post->setContent($contents[$i % count($contents)]);
             $post->setCreatedAt((new DateTimeImmutable())->modify("-$i days"));
             $post->setVisibility('public');
             $post->setAuthor($profiles[array_rand($profiles)]);
-
-            // ✅ Générer un slug unique en ajoutant un ID au slug
             $slug = $slugger->slug($title . '-' . $i)->lower();
             $post->setSlug($slug);
-
             $manager->persist($post);
         }
 
@@ -71,7 +70,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article = new Post();
         $article->setTitle('Bienvenue sur notre blog !');
-        $article->setType('article');
+        $article->setType(PostTypeEnum::ARTICLE);
         $article->setContent('Nous sommes ravis de vous accueillir sur notre blog. N’hésitez pas à partager vos lectures et à discuter avec la communauté !');
         $article->setCreatedAt(new DateTimeImmutable());
         $article->setVisibility('public');
@@ -81,7 +80,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article1 = new Post();
         $article1->setTitle('Les bases de Symfony pour débutants');
-        $article1->setType('article');
+        $article1->setType(PostTypeEnum::ARTICLE);
         $article1->setContent('Symfony est un puissant framework PHP permettant de développer des applications web robustes. Découvrez dans cet article les bases essentielles pour bien démarrer !');
         $article1->setCreatedAt(new DateTimeImmutable());
         $article1->setVisibility('public');
@@ -92,7 +91,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article2 = new Post();
         $article2->setTitle('Pourquoi utiliser Doctrine avec Symfony ?');
-        $article2->setType('article');
+        $article2->setType(PostTypeEnum::ARTICLE);
         $article2->setContent("Doctrine est l'ORM intégré à Symfony qui facilite la gestion des bases de données. Apprenez pourquoi et comment l'utiliser efficacement dans vos projets Symfony.");
         $article2->setCreatedAt(new DateTimeImmutable());
         $article2->setVisibility('public');
@@ -103,7 +102,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article3 = new Post();
         $article3->setTitle('Créer une API REST avec Symfony');
-        $article3->setType('article');
+        $article3->setType(PostTypeEnum::ARTICLE);
         $article3->setContent('Dans cet article, nous vous guidons étape par étape pour créer une API REST performante avec Symfony et API Platform.');
         $article3->setCreatedAt(new DateTimeImmutable());
         $article3->setVisibility('public');
@@ -114,7 +113,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article4 = new Post();
         $article4->setTitle('Optimiser les performances de votre application Symfony');
-        $article4->setType('article');
+        $article4->setType(PostTypeEnum::ARTICLE);
         $article4->setContent('Découvrez les meilleures pratiques pour améliorer les performances de votre application Symfony et réduire les temps de chargement.');
         $article4->setCreatedAt(new DateTimeImmutable());
         $article4->setVisibility('public');
@@ -125,7 +124,7 @@ class PostFixtures extends Fixture implements DependentFixtureInterface
 
         $article5 = new Post();
         $article5->setTitle('Les nouveautés de Symfony 6');
-        $article5->setType('article');
+        $article5->setType(PostTypeEnum::ARTICLE);
         $article5->setContent("Symfony 6 apporte de nombreuses améliorations et nouvelles fonctionnalités. Voici un tour d'horizon des nouveautés à ne pas manquer !");
         $article5->setCreatedAt(new DateTimeImmutable());
         $article5->setVisibility('public');

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Post;
+use App\Enum\PostTypeEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -15,9 +16,12 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
-    public function findRecentPosts(int $limit = 10, ?int $groupId = null): array
+
+    public function findRecentPosts(PostTypeEnum $type, int $limit = 10, ?int $groupId = null): array
     {
         $qb = $this->createQueryBuilder('p')
+            ->where('p.type = :type')
+            ->setParameter('type', $type->value)
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults($limit);
 
@@ -34,12 +38,14 @@ class PostRepository extends ServiceEntityRepository
         }
     }
 
-    public function findOlderPosts(int $page, int $limit, int $groupId): array
+    public function findOlderPosts(int $page, int $limit, int $groupId, PostTypeEnum $type): array
     {
         $qb = $this->createQueryBuilder('p')
             ->innerJoin('p.group', 'g')
             ->where('g.id = :groupId')
+            ->andWhere('p.type = :type')
             ->setParameter('groupId', $groupId)
+            ->setParameter('type', $type->value)
             ->orderBy('p.createdAt', 'DESC')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
@@ -57,6 +63,7 @@ class PostRepository extends ServiceEntityRepository
         int $maxPerPage = 15,
         string $sortField = 'createdAt',
         string $sortOrder = 'DESC',
+        PostTypeEnum $type = PostTypeEnum::ARTICLE,
     ): array {
         $allowedSortFields = ['status', 'title', 'createdAt', 'updatedAt'];
         if (!in_array($sortField, $allowedSortFields, true)) {
@@ -68,7 +75,7 @@ class PostRepository extends ServiceEntityRepository
             ->where('p.author = :profile')
             ->andWhere('p.type = :type')
             ->setParameter('profile', $profileId)
-            ->setParameter('type', 'article')
+            ->setParameter('type', $type->value)
             ->orderBy('p.' . $sortField, $sortOrder)
             ->setFirstResult(($page - 1) * $maxPerPage)
             ->setMaxResults($maxPerPage);

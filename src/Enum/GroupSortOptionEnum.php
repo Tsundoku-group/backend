@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enum\Group;
+namespace App\Enum;
 
 enum GroupSortOptionEnum: string
 {

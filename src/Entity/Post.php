@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\PostTypeEnum;
 use App\Repository\PostRepository;
 use DateTime;
 use DateTimeImmutable;
@@ -20,12 +21,12 @@ class Post
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Group::class)]
+    #[ORM\ManyToOne(targetEntity: Group::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Group $group = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $type = null;
+    #[ORM\Column(enumType: PostTypeEnum::class)]
+    private PostTypeEnum $type = PostTypeEnum::POST;
 
     #[ORM\ManyToOne(targetEntity: Profile::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -62,12 +63,12 @@ class Post
         return $this->id;
     }
 
-    public function getType(): string
+    public function getType(): PostTypeEnum
     {
         return $this->type;
     }
 
-    public function setType(string $type): void
+    public function setType(PostTypeEnum $type): void
     {
         $this->type = $type;
     }
@@ -143,7 +144,7 @@ class Post
         return $this;
     }
 
-    public function getStatus(): string
+    public function getStatus(): ?string
     {
         return $this->status;
     }

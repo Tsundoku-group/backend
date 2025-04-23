@@ -7,7 +7,7 @@ use App\Constant\SecurityErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
-use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\GroupSortOptionEnum;
 use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
