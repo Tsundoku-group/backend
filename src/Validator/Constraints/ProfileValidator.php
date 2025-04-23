@@ -2,7 +2,7 @@
 
 namespace App\Validator\Constraints;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\Profile;
 use App\Repository\ProfileRepository;
 use RuntimeException;
@@ -18,7 +18,7 @@ readonly class ProfileValidator
         $profile = $this->profileRepository->find($profileId);
 
         if (!$profile) {
-            throw new RuntimeException(ErrorMessagesConstant::PROFILE_NOT_FOUND);
+            throw new RuntimeException(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
         }
 
         return $profile;

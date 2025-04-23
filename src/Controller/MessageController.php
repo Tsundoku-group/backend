@@ -2,7 +2,8 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/message')]
+#[Route('/api/v1/messages')]
 class MessageController extends AbstractController
 {
     public function __construct(
@@ -37,7 +38,7 @@ class MessageController extends AbstractController
 
             return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -46,7 +47,7 @@ class MessageController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $queryParams = $request->query->all();
@@ -66,7 +67,7 @@ class MessageController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['userEmail'])) {
-            return new JsonResponse(['error' => 'User email is required.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => "L'adresse électronique de l'utilisateur est requise."], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new MarkMessageReadDTO($data);

@@ -68,6 +68,8 @@ class GroupProfile
     {
         $this->joinAt = $joinAt;
         $this->markAsUpdated();
+
+        return $this;
     }
 
     public function getUpdatedAt(): ?DateTime

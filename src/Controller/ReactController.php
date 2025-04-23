@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/react')]
+#[Route('/api/v1/reacts')]
 class ReactController extends AbstractController
 {
     public function __construct(
@@ -16,7 +16,7 @@ class ReactController extends AbstractController
     ) {
     }
 
-    #[Route('/toggle', name: 'toggle_react', methods: ['POST'])]
+    #[Route('', name: 'toggle_react', methods: ['POST'])]
     public function toggleReaction(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

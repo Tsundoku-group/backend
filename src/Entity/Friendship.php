@@ -22,6 +22,9 @@ class Friendship
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_BLOCKED = 'blocked';
 
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

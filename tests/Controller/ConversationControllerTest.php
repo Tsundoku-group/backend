@@ -67,7 +67,7 @@ class ConversationControllerTest extends TestCase
 
         $controller->setContainer($this->container);
         $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'page=1&limit=20']);
-        $response = $controller->getAllConversationsWithLastMessages(1, $request);
+        $response = $controller->getAllConversationsByProfileIdWithLastMessages(1, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
@@ -84,7 +84,7 @@ class ConversationControllerTest extends TestCase
         );
 
         $request = new Request([], [], [], [], [], ['QUERY_STRING' => 'page=1&limit=20']);
-        $response = $controller->getAllConversationsWithLastMessages(999, $request);
+        $response = $controller->getAllConversationsByProfileIdWithLastMessages(999, $request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());

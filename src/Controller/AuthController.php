@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,7 +25,7 @@ class AuthController extends AbstractController
         $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
         if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
-            return new JsonResponse(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => "Informations d'identification invalides"], Response::HTTP_UNAUTHORIZED);
         }
 
         $token = $jwtManager->create($user);
@@ -33,5 +34,25 @@ class AuthController extends AbstractController
             'token' => $token,
             'isVerified' => $user->isVerified(),
         ]);
+    }
+
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(Request $request, RefreshTokenManagerInterface $refreshTokenManager, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $refreshToken = $data['refresh_token'] ?? null;
+
+        if (!$refreshToken) {
+            return new JsonResponse(['error' => 'Jeton de rafraîchissement manquant'], 400);
+        }
+
+        $token = $refreshTokenManager->get($refreshToken);
+        if ($token) {
+            $refreshTokenManager->delete($token);
+
+            return new JsonResponse(['message' => 'Jeton de rafraîchissement supprimé'], 200);
+        }
+
+        return new JsonResponse(['message' => 'Aucun jeton de rafraîchissement trouvé'], 200);
     }
 }

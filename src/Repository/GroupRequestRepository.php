@@ -14,7 +14,7 @@ class GroupRequestRepository extends ServiceEntityRepository
         parent::__construct($registry, GroupRequest::class);
     }
 
-    public function findPendingRequestsByProfile(string $profileId)
+    public function findPendingRequestsByProfile(int $profileId)
     {
         try {
             $pendingRequestByProfile = $this->createQueryBuilder('gr')

@@ -13,9 +13,6 @@ class FollowerFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        $connection = $manager->getConnection();
-        $connection->executeStatement('ALTER SEQUENCE follower_id_seq RESTART WITH 1');
-
         $profiles = $manager->getRepository(Profile::class)->findAll();
 
         if (count($profiles) < 2) {
@@ -53,6 +50,7 @@ class FollowerFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             ProfileFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

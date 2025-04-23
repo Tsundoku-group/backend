@@ -2,81 +2,54 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\DTO\Post\CreatePostDTO;
 use App\DTO\Post\DeletePostDTO;
 use App\DTO\Post\UpdatePostDTO;
+use App\Enum\PostTypeEnum;
 use App\Repository\PostRepository;
 use App\Repository\ProfileRepository;
 use App\Service\PostService;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/v1/post')]
+#[Route('/api/v1/posts')]
 class PostController extends AbstractController
 {
-
     public function __construct(
         private readonly PostService $postService,
         private readonly PostRepository $postRepository,
         private readonly ProfileRepository $profileRepository,
-        private readonly EntityManagerInterface $entityManager
-    ) {}
-
-    #[Route('/{profileId}/recent', methods: ['GET'])]
-    public function getRecentPosts(string $profileId): JsonResponse
-    {
-        try {
-            $posts = $this->postService->getRecentPosts(10, $profileId);
-
-            return new JsonResponse(['posts' => $posts], 200);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
-    }
-
-    #[Route('/{profileId}/older', methods: ['GET'])]
-    public function getOlderPosts(string $profileId, Request $request): JsonResponse
-    {
-        $page = max((int) $request->query->get('page', 1), 1);
-        $limit = max((int) $request->query->get('limit', 10), 10);
-
-        try {
-            $posts = $this->postService->getOlderPosts($page, $limit, $profileId);
-            $totalPosts = $this->postRepository->countTotalPosts();
-            $remainingPosts = $totalPosts - ($page * $limit);
-            $nextPage = $remainingPosts > 0 ? $page + 1 : null;
-
-            return new JsonResponse([
-                'posts' => $posts,
-                'nextPage' => $nextPage,
-            ], 200);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
-        }
+    ) {
     }
 
     #[Route('/{profileId}/articles', methods: ['GET'])]
-    public function getArticlesByProfile(int $profileId, Request $request, SerializerInterface $serializer): JsonResponse
+    public function getArticlesByProfile(int $profileId, Request $request): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
-        $page = (int) $request->query->get('page', 1);
+        $page = (int) $request->query->get('page', '1');
         $limit = 15;
         $sortField = $request->query->get('sortField', 'createdAt');
         $sortOrder = $request->query->get('sortOrder', 'desc');
+        $type = PostTypeEnum::tryFrom($request->query->get('type', 'article'));
+
+        if ($type !== PostTypeEnum::ARTICLE) {
+            return new JsonResponse(['error' => 'Type attendu: article.'], 400);
+        }
 
         try {
             $result = $this->postRepository->findPaginatedArticlesByProfile(
@@ -84,7 +57,8 @@ class PostController extends AbstractController
                 $page,
                 $limit,
                 $sortField,
-                $sortOrder
+                $sortOrder,
+                $type
             );
 
             $formattedArticles = array_map(function ($article) {
@@ -95,7 +69,7 @@ class PostController extends AbstractController
 
             return new JsonResponse($result, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+            return new JsonResponse(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 
@@ -104,8 +78,14 @@ class PostController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        $type = PostTypeEnum::tryFrom($data['type'] ?? 'post');
+
+        if (!$type) {
+            return new JsonResponse(['error' => 'Type de post invalide.'], 400);
+        }
+
         $dto = new CreatePostDTO(
-            $data['type'] ?? 'post',
+            $type,
             $data['title'] ?? '',
             $data['content'] ?? '',
             $data['authorId'] ?? 1,
@@ -120,6 +100,7 @@ class PostController extends AbstractController
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
+
             return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
         }
 
@@ -136,12 +117,12 @@ class PostController extends AbstractController
 
             return new JsonResponse([
                 'message' => 'Post créé avec succès.',
-                'postId' => $post->getId()
+                'postId' => $post->getId(),
             ], 201);
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -150,35 +131,36 @@ class PostController extends AbstractController
         int $postId,
         Request $request,
         ValidatorInterface $validator,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
     ): JsonResponse {
         $post = $this->postRepository->find($postId);
         if (!$post) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $data = json_decode($request->getContent(), true);
 
         $editorId = $data['authorId'] ?? $data['editorId'] ?? null;
         if (!$editorId) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $editor = $this->profileRepository->find($editorId);
         if (!$editor) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
             if (
-                isset($data['status']) &&
-                !isset($data['title']) &&
-                !isset($data['content']) &&
-                !isset($data['visibility'])
+                isset($data['status'])
+                && !isset($data['title'])
+                && !isset($data['content'])
+                && !isset($data['visibility'])
             ) {
                 $post->setStatus($data['status']);
                 $entityManager->persist($post);
                 $entityManager->flush();
+
                 return new JsonResponse(['message' => 'Statut mis à jour avec succès.'], 200);
             } else {
                 $title = array_key_exists('title', $data) ? $data['title'] : $post->getTitle();
@@ -194,15 +176,18 @@ class PostController extends AbstractController
                     foreach ($errors as $error) {
                         $errorMessages[] = $error->getMessage();
                     }
+
                     return new JsonResponse(['error' => implode(', ', $errorMessages)], 400);
                 }
 
                 $this->postService->updatePost($post, $dto, $editor);
+
                 return new JsonResponse(['message' => 'Post mis à jour avec succès.']);
             }
-        } catch (\Exception $e) {
-            error_log("Error updating post: " . $e->getMessage());
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        } catch (Exception $e) {
+            error_log('Error updating post: ' . $e->getMessage());
+
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -211,14 +196,14 @@ class PostController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['editorId'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
         }
 
         $dto = new DeletePostDTO($data['editorId'], $postId);
 
         $editor = $this->profileRepository->find($dto->editorId);
         if (!$editor) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -228,7 +213,7 @@ class PostController extends AbstractController
         } catch (RuntimeException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 403);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
@@ -236,15 +221,17 @@ class PostController extends AbstractController
     public function getPost(int $postId): JsonResponse
     {
         $post = $this->postRepository->find($postId);
+
         if (!$post) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         try {
             $postData = $this->postService->formatPost($post);
+
             return new JsonResponse($postData, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

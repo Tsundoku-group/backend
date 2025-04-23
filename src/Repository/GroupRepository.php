@@ -3,7 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Group;
-use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\GroupSortOptionEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -58,10 +58,9 @@ class GroupRepository extends ServiceEntityRepository
 
         if (!empty($tagName)) {
             $tagsArray = array_map('trim', explode(',', strtolower($tagName)));
-            if (!empty($tagsArray)) {
-                $conditions->add($qb->expr()->in('LOWER(t.name)', ':tags'));
-                $qb->setParameter('tags', $tagsArray);
-            }
+
+            $conditions->add($qb->expr()->in('LOWER(t.name)', ':tags'));
+            $qb->setParameter('tags', $tagsArray);
         }
 
         if ($conditions->count() > 0) {

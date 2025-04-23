@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/api/v1/book')]
 class BookController extends AbstractController
 {
     private $googleBooksService;
@@ -18,14 +19,14 @@ class BookController extends AbstractController
         $this->googleBooksService = $googleBooksService;
     }
 
-    #[Route('/api/v1/latest-releases', name: 'latest_releases', methods: ['GET'])]
+    #[Route('/latest/releases', name: 'latest_releases', methods: ['GET'])]
     public function getLatestReleases(Request $request): JsonResponse
     {
         $limit = $request->query->getInt('limit', 40);
 
         if ($limit > 40) {
             return $this->json([
-                'error' => "Google Books API doesn't allow fetching more than 40 books at a time.",
+                'error' => "L'API Google Books ne permet pas de récupérer plus de 40 livres à la fois.",
             ], Response::HTTP_BAD_REQUEST);
         }
 

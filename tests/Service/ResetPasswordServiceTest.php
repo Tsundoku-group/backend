@@ -2,7 +2,8 @@
 
 namespace App\Tests\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\MailService;
@@ -109,8 +110,8 @@ class ResetPasswordServiceTest extends TestCase
         $result = $service->requestPasswordReset($email);
 
         $this->assertArrayHasKey('error', $result);
-        $this->assertEquals(ErrorMessagesConstant::USER_NOT_FOUND, $result['error']);
-        $this->assertEquals(JsonResponse::HTTP_NOT_FOUND, $result['status']);
+        $this->assertEquals(UserErrorMessagesConstant::USER_NOT_FOUND, $result['error']);
+        $this->assertEquals(Response::HTTP_NOT_FOUND, $result['status']);
     }
 
     public function testResetPasswordSuccess(): void
@@ -158,7 +159,7 @@ class ResetPasswordServiceTest extends TestCase
         $result = $service->resetPassword($token, 'new-password');
 
         $this->assertArrayHasKey('error', $result);
-        $this->assertEquals(ErrorMessagesConstant::INVALID_TOKEN, $result['error']);
+        $this->assertEquals(SecurityErrorMessagesConstant::INVALID_TOKEN, $result['error']);
         $this->assertEquals(Response::HTTP_NOT_FOUND, $result['status']);
     }
 
@@ -181,7 +182,7 @@ class ResetPasswordServiceTest extends TestCase
         $result = $service->resetPassword($token, 'new-password');
 
         $this->assertArrayHasKey('error', $result);
-        $this->assertEquals(ErrorMessagesConstant::TOKEN_EXPIRED, $result['error']);
+        $this->assertEquals(SecurityErrorMessagesConstant::TOKEN_EXPIRED, $result['error']);
         $this->assertEquals(Response::HTTP_BAD_REQUEST, $result['status']);
     }
 }

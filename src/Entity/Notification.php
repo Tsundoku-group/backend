@@ -15,6 +15,9 @@ use Ramsey\Uuid\UuidInterface;
 #[ORM\Index(name: 'IDX_BF5476CACD53EDB6', columns: ['receiver_id'])]
 class Notification
 {
+    /**
+     * @var UuidInterface|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]

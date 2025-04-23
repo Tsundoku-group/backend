@@ -2,11 +2,12 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\SecurityErrorMessagesConstant;
 use App\Entity\Group;
 use App\Entity\GroupProfile;
 use App\Entity\Profile;
-use App\Enum\Group\GroupSortOptionEnum;
+use App\Enum\GroupSortOptionEnum;
 use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
@@ -23,27 +24,25 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 readonly class GroupService
 {
     public function __construct(
-        private EntityManagerInterface        $entityManager,
-        private SluggerInterface              $slugger,
+        private EntityManagerInterface $entityManager,
+        private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
-        private GroupRepository               $groupRepository,
-        private GroupRequestRepository        $groupRequestRepository,
-        private TagService                    $tagService,
-        private MarkRepository                $markRepository,
-    )
-    {
+        private GroupRepository $groupRepository,
+        private GroupRequestRepository $groupRequestRepository,
+        private TagService $tagService,
+        private MarkRepository $markRepository,
+    ) {
     }
 
     public function getPrivateGroups(
-        string              $search = '',
-        ?string             $tagName = null,
+        string $search = '',
+        ?string $tagName = null,
         GroupSortOptionEnum $sort = GroupSortOptionEnum::NEWEST,
-        int                 $page = 1,
-        int                 $limit = 20,
-        ?int                $profileId = null,
-        bool                $myGroups = false
-    ): array
-    {
+        int $page = 1,
+        int $limit = 20,
+        ?int $profileId = null,
+        bool $myGroups = false,
+    ): array {
         $offset = ($page - 1) * $limit;
         $privateGroups = $this->groupRepository->findPrivateGroups($search, $tagName, $sort->value, $limit, $offset);
 
@@ -63,11 +62,11 @@ readonly class GroupService
         if ($profileId) {
             $marks = $this->markRepository->findBy([
                 'profile' => $profileId,
-                'targetType' => 'group'
+                'targetType' => 'group',
             ]);
 
             foreach ($marks as $mark) {
-                $marksByGroupId[(int)$mark->getTargetId()] = [
+                $marksByGroupId[(int) $mark->getTargetId()] = [
                     'isFavorite' => $mark->getIsFavorite(),
                     'isPinned' => $mark->getIsPinned(),
                     'rating' => $mark->getRating(),
@@ -83,7 +82,7 @@ readonly class GroupService
                 $group = $groupData;
                 $membersCount = 0;
             } else {
-                $group = (object)$groupData;
+                $group = (object) $groupData;
                 $membersCount = $groupData['membersCount'] ?? 0;
             }
 
@@ -110,7 +109,7 @@ readonly class GroupService
                 'joinStatus' => $joinStatus,
                 'isFavorite' => $isFavorite,
                 'isPinned' => $isPinned,
-                'tags' => array_map(fn($taggable) => [
+                'tags' => array_map(fn ($taggable) => [
                     'name' => $taggable->getTag()->getName(),
                     'slug' => $taggable->getTag()->getSlug(),
                     'parent' => $taggable->getTag()->getParentTag() ? [
@@ -122,16 +121,7 @@ readonly class GroupService
         }, $privateGroups);
 
         if ($profileId && $myGroups) {
-            $mappedGroups = array_filter($mappedGroups, function ($group) {
-                if ($group['joinStatus'] instanceof RequestStatusEnum) {
-                    $status = strtolower(trim($group['joinStatus']->value));
-                } else {
-                    $status = strtolower(trim((string)$group['joinStatus']));
-                }
-
-                return in_array($status, ['member', 'pending'], true);
-            });
-            $mappedGroups = array_values($mappedGroups);
+            $mappedGroups = $this->filterGroupsByMembership($mappedGroups);
         }
 
         return $mappedGroups;
@@ -143,12 +133,12 @@ readonly class GroupService
             $oneGroupBySlug = $this->groupRepository->findOneBy(['slug' => $slug]);
 
             if (!$oneGroupBySlug) {
-                throw new RuntimeException('Group not found');
+                throw new RuntimeException('Groupe non trouvé');
             }
 
             return $this->formatGroupResult($oneGroupBySlug);
         } catch (Exception $e) {
-            throw new RuntimeException('Group not found');
+            throw new RuntimeException('Groupe non trouvé');
         }
     }
 
@@ -164,7 +154,7 @@ readonly class GroupService
 
         return array_map(function ($groupProfile) {
             $profile = $groupProfile->getProfile();
-            $activePhotos = $profile->getProfilePhotos()->filter(fn($photo) => $photo->isActive());
+            $activePhotos = $profile->getProfilePhotos()->filter(fn ($photo) => $photo->isActive());
 
             return [
                 'id' => $profile->getId(),
@@ -205,7 +195,7 @@ readonly class GroupService
             return $group;
         } catch (Exception $e) {
             $this->entityManager->rollback();
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 
@@ -234,14 +224,14 @@ readonly class GroupService
     public function deleteGroup(Group $group): void
     {
         if (!$this->authorizationChecker->isGranted(GroupRoleVoter::DELETE_GROUP, $group)) {
-            throw new RuntimeException(ErrorMessagesConstant::ACCESS_DENIED);
+            throw new RuntimeException(SecurityErrorMessagesConstant::ACCESS_DENIED);
         }
 
         try {
             $this->entityManager->remove($group);
             $this->entityManager->flush();
         } catch (Exception $e) {
-            throw new RuntimeException(ErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
+            throw new RuntimeException(GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage());
         }
     }
 
@@ -274,12 +264,12 @@ readonly class GroupService
             'activities' => $group->getActivities() ?? [],
             'externalLinks' => $group->getExternalLinks() ?? [],
             'whoCanJoin' => $group->getWhoCanJoin(),
-            'membersPreview' => array_slice(array_map(fn($gp) => [
+            'membersPreview' => array_slice(array_map(fn ($gp) => [
                 'id' => $gp->getProfile()->getId(),
                 'username' => $gp->getProfile()->getUsername(),
-                'profilePhoto' => $gp->getProfile()->getActiveProfile()
+                'profilePhoto' => $gp->getProfile()->getActiveProfile(),
             ], $group->getGroupProfiles()->toArray()), 0, 10),
-            'tags' => array_map(fn($taggable) => [
+            'tags' => array_map(fn ($taggable) => [
                 'name' => $taggable->getTag()->getName(),
                 'slug' => $taggable->getTag()->getSlug(),
                 'parent' => $taggable->getTag()->getParentTag() ? [
@@ -288,5 +278,21 @@ readonly class GroupService
                 ] : null,
             ], $group->getTaggables()->toArray()),
         ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $groups
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterGroupsByMembership(array $groups): array
+    {
+        return array_values(array_filter($groups, function ($group): bool {
+            $status = $group['joinStatus'] instanceof RequestStatusEnum
+                ? strtolower(trim($group['joinStatus']->value))
+                : strtolower(trim((string) $group['joinStatus']));
+
+            return in_array($status, ['member', 'pending'], true);
+        }));
     }
 }

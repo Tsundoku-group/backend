@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Post;
+use App\Enum\PostTypeEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -15,39 +16,42 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
-    public function findRecentPosts(int $limit = 10, ?int $groupId = null): array
+
+    public function findRecentPosts(PostTypeEnum $type, int $limit = 10, ?int $groupId = null): array
     {
         $qb = $this->createQueryBuilder('p')
+            ->where('p.type = :type')
+            ->setParameter('type', $type->value)
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults($limit);
 
-        if ($groupId) {
+        if (null !== $groupId) {
             $qb->innerJoin('p.group', 'g')
-                ->where('g.id = :groupId')
+                ->andWhere('g.id = :groupId')
                 ->setParameter('groupId', $groupId);
-        } else {
-            $qb->where('p.visibility = :visibility')
-                ->setParameter('visibility', 'public');
         }
 
         try {
             return $qb->getQuery()->getResult();
-        } catch (NoResultException) {
+        } catch (NoResultException $e) {
             return [];
         }
     }
 
-    public function findOlderPosts(int $page, int $limit): array
+    public function findOlderPosts(int $page, int $limit, int $groupId, PostTypeEnum $type): array
     {
-        $olderPosts = $this->createQueryBuilder('p')
-            ->where('p.visibility = :visibility')
-            ->setParameter('visibility', 'public')
+        $qb = $this->createQueryBuilder('p')
+            ->innerJoin('p.group', 'g')
+            ->where('g.id = :groupId')
+            ->andWhere('p.type = :type')
+            ->setParameter('groupId', $groupId)
+            ->setParameter('type', $type->value)
             ->orderBy('p.createdAt', 'DESC')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         try {
-            return $olderPosts->getQuery()->getResult();
+            return $qb->getQuery()->getResult();
         } catch (NoResultException $e) {
             return [];
         }
@@ -58,19 +62,20 @@ class PostRepository extends ServiceEntityRepository
         int $page = 1,
         int $maxPerPage = 15,
         string $sortField = 'createdAt',
-        string $sortOrder = 'DESC'
+        string $sortOrder = 'DESC',
+        PostTypeEnum $type = PostTypeEnum::ARTICLE,
     ): array {
         $allowedSortFields = ['status', 'title', 'createdAt', 'updatedAt'];
         if (!in_array($sortField, $allowedSortFields, true)) {
             $sortField = 'createdAt';
         }
-        $sortOrder = strtolower($sortOrder) === 'asc' ? 'ASC' : 'DESC';
+        $sortOrder = 'asc' === strtolower($sortOrder) ? 'ASC' : 'DESC';
 
         $qb = $this->createQueryBuilder('p')
             ->where('p.author = :profile')
             ->andWhere('p.type = :type')
             ->setParameter('profile', $profileId)
-            ->setParameter('type', 'article')
+            ->setParameter('type', $type->value)
             ->orderBy('p.' . $sortField, $sortOrder)
             ->setFirstResult(($page - 1) * $maxPerPage)
             ->setMaxResults($maxPerPage);
@@ -86,10 +91,10 @@ class PostRepository extends ServiceEntityRepository
         return [
             'articles' => $articles,
             'pagination' => [
-                'currentPage'   => $page,
-                'limit'         => $maxPerPage,
+                'currentPage' => $page,
+                'limit' => $maxPerPage,
                 'totalArticles' => $totalCount,
-                'totalPages'    => ceil($totalCount / $maxPerPage),
+                'totalPages' => ceil($totalCount / $maxPerPage),
             ],
         ];
     }

@@ -8,7 +8,7 @@ class UpdateGroupDTO
 {
     #[Assert\NotBlank]
     #[Assert\Positive]
-    public string $groupId;
+    public int $groupId;
 
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 100)]
@@ -21,7 +21,7 @@ class UpdateGroupDTO
     #[Assert\Positive]
     public int $profileId;
 
-    public function __construct(string $groupId, ?string $name, ?string $description, int $profileId)
+    public function __construct(int $groupId, ?string $name, ?string $description, int $profileId)
     {
         $this->groupId = $groupId;
         $this->name = $name;

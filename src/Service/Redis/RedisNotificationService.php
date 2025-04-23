@@ -29,10 +29,10 @@ readonly class RedisNotificationService
      * @throws ExceptionInterface
      */
     public function addNotificationToCache(
-        string $receiverId,
-        string $actorId,
+        int $receiverId,
+        int $actorId,
         string $notificationTypeEnum,
-        ?string $resourceId,
+        ?int $resourceId,
         string $resourceTypeEnum,
     ): void {
         $notificationKey = "notifications:{$receiverId}";
@@ -51,7 +51,7 @@ readonly class RedisNotificationService
             $notif = json_decode($notifJson, true);
 
             if (
-                $notif['resourceId'] === $resourceId
+                $notif['resourceId'] === (int) $resourceId
                 && $notif['resourceType'] === $resourceTypeEnum
                 && $notif['notificationType'] === $notificationTypeEnum
             ) {
@@ -71,7 +71,7 @@ readonly class RedisNotificationService
                 'actorId' => $actorId,
                 'actorFirstName' => $actor->getFirstName(),
                 'actorLastName' => $actor->getLastName(),
-                'resourceId' => $resourceId,
+                'resourceId' => (int) $resourceId,
                 'resourceType' => ResourceTypeEnum::from($resourceTypeEnum),
                 'isRead' => false,
                 'notificationType' => NotificationTypeEnum::from($notificationTypeEnum),
@@ -123,7 +123,7 @@ readonly class RedisNotificationService
         return array_values($filteredNotifications);
     }
 
-    public function getNotifications(string $receiverId): array
+    public function getNotifications(int $receiverId): array
     {
         $notificationKey = "notifications:{$receiverId}";
         $notificationsJson = $this->redis->getClient()->lrange($notificationKey, 0, -1);
@@ -168,7 +168,7 @@ readonly class RedisNotificationService
         return $allNotifications;
     }
 
-    public function markNotificationsAsReadInCache(string $receiverId): void
+    public function markNotificationsAsReadInCache(int $receiverId): void
     {
         $notifications = $this->getNotifications($receiverId);
 

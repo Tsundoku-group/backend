@@ -11,10 +11,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'tag')]
 class Tag
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
     private string $name;

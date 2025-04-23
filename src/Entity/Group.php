@@ -15,10 +15,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: '`group`')]
 class Group
 {
+    /**
+     * @var int|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private int $id;
+    private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'group', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $groupProfiles;
@@ -34,7 +37,7 @@ class Group
     private ?string $description = null;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
-    private ?string $visibility;
+    private ?string $visibility = null;
 
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
@@ -205,7 +208,7 @@ class Group
 
     public function getTags(): array
     {
-        return $this->taggables->map(fn(Taggable $taggable) => $taggable->getTag())->toArray();
+        return $this->taggables->map(fn (Taggable $taggable) => $taggable->getTag())->toArray();
     }
 
     public function getPosts(): Collection
@@ -230,6 +233,7 @@ class Group
     public function setRules(?array $rules): self
     {
         $this->rules = $rules;
+
         return $this;
     }
 
@@ -241,6 +245,7 @@ class Group
     public function setActivities(?array $activities): self
     {
         $this->activities = $activities;
+
         return $this;
     }
 
@@ -252,6 +257,7 @@ class Group
     public function setWhoCanJoin(?string $whoCanJoin): self
     {
         $this->whoCanJoin = $whoCanJoin;
+
         return $this;
     }
 
@@ -263,6 +269,7 @@ class Group
     public function setExternalLinks(?array $externalLinks): self
     {
         $this->externalLinks = $externalLinks;
+
         return $this;
     }
 }

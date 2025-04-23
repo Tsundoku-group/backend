@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\DTO\ResetPassword\ForgotPasswordRequestDTO;
 use App\DTO\ResetPassword\ResetPasswordRequestDTO;
 use App\Service\ResetPasswordService;
@@ -33,7 +33,7 @@ class ResetPasswordController extends AbstractController
         );
 
         if (!$dto->token || !$dto->password) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $result = $this->resetPasswordService->resetPassword($resetToken, $password);
@@ -47,7 +47,7 @@ class ResetPasswordController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['email'])) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
         }
 
         $dto = new ForgotPasswordRequestDTO(

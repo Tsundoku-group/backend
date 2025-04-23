@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Enum\RequestStatusEnum;
 use App\Repository\GroupRepository;
 use App\Repository\GroupRequestRepository;
@@ -52,12 +52,12 @@ class GroupRequestController extends AbstractController
                 ], $requests),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Une erreur est survenue'], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/{id}/join', methods: ['POST'])]
-    public function requestToJoinGroup(int $id, Request $request): JsonResponse
+    #[Route('/{groupId}', methods: ['POST'])]
+    public function requestToJoinGroup(int $groupId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $profileId = $data['profileId'] ?? null;
@@ -66,7 +66,7 @@ class GroupRequestController extends AbstractController
             return new JsonResponse(['error' => 'Profile ID manquant.'], 400);
         }
 
-        $group = $this->groupRepository->find($id);
+        $group = $this->groupRepository->find($groupId);
         $profile = $this->profileRepository->find($profileId);
 
         if (!$group || !$profile) {
@@ -78,12 +78,12 @@ class GroupRequestController extends AbstractController
 
             return new JsonResponse(['message' => 'Demande envoyée avec succès.'], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 
-    #[Route('/{requestId}', methods: ['POST'])]
-    public function updateRequestStatus(int $requestId, Request $request): JsonResponse
+    #[Route('', methods: ['PUT'])]
+    public function updateRequestStatus(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -97,7 +97,7 @@ class GroupRequestController extends AbstractController
         }
 
         if (!$profileId || !$groupId || !$status) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INVALID_DATA], 403);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 403);
         }
 
         $groupRequest = $this->groupRequestRepository->find($groupId);
@@ -112,16 +112,12 @@ class GroupRequestController extends AbstractController
 
         $newStatus = ('approve' === $action) ? RequestStatusEnum::ACCEPTED : RequestStatusEnum::DENIED;
 
-        if (!isset($validActions[$action])) {
-            return new JsonResponse(['error' => 'Action invalide'], 400);
-        }
-
         try {
             $this->groupRequestService->updateRequestStatus($groupRequest, $newStatus);
 
             return new JsonResponse(['message' => "Demande $action avec succès"], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Une erreur est survenue'], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }

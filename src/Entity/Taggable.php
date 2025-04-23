@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Taggable
 {
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: Tag::class)]
+    #[ORM\ManyToOne(targetEntity: Tag::class, inversedBy: 'taggables')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Tag $tag;
 

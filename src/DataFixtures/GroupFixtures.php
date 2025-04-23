@@ -33,16 +33,16 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             throw new RuntimeException('Aucun profil trouvé. Ajoutez des profils avant de charger les groupes.');
         }
 
-        $existingPublicGroup = $manager->getRepository(Group::class)->findOneBy(['visibility' => 'public']);
+        $publicGroup = new Group($profiles[0]);
+        $publicGroup->setName('Fil d’actualité');
+        $publicGroup->setSlug($this->slugger->slug('Fil d’actualité')->lower());
+        $publicGroup->setVisibility('public');
+        $publicGroup->setDescription("Ce groupe est le fil d'actualité principal. Tous les membres peuvent y publier leurs réflexions, annonces ou critiques littéraires. Il représente la place publique de la plateforme.");
 
-        if (!$existingPublicGroup) {
-            $publicGroup = new Group($profiles[0]);
-            $publicGroup->setName('Fil d’actualité');
-            $publicGroup->setSlug($this->slugger->slug('Fil d’actualité')->lower());
-            $publicGroup->setVisibility('public');
-            $publicGroup->setDescription("Ce groupe est le fil d'actualité principal. Tous les membres peuvent y publier leurs réflexions, annonces ou critiques littéraires. Il représente la place publique de la plateforme.");
-            $manager->persist($publicGroup);
-        }
+        $manager->persist($publicGroup);
+        $manager->flush();
+        $this->addMembersToGroup($manager, $publicGroup, $profiles);
+        $this->addPostsToGroup($manager, $publicGroup, $profiles, 3, 6);
 
         $privateGroups = [
             'Club des lecteurs',
@@ -56,8 +56,6 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             'Club manga & anime',
             'Philosophie et essais',
         ];
-
-        $groupEntities = [];
 
         foreach ($privateGroups as $groupName) {
             $creator = $profiles[array_rand($profiles)];
@@ -91,15 +89,10 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
             ]);
 
             $manager->persist($group);
-            $groupEntities[] = $group;
+            $manager->flush();
 
             $this->addMembersToGroup($manager, $group, $profiles);
             $this->addPostsToGroup($manager, $group, $profiles);
-        }
-
-        $manager->flush();
-
-        foreach ($groupEntities as $group) {
             $this->addTagsToGroup($manager, $group, $tags);
         }
 
@@ -116,7 +109,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
         }
     }
 
-    private function addPostsToGroup(ObjectManager $manager, Group $group, array $profiles): void
+    private function addPostsToGroup(ObjectManager $manager, Group $group, array $profiles, int $min = 1, int $max = 3): void
     {
         $titles = [
             'Bienvenue dans le groupe !',
@@ -127,7 +120,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
         ];
 
         foreach ($profiles as $member) {
-            $randomPostCount = rand(1, 3);
+            $randomPostCount = rand($min, $max);
 
             for ($i = 0; $i < $randomPostCount; ++$i) {
                 $title = $titles[array_rand($titles)];
@@ -163,6 +156,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             ProfileFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }

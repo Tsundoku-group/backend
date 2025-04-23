@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/notification')]
+#[Route('/api/v1/notifications')]
 class NotificationController extends AbstractController
 {
     public function __construct(
@@ -19,7 +19,7 @@ class NotificationController extends AbstractController
     #[Route('/{receiverId}', name: 'get_notifications', methods: ['GET'])]
     public function getNotifications(string $receiverId, Request $request): JsonResponse
     {
-        $weeksAgo = max(0, (int) $request->query->get('weeksAgo', 0));
+        $weeksAgo = max(0, (int) $request->query->get('weeksAgo', '0'));
 
         $notifications = $this->redisNotificationService->getNotificationsByWeek($receiverId, $weeksAgo);
 
@@ -29,7 +29,7 @@ class NotificationController extends AbstractController
     }
 
     #[Route('/{receiverId}/read', name: 'mark_notifications_as_read', methods: ['POST'])]
-    public function markAsReadNotifications(string $receiverId): JsonResponse
+    public function markAsReadNotifications(int $receiverId): JsonResponse
     {
         $this->redisNotificationService->markNotificationsAsReadInCache($receiverId);
 

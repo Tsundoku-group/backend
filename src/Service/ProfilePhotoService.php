@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Constant\GenericErrorMessagesConstant;
 use App\Entity\Profile;
 use App\Entity\ProfilePhoto;
 use Doctrine\ORM\EntityManagerInterface;
@@ -110,7 +111,7 @@ class ProfilePhotoService
                 if ($profilePhoto->getUrl() === $url && $profilePhoto->getType() === $type && $profilePhoto->isActive()) {
                     return [
                         'status' => 'error',
-                        'message' => 'This profile photo is already activated',
+                        'message' => 'Cette photo de profil est déjà activée',
                     ];
                 }
 
@@ -129,7 +130,7 @@ class ProfilePhotoService
             if (!$found) {
                 return [
                     'status' => 'error',
-                    'message' => 'No profile photo found',
+                    'message' => "Aucune photo de profil n'a été trouvée",
                 ];
             }
 
@@ -137,12 +138,12 @@ class ProfilePhotoService
 
             return [
                 'status' => 'success',
-                'message' => 'Photo activated successfully',
+                'message' => 'Photo activée avec succès',
             ];
         } catch (Exception $e) {
             return [
                 'status' => 'error',
-                'message' => 'Error serveur: ' . $e->getMessage(),
+                'message' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage(),
             ];
         }
     }

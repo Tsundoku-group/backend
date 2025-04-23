@@ -12,6 +12,9 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 #[ORM\Table(name: 'react')]
 class React
 {
+    /**
+     * @var string|null Set by Doctrine
+     */
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]

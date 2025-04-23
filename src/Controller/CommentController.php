@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\DTO\Comment\GetCommentDTO;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
@@ -15,7 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/v1/comment')]
+#[Route('/api/v1/comments')]
 class CommentController extends AbstractController
 {
     public function __construct(
@@ -32,36 +34,44 @@ class CommentController extends AbstractController
         try {
             return $this->commentService->getCommentById($commentId);
         } catch (InvalidArgumentException $e) {
-            return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
+            return $this->json(['error' => 'Argument non valide : ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => 'Erreur de serveur interne', 'détails' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/{postId}/{profileId}/comments', methods: ['GET'])]
-    public function getCommentsForPost(string $postId, string $profileId): JsonResponse
+    #[Route('/post/{postId}', methods: ['GET'])]
+    public function getCommentsForPost(int $postId, Request $request): JsonResponse
     {
         try {
+            $profileId = (int) $request->query->get('profileId');
+
+            if (!$profileId) {
+                return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
+            }
+
             $dto = new GetCommentDTO($postId);
 
             $post = $this->postRepository->findPostWithGroupById($dto->postId);
             if (!$post) {
-                return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+                return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             return $this->commentService->getCommentsForPost($dto->postId, $profileId);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/{commentId}/{profileId}/children', methods: ['GET'])]
-    public function getCommentWithChildren(string $commentId, string $profileId): JsonResponse
+    #[Route('/{commentId}/children', methods: ['GET'])]
+    public function getCommentWithChildren(string $commentId, Request $request): JsonResponse
     {
+        $profileId = (int) $request->query->get('profileId');
+
         if (!$profileId) {
-            return $this->json(['error' => 'data is missing'], 404);
+            return new JsonResponse(['error' => 'Le paramètre profileId est requis.'], 400);
         }
 
         try {
@@ -69,27 +79,27 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/add/post', name: 'add_comment_to_post', methods: ['POST'])]
+    #[Route('', name: 'add_comment_to_post', methods: ['POST'])]
     public function addCommentToPost(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
         if (!$post) {
-            return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -97,22 +107,22 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/{commentId}/update', name: 'update_comment', methods: ['PUT'])]
+    #[Route('/{commentId}', name: 'update_comment', methods: ['PUT'])]
     public function updateComment(string $commentId, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['authorId']) || empty($data['content'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
@@ -120,11 +130,11 @@ class CommentController extends AbstractController
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/{commentId}/delete', name: 'delete_comment', methods: ['DELETE'])]
+    #[Route('/{commentId}', name: 'delete_comment', methods: ['DELETE'])]
     public function deleteComment(string $commentId, Request $request): JsonResponse
     {
         try {
@@ -133,57 +143,57 @@ class CommentController extends AbstractController
 
             $author = $this->profileRepository->findProfileById($data['authorId']);
             if (!$author) {
-                return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }
 
             $comment = $this->commentRepository->find($commentId);
 
             if (!$comment) {
-                return $this->json(['error' => 'comment not found'], 404);
+                return $this->json(['error' => 'commentaire non trouvé'], 404);
             }
 
             if ($comment->getAuthorId() !== (string) $authorId) {
-                return $this->json(['error' => 'Unauthorized action'], 403);
+                return $this->json(['error' => 'Action non autorisée'], 403);
             }
 
             $this->commentService->deleteComment($comment);
 
-            return $this->json(['message' => 'Comment deleted successfully'], 200);
+            return $this->json(['message' => 'Commentaire supprimé avec succès'], 200);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal Server Error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    #[Route('/add/reply', name: 'reply_to_comment', methods: ['POST'])]
+    #[Route('/replies', name: 'reply_to_comment', methods: ['POST'])]
     public function replyToComment(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['postId'], $data['authorId'], $data['content'], $data['parentId'])) {
-            return $this->json(['error' => 'Missing parameters'], 400);
+            return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
         $post = $this->postRepository->findPostWithGroupById($data['postId']);
         if (!$post) {
-            return $this->json(['error' => ErrorMessagesConstant::POST_NOT_FOUND], 404);
+            return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
         $author = $this->profileRepository->findProfileById($data['authorId']);
         if (!$author) {
-            return $this->json(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         $parentComment = $this->commentRepository->find($data['parentId']);
         if (!$parentComment) {
-            return $this->json(['error' => 'Parent comment not found'], 404);
+            return $this->json(['error' => "Le commentaire du parent n'a pas été trouvé"], 404);
         }
 
         try {
-            return $this->commentService->replyToComment($data['postId'], $data['authorId'], $data['content'], $data['parentId']);
+            return $this->commentService->replyToComment((int) $data['postId'], (int) $data['authorId'], $data['content'], (int) $data['parentId']);
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {
-            return $this->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
+            return $this->json(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

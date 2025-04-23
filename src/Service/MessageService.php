@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\Conversation;
 use App\Entity\Profile;
 use App\Entity\User;
@@ -27,30 +29,30 @@ readonly class MessageService
     public function sendMessage(int $conversationId, array $data): array
     {
         if (empty($data['userEmail'])) {
-            return ['error' => 'User email is required', 'status' => 400];
+            return ['error' => "L'adresse électronique de l'utilisateur est requise", 'status' => 400];
         }
 
         if (empty($data['message'])) {
-            return ['error' => 'Message content is required', 'status' => 400];
+            return ['error' => 'Le contenu du message est obligatoire', 'status' => 400];
         }
 
         $user = $this->userRepository->findOneUserByEmail($data['userEmail']);
         if (!$user) {
-            return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
         }
 
         $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
         if (!$createdBy) {
-            return ['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
         if (!$conversation) {
-            return ['error' => 'Conversation not found.', 'status' => 404];
+            return ['error' => 'Conversation introuvable', 'status' => 404];
         }
 
         if (!$this->conversationRepository->isUserParticipant($conversationId, $createdBy)) {
-            return ['error' => 'User is not a participant in this conversation.', 'status' => 403];
+            return ['error' => "L'utilisateur ne participe pas à cette conversation", 'status' => 403];
         }
 
         try {
@@ -73,9 +75,9 @@ readonly class MessageService
             $this->entityManager->persist($conversation);
             $this->entityManager->flush();
 
-            return ['success' => 'Message sent to conversation.'];
+            return ['success' => 'Message envoyé à la conversation'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -83,7 +85,7 @@ readonly class MessageService
     {
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
         if (!$conversation) {
-            return ['error' => 'Conversation not found.', 'status' => 404];
+            return ['error' => 'Conversation introuvable', 'status' => 404];
         }
 
         try {
@@ -107,7 +109,7 @@ readonly class MessageService
                 'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
             ], $pagedMessages);
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
@@ -117,24 +119,30 @@ readonly class MessageService
             $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
 
             if (!$user) {
-                return ['error' => ErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+                return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            }
+
+            $profile = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
+
+            if (!$profile) {
+                return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
             }
 
             $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
 
             if (!$conversation) {
-                return ['error' => 'Conversation not found.', 'status' => 404];
+                return ['error' => 'Conversation introuvable', 'status' => 404];
             }
 
-            if (!$this->conversationRepository->isUserParticipant($conversationId, $user)) {
-                return ['error' => 'User is not a participant in this conversation.', 'status' => 403];
+            if (!$this->conversationRepository->isUserParticipant($conversationId, $profile)) {
+                return ['error' => "L'utilisateur ne participe pas à cette conversation", 'status' => 403];
             }
 
             $this->redisMessageService->markMessagesRead($conversationId, $userEmail);
 
-            return ['success' => 'All messages marked as read.'];
+            return ['success' => 'Tous les messages sont marqués comme lus'];
         } catch (Exception $e) {
-            return ['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+            return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\PostErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Document\Comment;
 use App\Enum\NotificationTypeEnum;
 use App\Enum\ResourceTypeEnum;
@@ -16,6 +18,7 @@ use DateTime;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 readonly class CommentService
 {
@@ -36,7 +39,7 @@ readonly class CommentService
             $comment = $this->commentRepository->findCommentById($commentId);
 
             if (!$comment) {
-                return new JsonResponse(['error' => 'Comment not found'], 404);
+                return new JsonResponse(['error' => 'Commentaire non trouvé'], 404);
             }
 
             return new JsonResponse([
@@ -48,11 +51,11 @@ readonly class CommentService
                 'createdAt' => $comment->getCreatedAt(),
             ], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function getCommentChildren(string $commentId, string $profileId): JsonResponse
+    public function getCommentChildren(string $commentId, int $profileId): JsonResponse
     {
         try {
             $childComments = $this->commentRepository->findChildrenByParentId($commentId);
@@ -81,26 +84,26 @@ readonly class CommentService
 
             return new JsonResponse($formattedComments, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function getCommentsForPost(string $postId, string $profileId, int $limit = 5): JsonResponse
+    public function getCommentsForPost(int $postId, int $profileId, int $limit = 5): JsonResponse
     {
         try {
             $findPost = $this->postRepository->findOneBy(['id' => $postId]);
             if (!$findPost) {
-                return new JsonResponse(['error' => 'Post not found'], 404);
+                return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             if (!$postId) {
-                return new JsonResponse(['error' => 'Post ID is required'], 400);
+                return new JsonResponse(['error' => "L'identifiant du poste est requis"], 400);
             }
 
             $comments = $this->commentRepository->getMainComments($postId, $limit);
 
             if (empty($comments)) {
-                return new JsonResponse(['message' => 'No comments found'], 200);
+                return new JsonResponse(['message' => "Aucun commentaire n'a été trouvé"], 200);
             }
 
             $author = $this->profileValidator->validateProfile($findPost->getAuthor()->getId());
@@ -122,21 +125,21 @@ readonly class CommentService
 
             return new JsonResponse(['comments' => $formattedComments], 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function addCommentToPost(string $postId, string $authorId, string $content): JsonResponse
+    public function addCommentToPost(int $postId, int $authorId, string $content): JsonResponse
     {
         try {
             $post = $this->postRepository->find($postId);
             if (!$post) {
-                return new JsonResponse(['error' => 'Post not found'], 404);
+                return new JsonResponse(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
             }
 
             $author = $this->profileRepository->find($authorId);
             if (!$author) {
-                return new JsonResponse(['error' => 'Author not found'], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }
 
             $receiver = $post->getAuthor();
@@ -154,7 +157,7 @@ readonly class CommentService
             );
 
             return new JsonResponse([
-                'message' => 'Comment successfully added to post',
+                'message' => "Commentaire ajouté avec succès à l'article",
                 'comment' => [
                     'id' => $comment->getId(),
                     'content' => $comment->getContent(),
@@ -170,7 +173,7 @@ readonly class CommentService
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -179,12 +182,13 @@ readonly class CommentService
         $comment = $this->commentRepository->findCommentById($commentId);
 
         if (!$comment) {
-            return new JsonResponse(['error' => 'Comment not found'], 404);
+            return new JsonResponse(['error' => 'Commentaire non trouvé'], 404);
         }
 
-        if ($comment->getAuthorId() !== $authorId) {
-            return new JsonResponse(['error' => 'Author id does not match'], 400);
+        if ($comment->getAuthorId() != $authorId) {
+            return new JsonResponse(['error' => "L'identifiant de l'auteur ne correspond pas"], 400);
         }
+
         try {
             $comment->setContent($content);
             $comment->setUpdatedAt(new DateTime());
@@ -198,9 +202,9 @@ readonly class CommentService
                     'content' => $comment->getContent(),
                     'updatedAt' => $comment->getUpdatedAt()->format('Y-m-d H:i:s'),
                 ],
-            ], JsonResponse::HTTP_OK);
+            ], Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], JsonResponse::HTTP_FORBIDDEN);
         }
     }
 
@@ -209,19 +213,19 @@ readonly class CommentService
         $this->dm->remove($comment);
         $this->dm->flush();
 
-        return new JsonResponse(['message' => 'Comment deleted successfully'], 200);
+        return new JsonResponse(['message' => 'Commentaire supprimé avec succès'], 200);
     }
 
-    public function replyToComment(string $postId, string $authorId, string $content, string $parentId): JsonResponse
+    public function replyToComment(int $postId, int $authorId, string $content, int $parentId): JsonResponse
     {
         try {
             if (empty($postId) || empty($authorId) || empty($content) || empty($parentId)) {
-                return new JsonResponse(['error' => 'Missing parameters: postId, authorId, content, and parentId are required'], 400);
+                return new JsonResponse(['error' => 'Paramètres manquants : postId, authorId, content et parentId sont obligatoires.'], 400);
             }
 
             $parentComment = $this->dm->getRepository(Comment::class)->find($parentId);
             if (!$parentComment) {
-                return new JsonResponse(['error' => 'Parent comment not found'], 404);
+                return new JsonResponse(['error' => "Le commentaire du parent n'a pas été trouvé"], 404);
             }
 
             $reply = new Comment($postId, $authorId, $content, $parentId);
@@ -233,7 +237,7 @@ readonly class CommentService
             $this->dm->flush();
 
             return new JsonResponse([
-                'message' => 'Reply successfully added',
+                'message' => 'Réponse ajoutée avec succès',
                 'comment' => [
                     'id' => $reply->getId(),
                     'content' => $reply->getContent(),
@@ -243,7 +247,7 @@ readonly class CommentService
                 ],
             ], 201);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'details' => $e->getMessage()], 500);
         }
     }
 }

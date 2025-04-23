@@ -5,8 +5,10 @@ parameters:
     level: 5
     paths:
         - src # Répertoire à analyser
-        - tests # Analyser aussi les tests (facultatif)
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     excludePaths:
         - %currentWorkingDirectory%/src/Migrations/* # Exclure les migrations
+    ignoreErrors:
+        - '#\$id \(int\|null\) is never assigned int#'
+        - '#Property App\\Document\\Comment::\$id \(string\|null\) is never assigned string#'

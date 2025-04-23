@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Entity\React;
 use App\Enum\NotificationTypeEnum;
 use App\Enum\ReactTypeEnum;
@@ -39,12 +40,12 @@ readonly class ReactService
 
             $profile = $this->profileRepository->find($profileId);
             if (!$profile) {
-                return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
             }
 
             $receiver = $this->profileRepository->find($receiverId);
             if (!$receiver) {
-                return new JsonResponse(['error' => ErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404]);
             }
 
             $existingReaction = $this->reactRepository->findOneBy([
@@ -77,7 +78,7 @@ readonly class ReactService
 
             return new JsonResponse(['message' => 'Réaction ajoutée et notification mise en cache', 'status' => 201]);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => ErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500]);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500]);
         }
     }
 }

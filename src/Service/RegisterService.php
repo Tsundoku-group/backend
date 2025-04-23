@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Constant\ErrorMessagesConstant;
+use App\Constant\UserErrorMessagesConstant;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use DateInterval;
@@ -27,7 +27,7 @@ readonly class RegisterService
     {
         $existingUser = $this->userRepository->findOneUserByEmail($email);
         if ($existingUser) {
-            return ['error' => 'Email already in use', 'status' => 409];
+            return ['error' => UserErrorMessagesConstant::EMAIL_ALREADY_IN_USE, 'status' => 409];
         }
 
         $user = new User();
@@ -47,7 +47,7 @@ readonly class RegisterService
     {
         $user = $this->userRepository->findOneByRegistrationToken($token);
         if (!$user) {
-            throw new Exception(ErrorMessagesConstant::USER_NOT_FOUND, 404);
+            throw new Exception(UserErrorMessagesConstant::USER_NOT_FOUND, 404);
         }
 
         $user->setTokenRegistration(null);
@@ -61,7 +61,7 @@ readonly class RegisterService
     {
         $user = $this->userRepository->findOneUserByEmailAndIsVerified($email);
         if (!$user) {
-            throw new Exception('User not found', 404);
+            throw new Exception(UserErrorMessagesConstant::USER_NOT_FOUND, 404);
         }
 
         $tokenRegistration = $this->tokenGenerator->generateToken();

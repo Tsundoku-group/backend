@@ -9,14 +9,17 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 #[ODM\Document(collection: 'comments', repositoryClass: CommentRepository::class)]
 class Comment
 {
+    /**
+     * @var string|null Set by Doctrine
+     */
     #[ODM\Id]
-    private string $id;
+    private ?string $id = null;
 
-    #[ODM\Field(type: 'string')]
-    private string $postId;
+    #[ODM\Field(type: 'integer')]
+    private int $postId;
 
-    #[ODM\Field(type: 'string')]
-    private string $authorId;
+    #[ODM\Field(type: 'integer')]
+    private int $authorId;
 
     #[ODM\Field(type: 'string')]
     private string $content;
@@ -27,13 +30,13 @@ class Comment
     #[ODM\Field(type: 'date')]
     private DateTime $updatedAt;
 
-    #[ODM\Field(type: 'string')]
-    private ?string $parentId = null;
+    #[ODM\Field(type: 'integer')]
+    private ?int $parentId = null;
 
     #[ODM\Field(type: 'collection')]
     private array $children = [];
 
-    public function __construct(string $postId, string $authorId, string $content, ?string $parentId = null)
+    public function __construct(int $postId, int $authorId, string $content, ?int $parentId = null)
     {
         $this->postId = $postId;
         $this->authorId = $authorId;
@@ -48,12 +51,12 @@ class Comment
         return $this->id;
     }
 
-    public function getPostId(): string
+    public function getPostId(): int
     {
         return $this->postId;
     }
 
-    public function getAuthorId(): string
+    public function getAuthorId(): int
     {
         return $this->authorId;
     }
@@ -83,7 +86,7 @@ class Comment
         $this->updatedAt = $updatedAt;
     }
 
-    public function getParentId(): ?string
+    public function getParentId(): ?int
     {
         return $this->parentId;
     }

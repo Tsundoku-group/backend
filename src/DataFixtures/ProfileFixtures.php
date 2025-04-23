@@ -14,9 +14,6 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        $connection = $manager->getConnection();
-        $connection->executeStatement('ALTER SEQUENCE profile_id_seq RESTART WITH 1');
-
         $adminUser = $this->getReference('user_entity', User::class);
 
         // Profil actif pour l'admin
@@ -115,6 +112,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             UserFixtures::class,
+            ResetAutoIncrementFixtures::class,
         ];
     }
 }
