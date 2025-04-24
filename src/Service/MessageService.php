@@ -22,26 +22,16 @@ readonly class MessageService
         private RedisMessageService $redisMessageService,
         private EntityManagerInterface $entityManager,
         private ConversationRepository $conversationRepository,
-        private UserRepository $userRepository,
     ) {
     }
 
     public function sendMessage(int $conversationId, array $data): array
     {
-        if (empty($data['userEmail'])) {
-            return ['error' => "L'adresse électronique de l'utilisateur est requise", 'status' => 400];
-        }
-
-        if (empty($data['message'])) {
+        if (empty($data['content'])) {
             return ['error' => 'Le contenu du message est obligatoire', 'status' => 400];
         }
 
-        $user = $this->userRepository->findOneUserByEmail($data['userEmail']);
-        if (!$user) {
-            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
-        }
-
-        $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['user' => $user]);
+        $createdBy = $this->entityManager->getRepository(Profile::class)->findOneBy(['id' => $data['sender_id']]);
         if (!$createdBy) {
             return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
@@ -59,10 +49,9 @@ readonly class MessageService
             $dateTime = new DateTime('now', new DateTimeZone('Europe/Paris'));
 
             $messageData = [
-                'id' => $data['id'],
-                'content' => $data['message'],
+                'uuid' => $data['uuid'],
+                'content' => $data['content'],
                 'sender_id' => $createdBy->getId(),
-                'sender_email' => $data['userEmail'],
                 'sent_by' => $createdBy->getUsername(),
                 'sent_at' => $dateTime->format('Y-m-d H:i:s'),
                 'isRead' => false,
@@ -81,7 +70,7 @@ readonly class MessageService
         }
     }
 
-    public function getMessages(int $conversationId, array $queryParams, User $user): array
+    public function getMessages(int $conversationId, array $queryParams, Profile $profile): array
     {
         $conversation = $this->entityManager->getRepository(Conversation::class)->find($conversationId);
         if (!$conversation) {
@@ -99,14 +88,13 @@ readonly class MessageService
             $pagedMessages = array_slice($allMessages, $startIndex, $queryParams['limit'] ?? 10);
 
             return array_map(fn ($message) => [
-                'id' => $message['id'],
+                'id' => $message['uuid'],
                 'content' => $message['content'],
                 'sender_id' => $message['sender_id'],
                 'sent_by' => $message['sent_by'],
                 'sent_at' => $message['sent_at'],
                 'isRead' => $message['isRead'],
-                'sender_email' => $message['sender_email'],
-                'isCurrentUser' => $message['sender_email'] === $user->getEmail(),
+                'isCurrentUser' => $message['sent_by'] === $profile->getUsername(),
             ], $pagedMessages);
         } catch (Exception $e) {
             return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];

@@ -101,22 +101,6 @@ class ProfileRepository extends ServiceEntityRepository
         }
     }
 
-    public function findProfileByEmail(string $email): ?Profile
-    {
-        $result = $this->createQueryBuilder('p')
-            ->innerJoin('p.user', 'u')
-            ->where('u.email = :email')
-            ->andWhere('p.activeProfile = :activeProfile')
-            ->setParameter('email', $email)
-            ->setParameter('activeProfile', true);
-
-        try {
-            return $result->getQuery()->getOneOrNullResult();
-        } catch (NonUniqueResultException $e) {
-            return null;
-        }
-    }
-
     public function findProfileByUsername(string $username): ?array
     {
         $qb = $this->createQueryBuilder('p')

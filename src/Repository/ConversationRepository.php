@@ -4,8 +4,8 @@ namespace App\Repository;
 
 use App\Entity\Conversation;
 use App\Entity\Profile;
-use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -23,17 +23,20 @@ class ConversationRepository extends ServiceEntityRepository
         parent::__construct($registry, Conversation::class);
     }
 
-    public function findConversationsByUserOrderedByLastMessage(User $user, int $page, int $limit)
+    public function findConversationsByProfileByLastMessage(Profile $profile, int $page, int $limit): array
     {
-        return $this->createQueryBuilder('c')
+        $qd = $this->createQueryBuilder('c')
             ->innerJoin('c.participants', 'p')
-            ->where('p = :user')
-            ->setParameter('user', $user)
+            ->where('p = :profile')
+            ->setParameter('profile', $profile)
             ->orderBy('c.lastMessageAt', 'ASC')
             ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->setMaxResults($limit);
+        try {
+            return $qd->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
     }
 
     public function findOneByParticipants(array $participants): ?Conversation

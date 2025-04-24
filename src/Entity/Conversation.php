@@ -34,6 +34,9 @@ class Conversation
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isArchived;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?DateTimeImmutable $archivedAt = null;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isMuted = false;
 
@@ -110,6 +113,17 @@ class Conversation
     {
         $this->isArchived = $IsArchived;
 
+        return $this;
+    }
+
+    public function getArchivedAt(): ?DateTimeImmutable
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(?DateTimeImmutable $archivedAt): self
+    {
+        $this->archivedAt = $archivedAt;
         return $this;
     }
 

@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Message\GetMessageDTO;
 use App\DTO\Message\MarkMessageReadDTO;
 use App\DTO\Message\SendMessageDTO;
 use App\Entity\User;
+use App\Repository\ProfileRepository;
 use App\Service\MessageService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,7 +23,9 @@ class MessageController extends AbstractController
 {
     public function __construct(
         private readonly MessageService $messageService,
-    ) {
+        private readonly ProfileRepository $profileRepository
+    )
+    {
     }
 
     #[Route('/{conversationId}/send', name: 'send_message', methods: ['POST'])]
@@ -30,7 +34,7 @@ class MessageController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $dto = new SendMessageDTO($data);
         try {
-            $response = $this->messageService->sendMessage($conversationId, (array) $dto);
+            $response = $this->messageService->sendMessage($conversationId, (array)$dto);
 
             if (isset($response['error'])) {
                 return new JsonResponse(['error' => $response['error']], $response['status']);
@@ -38,27 +42,37 @@ class MessageController extends AbstractController
 
             return new JsonResponse($response, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/{conversationId}', name: 'get_messages', methods: ['GET'])]
     public function getMessages(int $conversationId, Request $request): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        $profileId = $request->query->get('profileId');
+        if (!$profileId) {
+            return new JsonResponse(['error' => 'ID manquant.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $profile = $this->profileRepository->find($profileId);
+
+        if (!$profile) {
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $queryParams = $request->query->all();
         $dto = new GetMessageDTO($queryParams);
-        $response = $this->messageService->getMessages($conversationId, (array) $dto, $user);
+        try {
+            $response = $this->messageService->getMessages($conversationId, (array)$dto, $profile);
 
-        if (isset($response['error'])) {
-            return new JsonResponse(['error' => $response['error']], $response['status']);
+            if (isset($response['error'])) {
+                return new JsonResponse(['error' => $response['error']], $response['status']);
+            }
+
+            return new JsonResponse($response, Response::HTTP_OK);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return new JsonResponse($response, Response::HTTP_OK);
     }
 
     #[Route('/{conversationId}/mark/read', name: 'mark_messages_read', methods: ['POST'])]

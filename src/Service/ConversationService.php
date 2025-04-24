@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Conversation\CreateConversationDTO;
 use App\Entity\Conversation;
@@ -18,37 +19,34 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\HttpFoundation\Response;
 
-class ConversationService
+readonly class ConversationService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository $userRepository,
-        private readonly ProfileRepository $profileRepository,
-        private readonly ConversationRepository $conversationRepository,
-        private readonly RedisMessageService $redisMessageService,
+        private EntityManagerInterface $entityManager,
+        private UserRepository         $userRepository,
+        private ProfileRepository      $profileRepository,
+        private ConversationRepository $conversationRepository,
+        private RedisMessageService    $redisMessageService,
     ) {
     }
 
     public function createConversation(CreateConversationDTO $dto): array
     {
-        $createdBy = $this->profileRepository->findProfileByEmail($dto->email);
+        $createdBy = $this->profileRepository->findOneBy(['username' => $dto->username]);
+
         if (!$createdBy) {
-            return ['error' => UserErrorMessagesConstant::USER_NOT_FOUND, 'status' => 404];
+            return ['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND, 'status' => 404];
         }
 
         try {
             $participantsIds = $dto->participants;
-            if (!in_array($createdBy->getId(), $participantsIds)) {
+            if (!in_array($createdBy->getId(), $participantsIds, true)) {
                 $participantsIds[] = $createdBy->getId();
             }
 
-            $participants = [];
-            foreach ($participantsIds as $participantId) {
-                $participant = $this->entityManager->getRepository(Profile::class)->find($participantId);
-                if ($participant) {
-                    $participants[] = $participant;
-                }
-            }
+            $participants = array_filter(array_map(function ($id) {
+                return $this->entityManager->getRepository(Profile::class)->find($id);
+            }, $participantsIds));
 
             if ($this->conversationRepository->findOneByParticipants($participants)) {
                 return ['error' => 'La conversation existe déjà', 'status' => 409];
@@ -65,16 +63,20 @@ class ConversationService
             $this->entityManager->persist($conversation);
             $this->entityManager->flush();
 
-            return ['message' => 'Conversation créée', 'conversationId' => $conversation->getId(), 'status' => 201];
+            return [
+                'message' => 'Conversation créée',
+                'conversationId' => $conversation->getId(),
+                'status' => 201
+            ];
         } catch (Exception $e) {
             return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
         }
     }
 
-    public function getAllConversationsWithLastMessages($user, int $page, int $limit): array
+    public function getAllConversationsWithLastMessages($profile, int $page, int $limit): array
     {
         try {
-            $conversations = $this->conversationRepository->findConversationsByUserOrderedByLastMessage($user, $page, $limit);
+            $conversations = $this->conversationRepository->findConversationsByProfileByLastMessage($profile, $page, $limit);
             if (!$conversations) {
                 return ['conversations' => [], 'status' => Response::HTTP_OK];
             }
@@ -152,7 +154,6 @@ class ConversationService
                 'lastMessageAt' => $conversation->getLastMessageAt(),
                 'createdBy' => [
                     'id' => $createdBy->getId(),
-                    'email' => $createdBy->getUser()->getEmail(),
                     'username' => $createdBy->getUsername(),
                 ],
                 'participants' => array_map(function ($participant) {
@@ -162,7 +163,6 @@ class ConversationService
 
                     return [
                         'id' => $participant->getId(),
-                        'email' => $participant->getUser()->getEmail(),
                         'username' => $participant->getUsername(),
                     ];
                 }, $conversation->getParticipants()->toArray()),
@@ -235,6 +235,7 @@ class ConversationService
                         'email' => $createdBy->getUser()->getEmail(),
                         'username' => $createdBy->getUsername(),
                     ],
+                    'archivedAt' => $conversation->getArchivedAt(),
                     'participants' => array_map(function ($participant) {
                         if (!$participant || !$participant->getUser()) {
                             return [];
@@ -270,6 +271,7 @@ class ConversationService
             }
 
             $conversation->setIsArchived(true);
+            $conversation->setArchivedAt(new DateTimeImmutable());
             $this->entityManager->flush();
 
             return ['message' => 'Conversation archivée', 'status' => Response::HTTP_OK];

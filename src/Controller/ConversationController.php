@@ -3,9 +3,11 @@
 namespace App\Controller;
 
 use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
 use App\DTO\Conversation\CreateConversationDTO;
 use App\DTO\Conversation\MuteConversationDTO;
+use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use App\Service\ConversationService;
 use Exception;
@@ -20,7 +22,7 @@ class ConversationController extends AbstractController
 {
     public function __construct(
         private readonly ConversationService $conversationService,
-        private readonly UserRepository $userRepository,
+        private readonly ProfileRepository $profileRepository,
     ) {
     }
 
@@ -31,7 +33,7 @@ class ConversationController extends AbstractController
             $data = json_decode($request->getContent(), true);
             $dto = new CreateConversationDTO($data);
 
-            if (!isset($dto->participants) || !isset($dto->email)) {
+            if (!isset($dto->participants) || !isset($dto->username)) {
                 return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
             }
 
@@ -46,19 +48,19 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{profileId}', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
+    #[Route('/{profileId}/all', name: 'get_all_conversations_with_last_messages', methods: ['GET'])]
     public function getAllConversationsByProfileIdWithLastMessages(int $profileId, Request $request): JsonResponse
     {
         try {
-            $user = $this->userRepository->findOneUserById($profileId);
-            if (!$user) {
-                return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_NOT_FOUND);
+            $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
+            if (!$profile) {
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             $page = $request->query->getInt('page', 1);
             $limit = $request->query->getInt('limit', 20);
 
-            $response = $this->conversationService->getAllConversationsWithLastMessages($user, $page, $limit);
+            $response = $this->conversationService->getAllConversationsWithLastMessages($profile, $page, $limit);
 
             return new JsonResponse(
                 ['conversations' => $response['conversations'] ?? '', 'error' => $response['error'] ?? ''],
@@ -69,11 +71,11 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'get_conversation_by_id', methods: ['GET'])]
-    public function getConversationById(int $id): JsonResponse
+    #[Route('/{conversationId}', name: 'get_conversation_by_id', methods: ['GET'])]
+    public function getConversationById(int $conversationId): JsonResponse
     {
         try {
-            $response = $this->conversationService->getOneConversationById($id);
+            $response = $this->conversationService->getOneConversationById($conversationId);
 
             return new JsonResponse(
                 ['conversation' => $response['conversation'] ?? '', 'error' => $response['error'] ?? ''],
@@ -84,11 +86,11 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{id}', name: 'delete_conversation', methods: ['DELETE'])]
-    public function deleteConversationById(int $id): JsonResponse
+    #[Route('/{conversationId}', name: 'delete_conversation', methods: ['DELETE'])]
+    public function deleteConversationById(int $conversationId): JsonResponse
     {
         try {
-            $response = $this->conversationService->deleteOneConversationById($id);
+            $response = $this->conversationService->deleteOneConversationById($conversationId);
 
             return new JsonResponse(
                 ['message' => $response['message'] ?? '', 'error' => $response['error'] ?? ''],
@@ -99,11 +101,11 @@ class ConversationController extends AbstractController
         }
     }
 
-    #[Route('/{userId}/archived', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
-    public function getArchivedConversationsByUserId(int $userId): JsonResponse
+    #[Route('/{profileId}/archived', name: 'get_archived_conversations_by_user_id', methods: ['GET'])]
+    public function getArchivedConversationsByUserId(int $profileId): JsonResponse
     {
         try {
-            $response = $this->conversationService->getArchivedConversationsByUserId($userId);
+            $response = $this->conversationService->getArchivedConversationsByUserId($profileId);
 
             return new JsonResponse(
                 ['conversations' => $response['conversations'] ?? '', 'error' => $response['error'] ?? ''],

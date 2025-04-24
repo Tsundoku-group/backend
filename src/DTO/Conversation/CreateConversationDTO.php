@@ -6,20 +6,25 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 readonly class CreateConversationDTO
 {
-    #[Assert\NotBlank(message: 'User email is required.')]
-    #[Assert\Email(message: 'The email must be valid.')]
-    public string $email;
+    #[Assert\NotBlank(message: 'Le nom d’utilisateur est requis.')]
+    #[Assert\Length(
+        min: 3,
+        max: 50,
+        minMessage: 'Le nom d’utilisateur doit contenir au moins {{ limit }} caractères.',
+        maxMessage: 'Le nom d’utilisateur ne peut pas dépasser {{ limit }} caractères.'
+    )]
+    public string $username;
 
-    #[Assert\NotBlank(message: 'Participants are required.')]
+    #[Assert\NotBlank(message: 'Les participants sont requis.')]
     #[Assert\All([
-        new Assert\Type(type: 'integer', message: 'Participant IDs must be integers.'),
-        new Assert\Positive(message: 'Participant IDs must be positive.'),
+        new Assert\Type(type: 'integer', message: 'Les ID des participants doivent être des entiers.'),
+        new Assert\Positive(message: 'Les ID des participants doivent être positifs.'),
     ])]
     public array $participants;
 
     public function __construct(array $data)
     {
-        $this->email = $data['email'] ?? '';
+        $this->username = $data['username'] ?? '';
         $this->participants = $data['participants'] ?? [];
     }
 }
