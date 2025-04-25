@@ -30,13 +30,13 @@ class Comment
     #[ODM\Field(type: 'date')]
     private DateTime $updatedAt;
 
-    #[ODM\Field(type: 'integer')]
-    private ?int $parentId = null;
+    #[ODM\Field(type: 'string')]
+    private ?string $parentId = null;
 
     #[ODM\Field(type: 'collection')]
     private array $children = [];
 
-    public function __construct(int $postId, int $authorId, string $content, ?int $parentId = null)
+    public function __construct(int $postId, int $authorId, string $content, ?string $parentId = null)
     {
         $this->postId = $postId;
         $this->authorId = $authorId;
@@ -86,7 +86,7 @@ class Comment
         $this->updatedAt = $updatedAt;
     }
 
-    public function getParentId(): ?int
+    public function getParentId(): ?string
     {
         return $this->parentId;
     }

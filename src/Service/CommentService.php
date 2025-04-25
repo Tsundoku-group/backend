@@ -216,7 +216,7 @@ readonly class CommentService
         return new JsonResponse(['message' => 'Commentaire supprimé avec succès'], 200);
     }
 
-    public function replyToComment(int $postId, int $authorId, string $content, int $parentId): JsonResponse
+    public function replyToComment(int $postId, int $authorId, string $content, string $parentId): JsonResponse
     {
         try {
             if (empty($postId) || empty($authorId) || empty($content) || empty($parentId)) {
