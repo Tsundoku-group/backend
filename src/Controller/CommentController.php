@@ -173,12 +173,12 @@ class CommentController extends AbstractController
             return $this->json(['error' => GenericErrorMessagesConstant::MISSING_PARAMETERS], 400);
         }
 
-        $post = $this->postRepository->findPostWithGroupById($data['postId']);
+        $post = $this->postRepository->findPostWithGroupById((int) $data['postId']);
         if (!$post) {
             return $this->json(['error' => PostErrorMessagesConstant::POST_NOT_FOUND], 404);
         }
 
-        $author = $this->profileRepository->findProfileById($data['authorId']);
+        $author = $this->profileRepository->findProfileById((int) $data['authorId']);
         if (!$author) {
             return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
@@ -189,7 +189,12 @@ class CommentController extends AbstractController
         }
 
         try {
-            return $this->commentService->replyToComment((int) $data['postId'], (int) $data['authorId'], $data['content'], (int) $data['parentId']);
+            return $this->commentService->replyToComment(
+                (int) $data['postId'],
+                (int) $data['authorId'],
+                $data['content'],
+                $data['parentId']
+            );
         } catch (InvalidArgumentException $e) {
             return $this->json(['error' => 'Invalid argument: ' . $e->getMessage()], 400);
         } catch (Exception $e) {

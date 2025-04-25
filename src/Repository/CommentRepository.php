@@ -47,16 +47,16 @@ class CommentRepository extends DocumentRepository
 
     public function findChildrenByParentId(string $commentId): array
     {
-        $commentChildren = $this->createQueryBuilder()
-            ->field('parentId')->equals($commentId)
-            ->sort('createdAt', 'asc');
-
         try {
             /** @var Iterator $results */
-            $results = $commentChildren->getQuery()->execute();
+            $results = $this->createQueryBuilder()
+                ->field('parentId')->equals($commentId)
+                ->sort('createdAt', 'asc')
+                ->getQuery()
+                ->execute();
 
             return iterator_to_array($results);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return [];
         }
     }
