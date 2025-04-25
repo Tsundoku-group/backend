@@ -83,3 +83,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-79] Récupération des groupes privés [#79](https://trello.com/c/4b4QL3pG/79-t-79-r%C3%A9cup%C3%A9ration-des-groupes-priv%C3%A9s)
 - [t-80] Corrections majeures [#80](https://trello.com/c/cWxndkAV/80-t-80-corrections-majeures)
 - [t-81] Remise au propre du chat [#81](https://trello.com/c/n2wwL4wu/81-t-81-remise-au-propre-du-chat)
+- [t-82] remise au propre des commentaires [#82](https://trello.com/c/NbobNjfd/82-t-82-remise-au-propre-des-commentaires)
