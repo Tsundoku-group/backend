@@ -76,9 +76,10 @@ class UserRepository extends ServiceEntityRepository
     public function findOneUserByEmailAndIsVerified(string $email): ?User
     {
         $findUserByEmailAndIsVerified = $this->createQueryBuilder('u')
-            ->select('u.email, u.isVerified')
             ->where('u.email = :email')
-            ->setParameter('email', $email);
+            ->andWhere('u.isVerified = false')
+            ->setParameter('email', $email)
+            ->setMaxResults(1);
 
         try {
             return $findUserByEmailAndIsVerified->getQuery()->getOneOrNullResult();
