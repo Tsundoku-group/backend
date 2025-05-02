@@ -7,4 +7,5 @@ enum ChallengeTypeEnum: string
     case PREDEFINED = 'predefined';
     case COMMUNITY = 'community';
     case CUSTOMISED = 'customised';
+    case SPECIAL = 'special';
 }
