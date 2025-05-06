@@ -114,4 +114,21 @@ class ProfileRepository extends ServiceEntityRepository
             return null;
         }
     }
+
+    public function findProfiles(string $search, int $limit = 20, int $offset = 0): ?array
+    {
+        $query = $this->createQueryBuilder('profile')
+            ->select('profile.id, profile.username, profile.firstName, profile.lastName')
+            ->where('profile.username LIKE :search')
+            ->setParameter('search', '%' . $search . '%')
+            ->orderBy('profile.username', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        try {
+            return  $query->getQuery()->getArrayResult();
+        } catch (NonUniqueResultException $e) {
+            return null;
+        }
+    }
 }

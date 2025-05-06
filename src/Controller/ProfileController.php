@@ -32,12 +32,12 @@ class ProfileController extends AbstractController
             $profileData = $this->profileService->getProfileWithStats($profileId);
 
             if (!$profileData) {
-                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             return new JsonResponse($profileData);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -53,7 +53,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse($getUserProfiles);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -64,7 +64,7 @@ class ProfileController extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 401);
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_UNAUTHORIZED);
         }
 
         $dto = new ProfileDTO($data);
@@ -76,9 +76,9 @@ class ProfileController extends AbstractController
                 return new JsonResponse(['error' => $createNewUserProfile['error']], $createNewUserProfile['status']);
             }
 
-            return new JsonResponse($createNewUserProfile, 201);
+            return new JsonResponse($createNewUserProfile, Response::HTTP_CREATED);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -88,7 +88,7 @@ class ProfileController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
-            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         $dto = new ProfileDTO($data);
@@ -102,7 +102,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse($updatedProfile, Response::HTTP_OK);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -113,12 +113,12 @@ class ProfileController extends AbstractController
             $deleteUserProfile = $this->profileService->deleteProfile($profileId);
 
             if (!$deleteUserProfile) {
-                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             return new JsonResponse(null, 204);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -128,12 +128,12 @@ class ProfileController extends AbstractController
         try {
             $fetchActiveProfile = $this->profileService->getActiveProfile($id);
             if (!$fetchActiveProfile) {
-                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             return new JsonResponse($fetchActiveProfile);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -142,7 +142,7 @@ class ProfileController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         if (!isset($data['id']) || !isset($data['profileId'])) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], 400);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_NOT_FOUND);
         }
 
         try {
@@ -155,7 +155,7 @@ class ProfileController extends AbstractController
 
             return new JsonResponse($setActiveProfile);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -168,12 +168,28 @@ class ProfileController extends AbstractController
         try {
             $updateProfileStatus = $this->profileService->updateProfileStatus($dto, $id);
             if (!$updateProfileStatus) {
-                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+                return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], Response::HTTP_NOT_FOUND);
             }
 
             return new JsonResponse($updateProfileStatus);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('', name: 'profile_search', methods: ['GET'])]
+    public function searchProfile(Request $request): JsonResponse
+    {
+        $search = $request->query->get('search', '');
+        $page = max((int) $request->query->get('page', '1'), 1);
+        $limit = max((int) $request->query->get('limit', '10'), 10);
+
+        try {
+            $profiles = $this->profileService->searchProfile($search, $page, $limit);
+
+            return new JsonResponse(['profiles' => $profiles], Response::HTTP_OK);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

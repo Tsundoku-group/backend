@@ -59,6 +59,9 @@ composer-dumpautoload:                   # Régénérer le fichier autoload
 make-entity:                             # Créer une nouvelle entité Symfony
 	$(COMPOSE) exec $(PHP_SERVICE) php bin/console make:entity $(entity)
 
+make-controller:
+	$(COMPOSE) exec $(PHP_SERVICE) php bin/console make:controller $(controller)
+
 cache-clear:                             # Vider le cache Symfony
 	$(COMPOSE) exec $(PHP_SERVICE) php bin/console cache:clear
 

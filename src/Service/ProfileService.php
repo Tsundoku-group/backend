@@ -16,6 +16,7 @@ use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Symfony\Component\HttpFoundation\Response;
 
 readonly class ProfileService
 {
@@ -244,6 +245,18 @@ readonly class ProfileService
             return ['success' => true, 'newStatus' => $profile->getStatus()];
         } catch (Exception $e) {
             return ['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR, 'status' => 500];
+        }
+    }
+
+    public function searchProfile(string $search, int $page = 1, int $limit = 20): ?array
+    {
+        $offset = ($page - 1) * $limit;
+        $profiles = $this->profileRepository->findProfiles($search,  $limit, $offset);
+
+        try {
+            return $profiles;
+        } catch (Exception $e) {
+            return null;
         }
     }
 }
