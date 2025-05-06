@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ChallengeProfileRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class ChallengeProfile
 {
     #[ORM\Id]
@@ -39,6 +40,12 @@ class ChallengeProfile
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $completedAt = null;
 
+    public function __construct()
+    {
+        $this->joinedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -49,9 +56,23 @@ class ChallengeProfile
         return $this->challenge;
     }
 
+    public function setChallenge(Challenge $challenge): self
+    {
+        $this->challenge = $challenge;
+
+        return $this;
+    }
+
     public function getProfile(): Profile
     {
         return $this->profile;
+    }
+
+    public function setProfile(Profile $profile): self
+    {
+        $this->profile = $profile;
+
+        return $this;
     }
 
     public function getStatus(): ChallengeProfileStatusEnum
@@ -77,7 +98,6 @@ class ChallengeProfile
     public function setRole(ChallengeProfileRoleEnum $role): self
     {
         $this->role = $role;
-        $this->updatedAt = new DateTimeImmutable();
 
         return $this;
     }
@@ -92,8 +112,21 @@ class ChallengeProfile
         return $this->updatedAt;
     }
 
+    #[ORM\PreUpdate]
+    public function updateUpdatedAt(): void
+    {
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     public function getCompletedAt(): ?DateTimeImmutable
     {
         return $this->completedAt;
+    }
+
+    public function setCompletedAt(?DateTimeImmutable $completedAt): self
+    {
+        $this->completedAt = $completedAt;
+
+        return $this;
     }
 }

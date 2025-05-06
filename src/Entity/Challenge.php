@@ -2,39 +2,66 @@
 
 namespace App\Entity;
 
+use App\Enum\ChallengeStatusEnum;
+use App\Enum\ChallengeActionTypeEnum;
+use App\Enum\ChallengeContentTypeEnum;
 use App\Enum\ChallengeTypeEnum;
 use App\Repository\ChallengeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\DiscriminatorColumn;
+use Doctrine\ORM\Mapping\DiscriminatorMap;
+use Doctrine\ORM\Mapping\InheritanceType;
 
 #[ORM\Entity(repositoryClass: ChallengeRepository::class)]
-class Challenge
+#[ORM\Table(name: 'challenge')]
+#[InheritanceType('SINGLE_TABLE')]
+#[DiscriminatorColumn(name: 'challenge_type', type: 'string')]
+#[DiscriminatorMap([
+    'base' => Challenge::class,
+    'joinable' => JoinableChallenge::class,
+])]
+#[ORM\HasLifecycleCallbacks]
+abstract class Challenge
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\Column(type: 'string', enumType: ChallengeTypeEnum::class)]
     private ChallengeTypeEnum $type;
 
-    #[ORM\Column(type: 'text')]
-    private string $description;
+    #[ORM\Column(length: 255)]
+    protected string $name;
 
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $startAt;
+    #[ORM\Column(type: 'string', enumType: ChallengeStatusEnum::class)]
+    protected ChallengeStatusEnum $status;
 
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $endAt;
+    #[ORM\Column(type: 'string', enumType: ChallengeActionTypeEnum::class)]
+    protected ChallengeActionTypeEnum $actionType;
+
+    #[ORM\Column(type: 'string', enumType: ChallengeContentTypeEnum::class)]
+    protected ChallengeContentTypeEnum $contentType;
+
+    #[ORM\Column(type: 'integer')]
+    protected int $quantity;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    protected \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $updatedAt;
+    protected \DateTimeImmutable $updatedAt;
+
+    #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeProfile::class, orphanRemoval: true)]
+    protected Collection $challengeProfiles;
 
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
+        $this->challengeProfiles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -50,42 +77,65 @@ class Challenge
     public function setType(ChallengeTypeEnum $type): self
     {
         $this->type = $type;
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
 
         return $this;
     }
 
-    public function getDescription(): string
+    public function getStatus(): ChallengeStatusEnum
     {
-        return $this->description;
+        return $this->status;
     }
 
-    public function setDescription(string $description): self
+    public function setStatus(ChallengeStatusEnum $status): self
     {
-        $this->description = $description;
+        $this->status = $status;
 
         return $this;
     }
 
-    public function getStartAt(): \DateTimeInterface
+    public function getActionType(): ChallengeActionTypeEnum
     {
-        return $this->startAt;
+        return $this->actionType;
     }
 
-    public function setStartAt(\DateTimeInterface $startAt): self
+    public function setActionType(ChallengeActionTypeEnum $actionType): self
     {
-        $this->startAt = $startAt;
+        $this->actionType = $actionType;
 
         return $this;
     }
 
-    public function getEndAt(): \DateTimeInterface
+    public function getContentType(): ChallengeContentTypeEnum
     {
-        return $this->endAt;
+        return $this->contentType;
     }
 
-    public function setEndAt(\DateTimeInterface $endAt): self
+    public function setContentType(ChallengeContentTypeEnum $contentType): self
     {
-        $this->endAt = $endAt;
+        $this->contentType = $contentType;
+
+        return $this;
+    }
+
+    public function getQuantity(): int
+    {
+        return $this->quantity;
+    }
+
+    public function setQuantity(int $quantity): self
+    {
+        $this->quantity = $quantity;
 
         return $this;
     }
@@ -100,10 +150,9 @@ class Challenge
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
     {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }
