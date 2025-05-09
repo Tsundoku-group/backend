@@ -23,8 +23,11 @@ class BooksList
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?array $books = null;
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $books = [];
+
+    #[ORM\Column(type: 'string', length: 10, nullable: false)]
+    private ?string $type = null;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private ?string $visibility = null;
@@ -72,6 +75,18 @@ class BooksList
     public function setBooks(?array $books): static
     {
         $this->books = $books;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
 
         return $this;
     }
