@@ -90,6 +90,12 @@ class Profile
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
 
+    /**
+     * @var Collection<int, BooksList>
+     */
+    #[ORM\OneToMany(targetEntity: BooksList::class, mappedBy: 'profile')]
+    private Collection $booksLists;
+
     private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
 
     public function __construct()
@@ -103,6 +109,7 @@ class Profile
         $this->conversationsParticipants = new ArrayCollection();
         $this->sentFriendships = new ArrayCollection();
         $this->receivedFriendships = new ArrayCollection();
+        $this->booksLists = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -473,6 +480,36 @@ class Profile
     public function removeConversationsParticipant(Conversation $conversation): self
     {
         $this->conversationsParticipants->removeElement($conversation);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BooksList>
+     */
+    public function getBooksLists(): Collection
+    {
+        return $this->booksLists;
+    }
+
+    public function addBooksList(BooksList $booksList): static
+    {
+        if (!$this->booksLists->contains($booksList)) {
+            $this->booksLists->add($booksList);
+            $booksList->setProfile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooksList(BooksList $booksList): static
+    {
+        if ($this->booksLists->removeElement($booksList)) {
+            // set the owning side to null (unless already changed)
+            if ($booksList->getProfile() === $this) {
+                $booksList->setProfile(null);
+            }
+        }
 
         return $this;
     }
