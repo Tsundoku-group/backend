@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\BooksListTypeNeum;
 use App\Repository\BooksListRepository;
 use DateTime;
 use DateTimeImmutable;
@@ -26,8 +27,8 @@ class BooksList
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $books = [];
 
-    #[ORM\Column(type: 'string', length: 10, nullable: false)]
-    private ?string $type = null;
+    #[ORM\Column(type: 'string', length: 10, nullable: false, enumType: BooksListTypeNeum::class)]
+    private ?string $type;
 
     #[ORM\Column(type: 'string', length: 10, nullable: false)]
     private ?string $visibility = null;
