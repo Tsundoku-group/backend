@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use App\Enum\BooksListTypeNeum;
+use App\Enum\BooksListTypeEnum;
+use App\Enum\VisibilityEnum;
 use App\Repository\BooksListRepository;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: BooksListRepository::class)]
 class BooksList
@@ -15,29 +17,37 @@ class BooksList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['public'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'booksLists')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Profile $profile = null;
+    #[Groups(['profile'])]
+    private Profile $profile;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['public'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['public'])]
     private ?array $books = [];
 
-    #[ORM\Column(type: 'string', length: 10, nullable: false, enumType: BooksListTypeNeum::class)]
-    private ?string $type;
+    #[ORM\Column(type: 'string', length: 10, nullable: false, enumType: BooksListTypeEnum::class)]
+    #[Groups(['public'])]
+    private BooksListTypeEnum $type;
 
-    #[ORM\Column(type: 'string', length: 10, nullable: false)]
-    private ?string $visibility = null;
+    #[ORM\Column(type: 'string', length: 10, nullable: false, enumType: VisibilityEnum::class)]
+    #[Groups(['public'])]
+    private VisibilityEnum $visibility;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?DateTimeImmutable $created_at = null;
+    #[Groups(['public'])]
+    private ?DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTime $updated_at = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['public'])]
+    private ?DateTime $updatedAt = null;
 
     public function getId(): ?int
     {
@@ -80,12 +90,12 @@ class BooksList
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): BooksListTypeEnum
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(BooksListTypeEnum $type): static
     {
         $this->type = $type;
 
@@ -106,24 +116,24 @@ class BooksList
 
     public function getCreatedAt(): ?DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeImmutable $created_at): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
-        $this->created_at = $created_at;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
     public function getUpdatedAt(): ?DateTime
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
-    public function setUpdatedAt(DateTime $updated_at): static
+    public function setUpdatedAt(DateTime $updatedAt): static
     {
-        $this->updated_at = $updated_at;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

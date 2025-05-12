@@ -2,25 +2,58 @@
 
 namespace App\Controller;
 
+use App\Constant\UserErrorMessagesConstant;
+use App\Entity\User;
+use App\Enum\VisibilityEnum;
+use App\Repository\BooksListRepository;
+use App\Validator\Constraints\ProfileValidator;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1/bookslist')]
 final class BooksListController extends AbstractController
 {
-    #[Route('/{profileId}', name: 'get_profile_booksList',methods: ['GET'])]
-    public function getBooksListByProfileId(int $profileId, Request $request): JsonResponse
+    public function __construct(
+        private readonly BooksListRepository $booksListRepository,
+        private readonly ProfileValidator    $profileValidator,
+    )
     {
+    }
 
+    #[Route('/{profileId}', name: 'get_profile_booksList', methods: ['GET'])]
+    public function getBooksListByProfileId(int $profileId): JsonResponse
+    {
+        $profile = $this->profileValidator->validateProfile($profileId);
+
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], Response::HTTP_UNAUTHORIZED);
+        }
+
+        try {
+            if ($user->getProfiles()->contains($profile)) {
+                $booksLists = $this->booksListRepository->findBy(['profile' => $profile->getId()]);
+            } else {
+                $booksLists = $this->booksListRepository->findBy(['profile' => $profile->getId(), 'visibility' => VisibilityEnum::PUBLIC]);
+            }
+
+            return $this->json($booksLists, Response::HTTP_OK, [], ['groups' => ['public']]);
+
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
 
     #[Route('', name: 'create_booksList', methods: ['POST'])]
-    public function createBooksList(int $profileId, Request $request): JsonResponse
+    public function createBooksList(Request $request): JsonResponse
     {
-
+        
     }
 
     #[Route('/{booksListId}', name: 'get_booksList', methods: ['GET'])]

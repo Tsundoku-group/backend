@@ -15,6 +15,7 @@ use InvalidArgumentException;
 #[ORM\Table(name: '`profile`')]
 class Profile
 {
+    private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
     /**
      * @var int|null Set by Doctrine
      */
@@ -90,13 +91,8 @@ class Profile
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
 
-    /**
-     * @var Collection<int, BooksList>
-     */
     #[ORM\OneToMany(targetEntity: BooksList::class, mappedBy: 'profile')]
     private Collection $booksLists;
-
-    private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
 
     public function __construct()
     {
@@ -130,6 +126,18 @@ class Profile
     public function isActiveProfile(): bool
     {
         return $this->activeProfile;
+    }
+
+    public function getActiveProfile(): ?Profile
+    {
+        return $this->activeProfile ? $this : null;
+    }
+
+    public function setActiveProfile(bool $isActive): self
+    {
+        $this->activeProfile = $isActive;
+
+        return $this;
     }
 
     public function activate(): void
@@ -373,18 +381,6 @@ class Profile
         return $this;
     }
 
-    public function getActiveProfile(): ?Profile
-    {
-        return $this->activeProfile ? $this : null;
-    }
-
-    public function setActiveProfile(bool $isActive): self
-    {
-        $this->activeProfile = $isActive;
-
-        return $this;
-    }
-
     public function getSentFriendships(): Collection
     {
         return $this->sentFriendships;
@@ -484,9 +480,6 @@ class Profile
         return $this;
     }
 
-    /**
-     * @return Collection<int, BooksList>
-     */
     public function getBooksLists(): Collection
     {
         return $this->booksLists;
