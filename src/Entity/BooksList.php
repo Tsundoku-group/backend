@@ -49,6 +49,10 @@ class BooksList
     #[Groups(['public'])]
     private ?DateTime $updatedAt = null;
 
+    #[ORM\Column]
+    #[Groups(['public'])]
+    private ?bool $favorite = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -102,12 +106,12 @@ class BooksList
         return $this;
     }
 
-    public function getVisibility(): ?string
+    public function getVisibility(): VisibilityEnum
     {
         return $this->visibility;
     }
 
-    public function setVisibility(string $visibility): static
+    public function setVisibility(VisibilityEnum $visibility): static
     {
         $this->visibility = $visibility;
 
@@ -134,6 +138,18 @@ class BooksList
     public function setUpdatedAt(DateTime $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function isFavorite(): ?bool
+    {
+        return $this->favorite;
+    }
+
+    public function setFavorite(bool $favorite): static
+    {
+        $this->favorite = $favorite;
 
         return $this;
     }

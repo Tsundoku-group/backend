@@ -2,7 +2,10 @@
 
 namespace App\Controller;
 
+use App\Constant\ErrorMessageConstant;
+use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
+use App\DTO\BooksList\BooksListDTO;
 use App\Entity\User;
 use App\Enum\VisibilityEnum;
 use App\Repository\BooksListRepository;
@@ -53,7 +56,19 @@ final class BooksListController extends AbstractController
     #[Route('', name: 'create_booksList', methods: ['POST'])]
     public function createBooksList(Request $request): JsonResponse
     {
-        
+        $jsonData = $request->getContent();
+
+        if (!$jsonData) {
+            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $booksListDTO = new BooksListDTO($jsonData);
+
+            return $this->json($booksListDTO, Response::HTTP_CREATED);
+        } catch (Exception $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     #[Route('/{booksListId}', name: 'get_booksList', methods: ['GET'])]
