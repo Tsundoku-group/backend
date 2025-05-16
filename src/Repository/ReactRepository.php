@@ -41,4 +41,20 @@ class ReactRepository extends ServiceEntityRepository
                 ->getQuery()
                 ->getSingleScalarResult() > 0;
     }
+
+    public function countLikesForPost(int $postId): int
+    {
+        try {
+            return (int) $this->createQueryBuilder('r')
+                ->select('COUNT(r.id)')
+                ->where('r.resourceId = :postId')
+                ->andWhere('r.resourceType = :resourceType')
+                ->setParameter('postId', $postId)
+                ->setParameter('resourceType', ResourceTypeEnum::POST)
+                ->getQuery()
+                ->getSingleScalarResult();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
 }
