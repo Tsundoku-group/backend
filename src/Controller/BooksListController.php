@@ -10,19 +10,25 @@ use App\Entity\User;
 use App\Enum\VisibilityEnum;
 use App\Repository\BooksListRepository;
 use App\Validator\Constraints\ProfileValidator;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/v1/bookslist')]
 final class BooksListController extends AbstractController
 {
     public function __construct(
-        private readonly BooksListRepository $booksListRepository,
-        private readonly ProfileValidator    $profileValidator,
+        private readonly BooksListRepository    $booksListRepository,
+        private readonly ProfileValidator       $profileValidator,
+        private readonly ValidatorInterface     $validator,
+        private readonly SerializerInterface    $serializer,
+        private readonly EntityManagerInterface $entityManager,
     )
     {
     }
@@ -75,6 +81,41 @@ final class BooksListController extends AbstractController
     public function getBooksList(Request $request): JsonResponse
     {
 
+    }
+
+    #[Route('/{booksListId}', name: 'update_booksList', methods: ['PUT'])]
+    public function updateBooksList(Request $request, int $booksListId): JsonResponse
+    {
+        $booksList = $this->booksListRepository->find($booksListId);
+
+        if (empty($booksList)) {
+            return $this->json(['error'], Response::HTTP_NOT_FOUND);
+        }
+
+        $jsonData = $request->getContent();
+
+        if (!$jsonData) {
+            return $this->json(['error' => GenericErrorMessagesConstant::INVALID_DATA], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $booksListDTO = $this->serializer->deserialize($jsonData, BooksListDTO::class, 'json');
+
+            $error = $this->validator->validate($booksListDTO);
+
+            if ($error->count() > 0) {
+                return $this->json($error, Response::HTTP_BAD_REQUEST);
+            }
+
+            $booksList->setTitle($booksListDTO->title);
+            $booksList->setFavorite($booksListDTO->favorite);
+
+            $this->entityManager->flush();
+
+            return $this->json($booksList, Response::HTTP_OK, [], ['groups' => ['public']]);
+        } catch (Exception $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('/{booksListId}', name: 'delete_booksList', methods: ['DELETE'])]
