@@ -4,8 +4,7 @@ namespace App\Enum;
 
 enum ChallengeTypeEnum: string
 {
-    case PREDEFINED = 'predefined';
     case COMMUNITY = 'community';
+    case PREDEFINED = 'predefined';
     case CUSTOMISED = 'customised';
-    case SPECIAL = 'special';
 }

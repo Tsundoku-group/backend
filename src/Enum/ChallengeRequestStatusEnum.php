@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum ChallengeProfileStatusEnum: string
+enum ChallengeRequestStatusEnum: string
 {
     case INVITED = 'invited';
     case PENDING = 'pending';

@@ -4,7 +4,9 @@ namespace App\Enum;
 
 enum ChallengeStatusEnum: string
 {
-    case PENDING = 'pending';
-    case IN_PROGRESS = 'in_progress';
-    case COMPLETED = 'completed';
+    case PENDING  = 'pending';
+    case ONGOING  = 'ongoing';
+    case SUCCESS  = 'success';
+    case FAILED   = 'failed';
+    case CANCELED = 'canceled';
 }
