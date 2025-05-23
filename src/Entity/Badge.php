@@ -3,10 +3,7 @@
 
 namespace App\Entity;
 
-use App\Enum\ChallengeTypeEnum;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
+use App\ValueObject\BadgeStyle;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -24,9 +21,10 @@ class Badge
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $awardedAt;
 
-    #[ORM\Column(enumType: ChallengeTypeEnum::class)]
-    private ChallengeTypeEnum $forChallengeType;
-
+    #[ORM\Embedded(class: BadgeStyle::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?BadgeStyle $style;
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -56,15 +54,14 @@ class Badge
         return $this;
     }
 
-    public function getForChallengeType(): ChallengeTypeEnum
+    public function getStyle(): BadgeStyle
     {
-        return $this->forChallengeType;
+        return $this->style;
     }
 
-    public function setForChallengeType(ChallengeTypeEnum $forChallengeType): static
+    public function setStyle(?BadgeStyle $style): static
     {
-        $this->forChallengeType = $forChallengeType;
-
+        $this->style = $style;
         return $this;
     }
 }

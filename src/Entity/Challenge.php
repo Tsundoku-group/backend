@@ -2,9 +2,6 @@
 
 namespace App\Entity;
 
-use App\Enum\ChallengeActionTypeEnum;
-use App\Enum\ChallengeContentTypeEnum;
-use App\Enum\ChallengeFrequencyEnum;
 use App\Enum\ChallengeStatusEnum;
 use App\Enum\ChallengeTypeEnum;
 use App\ValueObject\ChallengeConstraint;
@@ -18,16 +15,16 @@ class Challenge
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    protected ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(type: 'string', enumType: ChallengeTypeEnum::class)]
     private ChallengeTypeEnum $type;
 
     #[ORM\Column(length: 255)]
-    protected string $name;
+    private string $name;
 
     #[ORM\Column(type: 'string', enumType: ChallengeStatusEnum::class)]
-    protected ChallengeStatusEnum $status;
+    private ChallengeStatusEnum $status;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $startAt;
@@ -45,7 +42,7 @@ class Challenge
     private Collection $challengeRequests;
 
     #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeProfile::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    protected Collection $challengeProfiles;
+    private Collection $challengeProfiles;
 
     public function __construct()
     {
