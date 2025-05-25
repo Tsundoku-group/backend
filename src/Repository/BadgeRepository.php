@@ -15,8 +15,8 @@ class BadgeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Badge::class);
     }
-
-    public function findBadgesByChallengeProfile(int $profileId): array
+    
+    public function findBadgesByProfile(int $profileId, int $limit): array
     {
         return $this->createQueryBuilder('b')
             ->select('b.id', 'b.awardedAt', 'c.name as challengeName', 'c.type as challengeType')
@@ -25,6 +25,8 @@ class BadgeRepository extends ServiceEntityRepository
             ->join('cp.profile', 'p')
             ->where('p.id = :profileId')
             ->setParameter('profileId', $profileId)
+            ->orderBy('b.awardedAt', 'DESC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }

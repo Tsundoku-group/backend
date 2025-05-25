@@ -28,19 +28,19 @@ class BadgeController extends AbstractController
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
         if (!$profile) {
-            return new JsonResponse(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $badges = $this->badgeRepository->findBadgesByChallengeProfile($profileId);
+            $badges = $this->badgeRepository->findBadgesByProfile($profileId, 10);
 
             if (empty($badges)) {
-                return new JsonResponse(['message' => 'No badges found for this profile.'], 404);
+                return $this->json(['message' => 'No badges found for this profile.'], 404);
             }
 
-            return new JsonResponse($badges, 200);
+            return $this->json($badges, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+            return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 }
