@@ -2,16 +2,21 @@
 
 namespace App\Controller;
 
-use App\Constant\ErrorMessageConstant;
 use App\Constant\GenericErrorMessagesConstant;
+use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\UserErrorMessagesConstant;
 use App\DTO\BooksList\BooksListDTO;
+use App\Entity\BooksList;
 use App\Entity\User;
+use App\Enum\BooksListTypeEnum;
 use App\Enum\VisibilityEnum;
 use App\Repository\BooksListRepository;
+use App\Repository\ProfileRepository;
 use App\Validator\Constraints\ProfileValidator;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +30,7 @@ final class BooksListController extends AbstractController
 {
     public function __construct(
         private readonly BooksListRepository    $booksListRepository,
+        private readonly ProfileRepository      $profileRepository,
         private readonly ProfileValidator       $profileValidator,
         private readonly ValidatorInterface     $validator,
         private readonly SerializerInterface    $serializer,
@@ -69,18 +75,48 @@ final class BooksListController extends AbstractController
         }
 
         try {
-            $booksListDTO = new BooksListDTO($jsonData);
+            $booksListDTO = $this->serializer->deserialize($jsonData, BooksListDTO::class, 'json');
 
-            return $this->json($booksListDTO, Response::HTTP_CREATED);
+            $error = $this->validator->validate($booksListDTO);
+
+            if ($error->count() > 0) {
+                return $this->json($error, Response::HTTP_BAD_REQUEST);
+            }
+
+            $profile = $this->profileRepository->find($booksListDTO->profile);
+
+            if (!$profile) {
+                throw new RuntimeException(ProfileErrorMessagesConstant::PROFILE_NOT_FOUND);
+            }
+
+            $booksList = new BooksList();
+            $booksList->setTitle($booksListDTO->title);
+            $booksList->setVisibility($booksListDTO->visibility);
+            $booksList->setFavorite($booksListDTO->favorite);
+
+            $booksList->setProfile($profile);
+            $booksList->setType(BooksListTypeEnum::CUSTOM);
+            $booksList->setUpdatedAt(new DateTime());
+
+            $this->entityManager->persist($booksList);
+            $this->entityManager->flush();
+
+            return $this->json($booksList, Response::HTTP_CREATED, [], ['groups' => ['public']]);
         } catch (Exception $e) {
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 
     #[Route('/{booksListId}', name: 'get_booksList', methods: ['GET'])]
-    public function getBooksList(Request $request): JsonResponse
+    public function getBooksList(Request $request, int $booksListId): JsonResponse
     {
+        $booksList = $this->booksListRepository->find($booksListId);
 
+        if (empty($booksList)) {
+            return $this->json(['error'], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($booksList, Response::HTTP_OK, [], ['groups' => ['public']]);
     }
 
     #[Route('/{booksListId}', name: 'update_booksList', methods: ['PUT'])]
@@ -108,6 +144,7 @@ final class BooksListController extends AbstractController
             }
 
             $booksList->setTitle($booksListDTO->title);
+            $booksList->setVisibility($booksListDTO->visibility);
             $booksList->setFavorite($booksListDTO->favorite);
 
             $this->entityManager->flush();
@@ -119,9 +156,22 @@ final class BooksListController extends AbstractController
     }
 
     #[Route('/{booksListId}', name: 'delete_booksList', methods: ['DELETE'])]
-    public function deleteBooksList(Request $request): JsonResponse
+    public function deleteBooksList(int $booksListId): JsonResponse
     {
+        $booksList = $this->booksListRepository->find($booksListId);
 
+        if (empty($booksList)) {
+            return $this->json(['error'], Response::HTTP_NOT_FOUND);
+        }
+
+        try {
+            $this->entityManager->remove($booksList);
+            $this->entityManager->flush();
+
+            return $this->json(['message' => "booksList deleted"], Response::HTTP_NO_CONTENT);
+        } catch (Exception $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('/{booksListId}/add', name: 'add_books_to_booksList', methods: ['POST'])]

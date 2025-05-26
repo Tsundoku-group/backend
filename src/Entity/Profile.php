@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 #[ORM\Table(name: '`profile`')]
@@ -22,6 +23,7 @@ class Profile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['profile.read'])]
     private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'profile', cascade: ['persist', 'remove'], orphanRemoval: true)]

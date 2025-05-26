@@ -5,8 +5,8 @@ namespace App\Entity;
 use App\Enum\BooksListTypeEnum;
 use App\Enum\VisibilityEnum;
 use App\Repository\BooksListRepository;
-use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -22,7 +22,6 @@ class BooksList
 
     #[ORM\ManyToOne(inversedBy: 'booksLists')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['profile'])]
     private Profile $profile;
 
     #[ORM\Column(length: 255)]
@@ -43,15 +42,20 @@ class BooksList
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['public'])]
-    private ?DateTimeImmutable $createdAt = null;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['public'])]
-    private ?DateTime $updatedAt = null;
+    private ?DateTimeInterface $updatedAt = null;
 
     #[ORM\Column]
     #[Groups(['public'])]
     private ?bool $favorite = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -130,12 +134,12 @@ class BooksList
         return $this;
     }
 
-    public function getUpdatedAt(): ?DateTime
+    public function getUpdatedAt(): ?DateTimeInterface
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(DateTime $updatedAt): static
+    public function setUpdatedAt(DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 
