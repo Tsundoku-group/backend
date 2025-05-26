@@ -1,9 +1,10 @@
-<?php 
+<?php
 
 namespace App\Controller;
 
 use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
+use App\Entity\Challenge;
 use App\Repository\ChallengeRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ChallengeService;
@@ -19,25 +20,42 @@ class ChallengeController extends AbstractController
         private readonly ChallengeService $challengeService,
         private readonly ChallengeRepository $challengeRepository,
         private readonly ProfileRepository $profileRepository,
-    ) {
-    }
+    ) {}
 
-    #[Route('/{profileId}', methods: ['GET'])]
-    public function getChallengesByProfile(int $profileId): JsonResponse
+    #[Route('/{profileId}/active', methods: ['GET'])]
+    public function getActiveChallengesByProfile(int $profileId): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
         if (!$profile) {
-            return new JsonResponse(['error' =>
-            ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
         }
 
         try {
-            $challenges = $this->challengeRepository->findByProfileId($profileId);
+            $activeChallenges = $this->challengeRepository->findActiveChallengesByProfile($profileId);
 
-            return new JsonResponse($challenges, 200);
+            $data = array_map(fn(Challenge $c): array => [
+                'id'        => $c->getId(),
+                'name'      => $c->getName(),
+                'type'      => $c->getType()->value,
+                'status'    => $c->getStatus()->value,
+                'startAt'   => $c->getStartAt()->format(DATE_ATOM),
+                'endAt'     => $c->getEndAt()->format(DATE_ATOM),
+                'creator'  => [
+                    'id'        => $c->getCreator()->getId(),
+                    'username'  => $c->getCreator()->getUsername(),
+                ],
+                'constraint' => [
+                    'action'      => $c->getConstraint()->getAction()->value,
+                    'contentType' => $c->getConstraint()->getContentType()->value,
+                    'frequency'   => $c->getConstraint()->getFrequency()->value,
+                    'targetCount' => $c->getConstraint()->getTargetCount(),
+                ],
+            ], $activeChallenges);
+
+            return $this->json($data, 200);
         } catch (Exception $e) {
-            return new JsonResponse(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+            return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 }
