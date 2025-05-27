@@ -35,4 +35,24 @@ class ChallengeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return Challenge[] Returns an array of Challenge objects
+     */
+    public function findInactiveChallengesByProfile(int $profileId) : array
+    {
+        return $this->createQueryBuilder('c')
+            ->innerJoin('c.challengeProfiles', 'cp')
+            ->andWhere('cp.profile = :profile')
+            ->andWhere('c.status IN (:statuses)')
+            ->setParameter('profile', $profileId)
+            ->setParameter('statuses', [
+                ChallengeStatusEnum::SUCCESS->value,
+                ChallengeStatusEnum::FAILED->value,
+                ChallengeStatusEnum::CANCELED->value,
+            ])
+            ->orderBy('c.startAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
