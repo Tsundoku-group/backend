@@ -7,7 +7,6 @@ namespace App\DataFixtures;
 use App\Entity\ChallengeProfile;
 use App\Entity\Profile;
 use App\Entity\Challenge;
-use App\Enum\ChallengeStatusEnum;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -18,34 +17,53 @@ class ChallengeProfileFixtures extends Fixture implements DependentFixtureInterf
 
     /**
      * Charge les fixtures dans la base de données.
-     *
-     * @param ObjectManager $manager
      */
     public function load(ObjectManager $manager): void
     {
-        // Récupérer le profile cible
-        $profile = $manager->getRepository(Profile::class)->find(1);
-        if (!$profile instanceof Profile) {
-            throw new \RuntimeException('Profile with id 1 not found.');
+        $faker = \Faker\Factory::create('fr_FR');
+
+        // Récupérer un profile cible différent du créateur
+        $profiles = $manager->getRepository(Profile::class)->findAll();
+        if (count($profiles) < 2) {
+            throw new \RuntimeException('Au moins 2 profils sont nécessaires pour créer des ChallengeProfile supplémentaires.');
         }
 
         $challenges = $manager->getRepository(Challenge::class)->findAll();
         if (empty($challenges)) {
-            throw new \RuntimeException('No Challenge entities found.');
+            throw new \RuntimeException('Aucun Challenge trouvé. Assurez-vous que ChallengeFixtures s\'exécute avant.');
         }
 
-        foreach ($challenges as $index => $challenge) {
-            $challengeProfile = new ChallengeProfile();
-            $challengeProfile
-                ->setProfile($profile)
-                ->setChallenge($challenge)
-                ->setProgress([])
-                ->setStatus(ChallengeStatusEnum::PENDING);
+        $participantsCreated = 0;
 
-            $manager->persist($challengeProfile);
+        foreach ($challenges as $challenge) {
+            // Récupérer le créateur du challenge pour l'exclure des participants
+            $creator = $challenge->getCreator();
 
-            if ($index === 0) {
-                $this->addReference(self::REFERENCE_CHALLENGE_PROFILE_1, $challengeProfile);
+            // Filtrer les profils pour exclure le créateur
+            $availableProfiles = array_filter($profiles, function (Profile $profile) use ($creator) {
+                return $profile->getId() !== $creator->getId();
+            });
+
+            if (empty($availableProfiles)) {
+                continue;
+            }
+
+            // Ajouter 1 à 3 participants aléatoires à chaque challenge
+            $numParticipants = $faker->numberBetween(1, min(3, count($availableProfiles)));
+            $selectedProfiles = $faker->randomElements($availableProfiles, $numParticipants);
+
+            foreach ($selectedProfiles as $profile) {
+                $challengeProfile = new ChallengeProfile($challenge, $profile, 'participant');
+                $challengeProfile->setProgress($faker->numberBetween(0, 5));
+
+                $manager->persist($challengeProfile);
+
+                // Créer une référence pour le premier ChallengeProfile participant
+                if ($participantsCreated === 0) {
+                    $this->addReference(self::REFERENCE_CHALLENGE_PROFILE_1, $challengeProfile);
+                }
+
+                $participantsCreated++;
             }
         }
 

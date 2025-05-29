@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Challenge;
 use App\Entity\Profile;
 use App\Enum\ChallengeRequestStatusEnum;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -16,21 +17,30 @@ class ChallengeRequest
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Challenge::class, inversedBy: 'challengeRequests')]
-    private ?Challenge $challenge;
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private Challenge $challenge;
 
     #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'challengeRequests')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Profile $profile;
 
-    #[ORM\Column(type: 'string', enumType: ChallengeRequestStatusEnum::class)]
+    #[ORM\Column(enumType: ChallengeRequestStatusEnum::class)]
     private ChallengeRequestStatusEnum $status = ChallengeRequestStatusEnum::PENDING;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $sentAt;
+    private DateTimeImmutable $createdAt;
 
-    public function __construct()
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $joinAt = null;
+
+    public function __construct(Challenge $challenge, Profile $profile)
     {
-        $this->sentAt = new \DateTimeImmutable();
+        $this->challenge = $challenge;
+        $this->profile = $profile;
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -38,28 +48,14 @@ class ChallengeRequest
         return $this->id;
     }
 
-    public function getChallenge(): ?Challenge
+    public function getChallenge(): Challenge
     {
         return $this->challenge;
-    }
-
-    public function setChallenge(?Challenge $challenge): self
-    {
-        $this->challenge = $challenge;
-
-        return $this;
     }
 
     public function getProfile(): Profile
     {
         return $this->profile;
-    }
-
-    public function setProfile(Profile $profile): self
-    {
-        $this->profile = $profile;
-
-        return $this;
     }
 
     public function getStatus(): ChallengeRequestStatusEnum
@@ -70,18 +66,39 @@ class ChallengeRequest
     public function setStatus(ChallengeRequestStatusEnum $status): self
     {
         $this->status = $status;
+        $this->updatedAt = new DateTimeImmutable();
+
+        if (ChallengeRequestStatusEnum::ACCEPTED === $status) {
+            $this->joinAt = new DateTimeImmutable();
+        }
 
         return $this;
     }
 
-    public function getSentAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
-        return $this->sentAt;
+        return $this->createdAt;
+    }
+    public function getUpdatedAt(): ?DateTimeImmutable
+    {
+        return $this->updatedAt;
     }
 
-    public function setSentAt(\DateTimeImmutable $sentAt): self
+    public function setUpdatedAt(DateTimeImmutable $updatedAt): self
     {
-        $this->sentAt = $sentAt;
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getJoinAt(): ?DateTimeImmutable
+    {
+        return $this->joinAt;
+    }
+
+    public function setJoinAt(?DateTimeImmutable $joinAt): self
+    {
+        $this->joinAt = $joinAt;
 
         return $this;
     }

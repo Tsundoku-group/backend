@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
+use App\Dto\CreateChallengeDto;
 use App\Entity\Challenge;
 use App\Repository\ChallengeRepository;
 use App\Repository\ProfileRepository;
@@ -11,7 +12,10 @@ use App\Service\ChallengeService;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/v1/challenges')]
 class ChallengeController extends AbstractController
@@ -20,6 +24,8 @@ class ChallengeController extends AbstractController
         private readonly ChallengeService $challengeService,
         private readonly ChallengeRepository $challengeRepository,
         private readonly ProfileRepository $profileRepository,
+        private readonly SerializerInterface $serializer,
+        private readonly ValidatorInterface $validator,
     ) {}
 
     #[Route('/{profileId}/active', methods: ['GET'])]
@@ -93,6 +99,38 @@ class ChallengeController extends AbstractController
             return $this->json($data, 200);
         } catch (Exception $e) {
             return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+        }
+    }
+
+    #[Route('', methods: ['POST'])]
+    public function createChallenge(Request $request): JsonResponse
+    {
+        try {
+            $dto = $this->serializer->deserialize(
+                $request->getContent(),
+                CreateChallengeDto::class,
+                'json'
+            );
+
+            $errors = $this->validator->validate($dto);
+            if (count($errors) > 0) {
+                $messages = [];
+                foreach ($errors as $violation) {
+                    $messages[$violation->getPropertyPath()][] = $violation->getMessage();
+                }
+                return $this->json(['errors' => $messages], 400);
+            }
+
+            $creator = $this->profileRepository->find($dto->creatorId);
+            if (!$creator) {
+                return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            }
+
+            $challenge = $this->challengeService->createChallenge($dto, $creator);
+
+            return $this->json(['id' => $challenge->getId()], 201);
+        } catch (Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 400);
         }
     }
 }

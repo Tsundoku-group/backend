@@ -38,16 +38,13 @@ class Challenge
     #[ORM\Embedded(class: ChallengeConstraint::class)]
     private ChallengeConstraint $constraint;
 
-    #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeRequest::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection $challengeRequests;
-
     #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeProfile::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $challengeProfiles;
 
-    public function __construct()
+    public function __construct(Profile $creator)
     {
-        $this->challengeRequests = new ArrayCollection();
         $this->challengeProfiles = new ArrayCollection();
+        $this->creator = $creator;
     }
 
     public function getId(): ?int
@@ -138,56 +135,23 @@ class Challenge
         return $this;
     }
 
-    public function getChallengeRequests(): Collection
-    {
-        return $this->challengeRequests;
-    }
-
-    public function addChallengeRequest(ChallengeRequest $challengeRequest): self
-    {
-        if (!$this->challengeRequests->contains($challengeRequest)) {
-            $this->challengeRequests[] = $challengeRequest;
-            $challengeRequest->setChallenge($this);
-        }
-
-        return $this;
-    }
-
-    public function removeChallengeRequest(ChallengeRequest $challengeRequest): self
-    {
-        if ($this->challengeRequests->removeElement($challengeRequest)) {
-            // set the owning side to null (unless already changed)
-            if ($challengeRequest->getChallenge() === $this) {
-                $challengeRequest->setChallenge(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getChallengeProfiles(): Collection
     {
         return $this->challengeProfiles;
     }
 
-    public function addChallengeProfile(ChallengeProfile $challengeProfile): self
+    public function addChallengeProfile(ChallengeProfile $challengeProfile): static
     {
         if (!$this->challengeProfiles->contains($challengeProfile)) {
             $this->challengeProfiles[] = $challengeProfile;
-            $challengeProfile->setChallenge($this);
         }
 
         return $this;
     }
 
-    public function removeChallengeProfile(ChallengeProfile $challengeProfile): self
+    public function removeChallengeProfile(ChallengeProfile $challengeProfile): static
     {
-        if ($this->challengeProfiles->removeElement($challengeProfile)) {
-            // set the owning side to null (unless already changed)
-            if ($challengeProfile->getChallenge() === $this) {
-                $challengeProfile->setChallenge(null);
-            }
-        }
+        $this->challengeProfiles->removeElement($challengeProfile);
 
         return $this;
     }

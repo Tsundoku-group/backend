@@ -26,7 +26,6 @@ class BadgeFixtures extends Fixture implements DependentFixtureInterface
             $badge = new Badge();
             $badge->setChallengeProfile($challengeProfile)
                 ->setAwardedAt(new \DateTimeImmutable())
-                ->setForChallengeType($this->getRandomChallengeType())
                 ->setStyle(null);
 
             $manager->persist($badge);
@@ -77,21 +76,8 @@ class BadgeFixtures extends Fixture implements DependentFixtureInterface
         $badge = new Badge();
         $badge->setChallengeProfile($challengeProfile)
             ->setAwardedAt(\DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-1 year', 'now')))
-            ->setForChallengeType($this->getRandomChallengeType())
             ->setStyle(null);
 
         return $badge;
-    }
-
-    /**
-     * Retourne un type de challenge aléatoire.
-     *
-     * @return ChallengeTypeEnum
-     */
-    private function getRandomChallengeType(): ChallengeTypeEnum
-    {
-        $types = ChallengeTypeEnum::cases();
-
-        return $types[array_rand($types)];
     }
 }
