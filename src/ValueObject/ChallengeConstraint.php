@@ -71,6 +71,9 @@ class ChallengeConstraint
                 ChallengeContentTypeEnum::PAGE,
                 ChallengeContentTypeEnum::CHAPTER,
             ],
+            ChallengeActionTypeEnum::HAVE => [
+                ChallengeContentTypeEnum::BOOK,
+            ],
         ];
 
         $action = $this->getAction();

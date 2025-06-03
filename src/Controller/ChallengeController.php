@@ -102,6 +102,17 @@ class ChallengeController extends AbstractController
         }
     }
 
+    #[Route('/constraints', methods: ['GET'])]
+    public function getChallengeConstraints(): JsonResponse
+    {
+        try {
+            $constraints = $this->challengeService->getChallengeConstraints();
+            return $this->json($constraints, 200);
+        } catch (Exception $e) {
+            return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
+        }
+    }
+
     #[Route('', methods: ['POST'])]
     public function createChallenge(Request $request): JsonResponse
     {
@@ -121,7 +132,14 @@ class ChallengeController extends AbstractController
                 return $this->json(['errors' => $messages], 400);
             }
 
-            $creator = $this->profileRepository->find($dto->creatorId);
+            $user = $this->getUser();
+            if (!$user) {
+                return $this->json(['error' => 'Non authentifié'], 401);
+            }
+            $creator = $this->profileRepository->findOneBy([
+                'user'          => $user,
+                'activeProfile' => true,
+            ]);
             if (!$creator) {
                 return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }

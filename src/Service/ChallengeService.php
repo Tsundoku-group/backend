@@ -95,4 +95,34 @@ class ChallengeService
         return $this->em->getRepository(ChallengeProfile::class)
             ->findBy(['profile' => $profile]);
     }
+
+    public function getChallengeConstraints(): array
+    {
+        $actionTypes  = array_map(fn(ChallengeActionTypeEnum $e) => $e->value, ChallengeActionTypeEnum::cases());
+        $contentTypes = array_map(fn(ChallengeContentTypeEnum $e) => $e->value, ChallengeContentTypeEnum::cases());
+        $frequencies  = array_map(fn(ChallengeFrequencyEnum $e) => $e->value, ChallengeFrequencyEnum::cases());
+
+        $allowedContent = [
+            ChallengeActionTypeEnum::WRITE->value => [
+                ChallengeContentTypeEnum::ARTICLE->value,
+                ChallengeContentTypeEnum::BOOK_REVIEW->value,
+                ChallengeContentTypeEnum::BOOK_DESCRIPTION->value,
+            ],
+            ChallengeActionTypeEnum::READ->value => [
+                ChallengeContentTypeEnum::BOOK->value,
+                ChallengeContentTypeEnum::PAGE->value,
+                ChallengeContentTypeEnum::CHAPTER->value,
+            ],
+            ChallengeActionTypeEnum::HAVE->value => [
+                ChallengeContentTypeEnum::BOOK->value,
+            ],
+        ];
+
+        return [
+            'actionTypes'    => $actionTypes,
+            'contentTypes'   => $contentTypes,
+            'frequencies'    => $frequencies,
+            'allowedContent' => $allowedContent,
+        ];
+    }
 }
