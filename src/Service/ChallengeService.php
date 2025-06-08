@@ -17,7 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class ChallengeService
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,       
+        private readonly EntityManagerInterface $em,
     ) {}
 
     public function createChallenge(CreateChallengeDto $dto, Profile $creator): Challenge
@@ -39,8 +39,8 @@ class ChallengeService
             ->setName($dto->name)
             ->setType($typeEnum)
             ->setStatus(ChallengeStatusEnum::PENDING)
-            ->setStartAt(new \DateTimeImmutable($dto->startAt))
-            ->setEndAt(new \DateTimeImmutable($dto->endAt))
+            ->setStartAt($this->parseDateTime($dto->startAt))
+            ->setEndAt($this->parseDateTime($dto->endAt))
             ->setConstraint($constraint);
 
         $creatorChallengeProfile = new ChallengeProfile($challenge, $creator, 'admin');
@@ -51,6 +51,36 @@ class ChallengeService
         $this->em->flush();
 
         return $challenge;
+    }
+
+    private function parseDateTime(string $dateString): \DateTimeImmutable
+    {
+        $timezone = new \DateTimeZone('Europe/Paris');
+
+        $dateString = trim($dateString);
+
+        if (preg_match('/\+\d{2}:\d{2}$/', $dateString)) {
+            return new \DateTimeImmutable($dateString);
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $dateString)) {
+            $dateString .= ':00';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $dateString)) {
+            return new \DateTimeImmutable($dateString, $timezone);
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
+            $dateString .= 'T00:00:00';
+            return new \DateTimeImmutable($dateString, $timezone);
+        }
+
+        try {
+            return new \DateTimeImmutable($dateString, $timezone);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException("Invalid date format: {$dateString}");
+        }
     }
 
     public function addParticipant(Challenge $challenge, Profile $participant): ChallengeProfile

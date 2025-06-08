@@ -17,11 +17,17 @@ class CreateChallengeDto
     public string $type;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime(format: 'Y-m-d\\TH:i:sP')]
+    #[Assert\Regex(
+        pattern: '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\+\d{2}:\d{2})?$/',
+        message: 'Invalid date format. Expected: YYYY-MM-DDTHH:mm, YYYY-MM-DDTHH:mm:ss or with timezone'
+    )]
     public string $startAt;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime(format: 'Y-m-d\\TH:i:sP')]
+    #[Assert\Regex(
+        pattern: '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\+\d{2}:\d{2})?$/',
+        message: 'Invalid date format. Expected: YYYY-MM-DDTHH:mm, YYYY-MM-DDTHH:mm:ss or with timezone'
+    )]
     public string $endAt;
 
     #[Assert\NotNull]

@@ -134,7 +134,7 @@ class ChallengeController extends AbstractController
 
             $user = $this->getUser();
             if (!$user) {
-                return $this->json(['error' => 'Non authentifié'], 401);
+                return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
             }
             $creator = $this->profileRepository->findOneBy([
                 'user'          => $user,
@@ -142,6 +142,10 @@ class ChallengeController extends AbstractController
             ]);
             if (!$creator) {
                 return $this->json(['error' => ProfileErrorMessagesConstant::PROFILE_NOT_FOUND], 404);
+            }
+
+            if ($creator->getUser() !== $user) {
+                return $this->json(['error' => SecurityErrorMessagesConstant::ACCESS_DENIED], 401);
             }
 
             $challenge = $this->challengeService->createChallenge($dto, $creator);
