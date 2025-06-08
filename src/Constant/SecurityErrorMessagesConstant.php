@@ -10,4 +10,5 @@ class SecurityErrorMessagesConstant
     public const UNAUTHORIZED_ACCESS = 'Accès non autorisé';
     public const FORBIDDEN = 'Accès refusé';
     public const ACCESS_DENIED = 'Accès refusé';
+    public const INSUFFICIENT_PERMISSIONS = 'Droits insuffisants pour réaliser cette action';
 }

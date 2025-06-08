@@ -155,4 +155,10 @@ class ChallengeService
             'allowedContent' => $allowedContent,
         ];
     }
+
+    public function deleteChallenge(Challenge $challenge): void
+    {
+        $this->em->remove($challenge);
+        $this->em->flush();
+    }
 }

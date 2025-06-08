@@ -8,4 +8,5 @@ class GenericErrorMessagesConstant
     public const INVALID_DATA = 'Données invalides';
     public const INVALID_INPUT = 'Entrée invalide';
     public const MISSING_PARAMETERS = 'Paramètres manquants';
+    public const NOT_FOUND = 'Ressource non trouvée';
 }

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
 use App\Dto\CreateChallengeDto;
@@ -10,7 +11,9 @@ use App\Repository\ChallengeRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ChallengeService;
 use Exception;
+use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -153,6 +156,31 @@ class ChallengeController extends AbstractController
             return $this->json(['id' => $challenge->getId()], 201);
         } catch (Exception $e) {
             return $this->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    #[Route('/{challengeId}', methods: ['DELETE'])]
+    public function deleteChallenge(int $challengeId): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => SecurityErrorMessagesConstant::INSUFFICIENT_PERMISSIONS], 403);
+        }
+
+        $challenge = $this->challengeRepository->find($challengeId);
+        if (!$challenge) {
+            return $this->json(GenericErrorMessagesConstant::NOT_FOUND, 404);
+        }
+
+        if ($challenge->getCreator()->getUser() !== $user) {
+            return $this->json(SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS, 401);
+        }
+
+        try {
+            $this->challengeService->deleteChallenge($challenge);
+            return $this->json(['message' => 'Challenge successfully deleted.']);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
         }
     }
 }
