@@ -6,14 +6,11 @@ use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
 use App\Dto\CreateChallengeDto;
-use App\Entity\Challenge;
 use App\Repository\ChallengeRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ChallengeService;
 use Exception;
-use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -32,7 +29,7 @@ class ChallengeController extends AbstractController
     ) {}
 
     #[Route('/{profileId}/active', methods: ['GET'])]
-    public function getActiveChallengesByProfile(int $profileId): JsonResponse
+    public function getActiveChallengesByProfile(int $profileId, Request $request): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
@@ -41,35 +38,38 @@ class ChallengeController extends AbstractController
         }
 
         try {
-            $activeChallenges = $this->challengeRepository->findActiveChallengesByProfile($profileId);
+            $offset = (int) $request->query->get('offset', 0);
+            $limit = (int) $request->query->get('limit', 5);
 
-            $data = array_map(fn(Challenge $c): array => [
-                'id'        => $c->getId(),
-                'name'      => $c->getName(),
-                'type'      => $c->getType()->value,
-                'status'    => $c->getStatus()->value,
-                'startAt'   => $c->getStartAt()->format(DATE_ATOM),
-                'endAt'     => $c->getEndAt()->format(DATE_ATOM),
-                'creator'  => [
-                    'id'        => $c->getCreator()->getId(),
-                    'username'  => $c->getCreator()->getUsername(),
-                ],
-                'constraint' => [
-                    'action'      => $c->getConstraint()->getAction()->value,
-                    'contentType' => $c->getConstraint()->getContentType()->value,
-                    'frequency'   => $c->getConstraint()->getFrequency()->value,
-                    'targetCount' => $c->getConstraint()->getTargetCount(),
-                ],
-            ], $activeChallenges);
+            $activeChallenges = $this->challengeRepository->findActiveChallengesByProfilePaginated(
+                $profileId,
+                $offset,
+                $limit
+            );
 
-            return $this->json($data, 200);
+            $totalCount = $this->challengeRepository->countChallengesByProfileAndStatus($profileId, [
+                \App\Enum\ChallengeStatusEnum::PENDING->value,
+                \App\Enum\ChallengeStatusEnum::ONGOING->value,
+            ]);
+
+            $data = $this->challengeService->formatChallengesData($activeChallenges);
+
+            return $this->json([
+                'data' => $data,
+                'pagination' => [
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    'total' => $totalCount,
+                    'hasMore' => ($offset + $limit) < $totalCount
+                ]
+            ], 200);
         } catch (Exception $e) {
             return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }
     }
 
     #[Route('/{profileId}/inactive', methods: ['GET'])]
-    public function getInactiveChallengesByProfile(int $profileId): JsonResponse
+    public function getInactiveChallengesByProfile(int $profileId, Request $request): JsonResponse
     {
         $profile = $this->profileRepository->findOneBy(['id' => $profileId]);
 
@@ -78,28 +78,32 @@ class ChallengeController extends AbstractController
         }
 
         try {
-            $activeChallenges = $this->challengeRepository->findInactiveChallengesByProfile($profileId);
+            $offset = (int) $request->query->get('offset', 0);
+            $limit = (int) $request->query->get('limit', 5);
 
-            $data = array_map(fn(Challenge $c): array => [
-                'id'        => $c->getId(),
-                'name'      => $c->getName(),
-                'type'      => $c->getType()->value,
-                'status'    => $c->getStatus()->value,
-                'startAt'   => $c->getStartAt()->format(DATE_ATOM),
-                'endAt'     => $c->getEndAt()->format(DATE_ATOM),
-                'creator'  => [
-                    'id'        => $c->getCreator()->getId(),
-                    'username'  => $c->getCreator()->getUsername(),
-                ],
-                'constraint' => [
-                    'action'      => $c->getConstraint()->getAction()->value,
-                    'contentType' => $c->getConstraint()->getContentType()->value,
-                    'frequency'   => $c->getConstraint()->getFrequency()->value,
-                    'targetCount' => $c->getConstraint()->getTargetCount(),
-                ],
-            ], $activeChallenges);
+            $inactiveChallenges = $this->challengeRepository->findInactiveChallengesByProfilePaginated(
+                $profileId,
+                $offset,
+                $limit
+            );
 
-            return $this->json($data, 200);
+            $totalCount = $this->challengeRepository->countChallengesByProfileAndStatus($profileId, [
+                \App\Enum\ChallengeStatusEnum::SUCCESS->value,
+                \App\Enum\ChallengeStatusEnum::FAILED->value,
+                \App\Enum\ChallengeStatusEnum::CANCELED->value,
+            ]);
+
+            $data = $this->challengeService->formatChallengesData($inactiveChallenges);
+
+            return $this->json([
+                'data' => $data,
+                'pagination' => [
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    'total' => $totalCount,
+                    'hasMore' => ($offset + $limit) < $totalCount
+                ]
+            ], 200);
         } catch (Exception $e) {
             return $this->json(['error' => SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS], 401);
         }

@@ -20,6 +20,28 @@ class ChallengeService
         private readonly EntityManagerInterface $em,
     ) {}
 
+    public function formatChallengesData(array $challenges): array
+    {
+        return array_map(fn(Challenge $c): array => [
+            'id'        => $c->getId(),
+            'name'      => $c->getName(),
+            'type'      => $c->getType()->value,
+            'status'    => $c->getStatus()->value,
+            'startAt'   => $c->getStartAt()->format(DATE_ATOM),
+            'endAt'     => $c->getEndAt()->format(DATE_ATOM),
+            'creator'  => [
+                'id'        => $c->getCreator()->getId(),
+                'username'  => $c->getCreator()->getUsername(),
+            ],
+            'constraint' => [
+                'action'      => $c->getConstraint()->getAction()->value,
+                'contentType' => $c->getConstraint()->getContentType()->value,
+                'frequency'   => $c->getConstraint()->getFrequency()->value,
+                'targetCount' => $c->getConstraint()->getTargetCount(),
+            ],
+        ], $challenges);
+    }
+
     public function createChallenge(CreateChallengeDto $dto, Profile $creator): Challenge
     {
         $typeEnum    = ChallengeTypeEnum::from($dto->type);
