@@ -10,17 +10,20 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 #[ORM\Table(name: '`profile`')]
 class Profile
 {
+    private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
     /**
      * @var int|null Set by Doctrine
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['profile.read'])]
     private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: GroupProfile::class, mappedBy: 'profile', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -90,7 +93,8 @@ class Profile
     #[ORM\Column(nullable: true, options: ['default' => false])]
     private bool $activeProfile = false;
 
-    private const VALID_STATUSES = ['online', 'do_not_disturb', 'away', 'offline'];
+    #[ORM\OneToMany(targetEntity: BooksList::class, mappedBy: 'profile')]
+    private Collection $booksLists;
 
     public function __construct()
     {
@@ -103,6 +107,7 @@ class Profile
         $this->conversationsParticipants = new ArrayCollection();
         $this->sentFriendships = new ArrayCollection();
         $this->receivedFriendships = new ArrayCollection();
+        $this->booksLists = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,6 +128,18 @@ class Profile
     public function isActiveProfile(): bool
     {
         return $this->activeProfile;
+    }
+
+    public function getActiveProfile(): ?Profile
+    {
+        return $this->activeProfile ? $this : null;
+    }
+
+    public function setActiveProfile(bool $isActive): self
+    {
+        $this->activeProfile = $isActive;
+
+        return $this;
     }
 
     public function activate(): void
@@ -366,18 +383,6 @@ class Profile
         return $this;
     }
 
-    public function getActiveProfile(): ?Profile
-    {
-        return $this->activeProfile ? $this : null;
-    }
-
-    public function setActiveProfile(bool $isActive): self
-    {
-        $this->activeProfile = $isActive;
-
-        return $this;
-    }
-
     public function getSentFriendships(): Collection
     {
         return $this->sentFriendships;
@@ -473,6 +478,33 @@ class Profile
     public function removeConversationsParticipant(Conversation $conversation): self
     {
         $this->conversationsParticipants->removeElement($conversation);
+
+        return $this;
+    }
+
+    public function getBooksLists(): Collection
+    {
+        return $this->booksLists;
+    }
+
+    public function addBooksList(BooksList $booksList): static
+    {
+        if (!$this->booksLists->contains($booksList)) {
+            $this->booksLists->add($booksList);
+            $booksList->setProfile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooksList(BooksList $booksList): static
+    {
+        if ($this->booksLists->removeElement($booksList)) {
+            // set the owning side to null (unless already changed)
+            if ($booksList->getProfile() === $this) {
+                $booksList->setProfile(null);
+            }
+        }
 
         return $this;
     }

@@ -54,11 +54,6 @@ nextjs-bash: ## Accède au shell du container Next.js
 	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) bash
 #< ========== ACCESS CONTAINERS ==========
 
-
-#> ========== COMPOSER ==========
-composer-install: ## Lance composer install dans PHP
-	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) composer install
-
 composer-require: ## Installe un package via composer require
 	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) composer require $(package)
     ## make composer-require package="**nom du package**"
