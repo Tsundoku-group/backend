@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.local
+node_modules
+var/
+vendor/
+tests/
+phpstan.neon
+phpunit.xml.dist
+composer.lock
+Makefile
+Dockerfile
+docker-compose*
+.idea
+.vscode
+coverage/

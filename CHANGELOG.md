@@ -84,3 +84,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [t-80] Corrections majeures [#80](https://trello.com/c/cWxndkAV/80-t-80-corrections-majeures)
 - [t-81] Remise au propre du chat [#81](https://trello.com/c/n2wwL4wu/81-t-81-remise-au-propre-du-chat)
 - [t-82] remise au propre des commentaires [#82](https://trello.com/c/NbobNjfd/82-t-82-remise-au-propre-des-commentaires)
+- [t-85] ajout du compte like [#85](https://trello.com/c/c86DfbeG/85-t-85-ajout-du-compte-like)

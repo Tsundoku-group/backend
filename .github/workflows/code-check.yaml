@@ -1,0 +1,54 @@
+name: Symfony Code Quality Check
+
+on:
+  pull_request:
+    branches:
+      - pre-prod
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-code:
+    name: Analyze PHPStan, ECS and PHPUnit
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: symfony
+          POSTGRES_PASSWORD: symfony
+          POSTGRES_DB: symfony_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "pgsql://symfony:symfony@localhost:5432/symfony_test"
+      APP_ENV: test
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v3
+
+      - name: Installing PHP, Composer & Extensions
+        uses: shivammathur/setup-php@2.30.1
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, mbstring, intl, dom
+          coverage: none
+
+      - name: Installing dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyse
+
+      - name: Run ECS (Easy Coding Standard)
+        run: ./vendor/bin/ecs check src
+
+      - name: Run tests PHPUnit
+        run: ./vendor/bin/phpunit --testdox

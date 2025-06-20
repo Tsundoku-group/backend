@@ -62,6 +62,7 @@ readonly class PostService
             ],
             'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
             'hasLiked' => $this->reactRepository->hasUserLikedPost($profileId, $post->getId()),
+            'likesCount' => $this->reactRepository->countLikesForPost($post->getId()),
         ], $posts);
     }
 
@@ -84,6 +85,7 @@ readonly class PostService
             ],
             'commentsCount' => $this->commentRepository->countCommentsForPost($post->getId()),
             'hasLiked' => $this->reactRepository->hasUserLikedPost($profileId, $post->getId()),
+            'likesCount' => $this->reactRepository->countLikesForPost($post->getId()),
         ], $posts);
     }
 

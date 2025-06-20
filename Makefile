@@ -1,145 +1,189 @@
-# Nom des services Docker Compose
-COMPOSE_FILE_PATH=../infrastructure/docker-compose.yaml
-COMPOSE=docker compose -f $(COMPOSE_FILE_PATH)               # Commande pour exécuter Docker Compose
-PHP_SERVICE=php                          					 # Service Docker pour PHP
+#> ========== CONFIG ==========
+ENV_FILE=../infrastructure/.env
+COMPOSE=docker compose
+COMPOSE_DEV_FILES=-f ../infrastructure/compose/dev/docker-compose.yaml -f ../infrastructure/compose/dev/docker-compose.override.yaml -f ../infrastructure/compose/dev/sonarqube/docker-compose.yaml
 
-# Fichier d'environnement
-ENV_FILE=.env                            # Fichier contenant les variables d'environnement
+PHP_SERVICE=php
+NEXTJS_SERVICE=nextjs
+#< ========== CONFIG ==========
 
-# Commandes Docker Compose
-build:                                   # Construire les images Docker des services
-	$(COMPOSE) build
 
-start:                                   # Démarrer les conteneurs sans détachement
-	$(COMPOSE) start
+#> ========== AIDE ==========
+help: ## Affiche la liste des commandes disponibles
+	@echo "Commandes disponibles :"
+	@grep -E '^[a-zA-Z_-]+:.*?##' Makefile | awk 'BEGIN {FS = ":.*?##"}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+#< ========== AIDE ==========
 
-stop:                                    # Arrêter les conteneurs en cours d'exécution
-	$(COMPOSE) stop
 
-up:                                      # Démarrer les conteneurs en arrière-plan (mode détaché)
-	docker compose -f ../infrastructure/docker-compose.yaml -f ../infrastructure/docker-compose.override.yaml up -d
+#> ========== DOCKER COMPOSE ==========
+build: ## Build les containers sans cache
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) build --no-cache
 
-down:                                    # Arrêter et supprimer les conteneurs, réseaux et volumes associés
-	$(COMPOSE) down
+start: ## Démarre les services existants
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) start
 
-restart:                                 # Redémarrer les conteneurs
-	$(COMPOSE) restart
+stop: ## Stoppe les services
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) stop
 
-docker-ps:                               # Afficher l'état des conteneurs Docker
-	$(COMPOSE) ps
+up: ## Démarre les containers en détache
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) up -d
 
-images:                                  # Afficher les images Docker utilisées
-	$(COMPOSE) images
+down: ## Stoppe et supprime les containers
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) down
 
-logs:                                    # Afficher les logs des conteneurs en temps réel
-	$(COMPOSE) logs -f
+restart: ## Redémarre tous les services
+	$(MAKE) down
+	$(MAKE) up
 
-# Accès aux conteneurs
-php-bash:                                # Ouvrir un terminal dans le conteneur PHP
-	$(COMPOSE) exec $(PHP_SERVICE) bash
+docker-ps: ## Liste les containers actifs
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) ps
 
-composer-bash:                           # Ouvrir un terminal dans le conteneur Composer
-	$(COMPOSE) exec $(PHP_SERVICE) bash
+images: ## Liste les images Docker
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) images
 
-# Commandes Composer
-composer-install:                        # Installer les dépendances avec Composer
-	$(COMPOSE) exec $(PHP_SERVICE) composer install
+logs: ## Affiche les logs
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) logs -f
+#< ========== DOCKER COMPOSE ==========
 
-composer-require:                        # Ajouter une nouvelle dépendance Composer
-	$(COMPOSE) exec $(PHP_SERVICE) composer require $(package)
-# make composer-require package="**nom du package**"
 
-composer-update:                         # Mettre à jour les dépendances Composer
-	$(COMPOSE) exec $(PHP_SERVICE) composer update
+#> ========== ACCESS CONTAINERS ==========
+php-bash: ## Accède au shell du container PHP
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) bash
 
-composer-dumpautoload:                   # Régénérer le fichier autoload
-	$(COMPOSE) exec $(PHP_SERVICE) composer dump-autoload
+nextjs-bash: ## Accède au shell du container Next.js
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) bash
+#< ========== ACCESS CONTAINERS ==========
 
-# Commandes Symfony
-make-entity:                             # Créer une nouvelle entité Symfony
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console make:entity $(entity)
+composer-require: ## Installe un package via composer require
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) composer require $(package)
+    ## make composer-require package="**nom du package**"
 
-make-controller:
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console make:controller $(controller)
+composer-update: ## Mettre à jour les dépendances Composer
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) composer update
 
-cache-clear:                             # Vider le cache Symfony
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console cache:clear
+composer-dumpautoload: ## Régénérer le fichier autoload
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) composer dump-autoload
+#< ========== COMPOSER ==========
 
-debug-router:                            # Lister toutes les routes définies dans Symfony
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console debug:router
 
-debug-env:                               # Afficher les variables d'environnement Symfony
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console debug:dotenv
+#> ========== SYMFONY ==========
+cache-clear: ## Vide le cache Symfony
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console cache:clear
 
-debug-autowiring:                        # Lister les services disponibles pour l'autowiring
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console debug:autowiring
+debug-router: ## Affiche les routes Symfony
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console debug:router
 
-# Commandes Doctrine (base de données et migrations)
-create-database:                         # Créer la base de données si elle n'existe pas
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:database:create --if-not-exists
+debug-env: ## Afficher les variables d'environnement Symfony
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console debug:dotenv
 
-drop-database:                           # Supprimer la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:database:drop --force
+debug-autowiring: ## Lister les services disponibles pour l'autowiring
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console debug:autowiring
+#< ========== SYMFONY ==========
 
-create-schema:                           # Générer le schéma de la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:schema:create
 
-update-schema:                           # Mettre à jour le schéma de la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:schema:update --force
+#> ========== DOCTRINE ==========
+create-database: ## Créer la base de données si elle n'existe pas
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:database:create --if-not-exists
 
-validate-schema:                         # Valider le schéma de la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:schema:validate
+drop-database: ## Supprimer la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:database:drop --force
 
-fixtures:                                # Charger les fixtures dans la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:fixtures:load --no-interaction
+create-schema: ## Générer le schéma de la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:schema:create
 
-make-migration:                          # Générer un fichier de migration
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console make:migration
+update-schema: ## Mettre à jour le schéma de la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:schema:update --force
 
-migrate:                                 # Appliquer les migrations dans la base de données
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:migrate --no-interaction
+validate-schema: ## Valider le schéma de la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:schema:validate
 
-migrations-list:						 # affiche la list des migrations
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:list
+fixtures: ## Charger les fixtures dans la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:fixtures:load --no-interaction
 
-migrations-status:                       # Vérifier le statut des migrations
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:status
+make-migration: ## Générer un fichier de migration
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console make:migration
 
-migrations-diff:                         # Générer une migration basée sur les changements d'entités
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:diff
+migrate: ## Appliquer les migrations dans la base de données
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:migrate --no-interaction
 
-migrations-rollback:                     # Annuler la dernière migration exécutée
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:execute --down $(MIGRATION_ID)
+migrations-list: ## affiche la list des migrations
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:list
 
-migrations-execute:                      # Exécuter une migration spécifique
-	$(COMPOSE) exec $(PHP_SERVICE) php bin/console doctrine:migrations:execute $(MIGRATION_ID) --up
+migrations-status: ## Vérifier le statut des migrations
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:status
 
-# PHPStan
-phpstan:								 # Lancer PHPStan pour analyser le code source
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpstan analyse --memory-limit=512M
+migrations-diff: ## Générer une migration basée sur les changements d'entités
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:diff
 
-# PHP-ECS
-ecs-check:								 # Vérifier le respect des standards de code avec ECS
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/ecs check src
+migrations-rollback: ## Annuler la dernière migration exécutée
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:execute --down $(MIGRATION_ID)
 
-ecs-fix:								 # Corriger automatiquement les erreurs de formatage avec ECS
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/ecs check src --fix
+migrations-execute: ## Exécuter une migration spécifique
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) php bin/console doctrine:migrations:execute $(MIGRATION_ID) --up
+#< ========== DOCTRINE ==========
 
-# PHPUnit Tests
-phpunit:                                 # Exécuter tous les tests
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit --testdox
 
-phpunit-file:                            # Exécuter les tests sur un fichier spécifique
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit $(file)
+#> ========== PHPSTAN ==========
+phpstan: ## Lancer PHPStan pour analyser le code source
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpstan analyse --memory-limit=512M
+#< ========== PHPSTAN ==========
 
-phpunit-filter:                          # Exécuter un test précis via un filtre
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit --filter $(filter)
 
-phpunit-coverage:                        # Générer un rapport de couverture
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit --coverage-html tests/coverage
+#> ========== PHP-ECS ==========
+ecs-check: ## Vérifier le respect des standards de code avec ECS
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/ecs check src
 
-phpunit-debug:                           # Lancer les tests en mode verbose pour débug
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit --debug
+ecs-fix: ## Corriger automatiquement les erreurs de formatage avec ECS
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/ecs check src --fix
+#< ========== PHP-ECS ==========
 
-phpunit-group:                           # Exécuter des tests basés sur un groupe spécifique
-	$(COMPOSE) exec $(PHP_SERVICE) vendor/bin/phpunit --group $(group)
+
+#> ========== PHPUNIT TESTS ==========
+phpunit: ## Exécuter tous les tests
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit --testdox
+
+phpunit-file: ## Exécuter les tests sur un fichier spécifique
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit $(file)
+
+phpunit-filter: ## Exécuter un test précis via un filtre
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit --filter $(filter)
+
+phpunit-coverage: ## Générer un rapport de couverture
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit --coverage-html tests/coverage
+
+phpunit-debug: ## Lancer les tests en mode verbose pour débug
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit --debug
+
+phpunit-group: ## Exécuter des tests basés sur un groupe spécifique
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(PHP_SERVICE) vendor/bin/phpunit --group $(group)
+#< ========== PHPUNIT TESTS ==========
+
+
+#> ========== NEXTJS ==========
+npm-install: ## Installe les dépendances npm
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm install
+
+npm-update: ## Mettre à jour les dépendances npm
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm update
+
+run-dev: ## Démarrer le serveur de développement
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run dev
+
+build-next: ## Générer une version de production du projet
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run build
+
+start-next: ## Démarrer le serveur en mode production
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm start
+
+lint: ## Vérifier le code avec ESLint
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run lint
+
+test: ## Lancer les tests unitaires
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run test
+
+test-watch: ## Lancer les tests en mode "watch"
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run test:watch
+
+format: ## Formater le code avec Prettier
+	$(COMPOSE) --env-file $(ENV_FILE) $(COMPOSE_DEV_FILES) exec $(NEXTJS_SERVICE) npm run format
+#< ========== NEXTJS ==========

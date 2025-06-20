@@ -57,6 +57,7 @@ class ProfileFixtures extends Fixture implements DependentFixtureInterface
         $adminInactiveProfile->setStatus('offline');
 
         $manager->persist($adminInactiveProfile);
+        $this->addReference('admin_active_profile', $adminActiveProfile);
 
         // Ajouter des utilisateurs avec deux profils chacun
         for ($i = 1; $i <= 20; ++$i) {
