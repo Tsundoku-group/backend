@@ -62,27 +62,21 @@ class ChallengeFixtures extends Fixture implements DependentFixtureInterface
                 $targetCount
             );
 
-            // Création du challenge
-            $challenge = new Challenge();
+            // Création du challenge avec le constructeur requis
+            $challenge = new Challenge($creator, $constraint);
             $challenge
                 ->setName(ucfirst($action->value) . ' ' . $faker->word())
                 ->setType($type)
                 ->setStatus($status)
                 ->setStartAt($startAt)
                 ->setEndAt($endAt)
-                ->setCreator($creator)
                 ->setConstraint($constraint);
 
             $manager->persist($challenge);
 
-            // Création du lien ChallengeProfile pour le créateur
-            $challengeProfile = new ChallengeProfile();
-            $challengeProfile
-                ->setChallenge($challenge)
-                ->setProfile($creator)
-                // status initial = PENDING
-                ->setStatus(ChallengeStatusEnum::PENDING)
-                ->setProgress([]);
+            // Création du lien ChallengeProfile pour le créateur avec le rôle admin
+            $challengeProfile = new ChallengeProfile($challenge, $creator, 'admin');
+            $challengeProfile->setProgress(0);
 
             $manager->persist($challengeProfile);
         }

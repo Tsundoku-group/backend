@@ -55,6 +55,26 @@ class ChallengeConstraint
         return $this->targetCount;
     }
 
+    public function setAction(ChallengeActionTypeEnum $action): void
+    {
+        $this->action = $action;
+    }
+
+    public function setContentType(ChallengeContentTypeEnum $contentType): void
+    {
+        $this->contentType = $contentType;
+    }
+
+    public function setFrequency(ChallengeFrequencyEnum $frequency): void
+    {
+        $this->frequency = $frequency;
+    }
+
+    public function setTargetCount(int $targetCount): void
+    {
+        $this->targetCount = $targetCount;
+    }
+
     /**
      * @param ExecutionContextInterface $context
      */
@@ -70,6 +90,9 @@ class ChallengeConstraint
                 ChallengeContentTypeEnum::BOOK,
                 ChallengeContentTypeEnum::PAGE,
                 ChallengeContentTypeEnum::CHAPTER,
+            ],
+            ChallengeActionTypeEnum::HAVE => [
+                ChallengeContentTypeEnum::BOOK,
             ],
         ];
 

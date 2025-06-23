@@ -15,29 +15,19 @@ class BadgeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Badge::class);
     }
-
-//    /**
-//     * @return Badge[] Returns an array of Badge objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Badge
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    
+    public function findBadgesByProfile(int $profileId, int $limit): array
+    {
+        return $this->createQueryBuilder('b')
+            ->select('b.id', 'b.awardedAt', 'c.name as challengeName', 'c.type as challengeType')
+            ->join('b.challengeProfile', 'cp')
+            ->join('cp.challenge', 'c')
+            ->join('cp.profile', 'p')
+            ->where('p.id = :profileId')
+            ->setParameter('profileId', $profileId)
+            ->orderBy('b.awardedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

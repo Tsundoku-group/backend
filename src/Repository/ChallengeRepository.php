@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Challenge;
+use App\Enum\ChallengeStatusEnum;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,28 +17,78 @@ class ChallengeRepository extends ServiceEntityRepository
         parent::__construct($registry, Challenge::class);
     }
 
-//    /**
-//     * @return Challenge[] Returns an array of Challenge objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findActiveChallengesByProfile(int $profileId): array
+    {
+        return $this->findChallengesByProfileAndStatus($profileId, [
+            ChallengeStatusEnum::PENDING->value,
+            ChallengeStatusEnum::ONGOING->value,
+        ]);
+    }
 
-//    public function findOneBySomeField($value): ?Challenge
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function findInactiveChallengesByProfile(int $profileId): array
+    {
+        return $this->findChallengesByProfileAndStatus($profileId, [
+            ChallengeStatusEnum::SUCCESS->value,
+            ChallengeStatusEnum::FAILED->value,
+            ChallengeStatusEnum::CANCELED->value,
+        ]);
+    }
+
+    public function findChallengesByProfileAndStatus(
+        int $profileId,
+        array $statuses,
+        int $offset = 0,
+        int $limit = 0,
+    ): array {
+        $qb = $this->createQueryBuilder('c')
+            ->innerJoin('c.challengeProfiles', 'cp')
+            ->andWhere('cp.profile = :profile')
+            ->andWhere('c.status IN (:statuses)')
+            ->setParameter('profile', $profileId)
+            ->setParameter('statuses', $statuses)
+            ->orderBy('c.startAt', 'ASC')
+            ->setFirstResult($offset);
+
+        if ($limit !== 0) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findActiveChallengesByProfilePaginated(
+        int $profileId,
+        int $offset = 0,
+        int $limit = 5
+    ): array {
+        return $this->findChallengesByProfileAndStatus($profileId, [
+            ChallengeStatusEnum::PENDING->value,
+            ChallengeStatusEnum::ONGOING->value,
+        ], $offset, $limit);
+    }
+
+    public function findInactiveChallengesByProfilePaginated(
+        int $profileId,
+        int $offset = 0,
+        int $limit = 5
+    ): array {
+        return $this->findChallengesByProfileAndStatus($profileId, [
+            ChallengeStatusEnum::SUCCESS->value,
+            ChallengeStatusEnum::FAILED->value,
+            ChallengeStatusEnum::CANCELED->value,
+        ], $offset, $limit);
+    }
+
+    public function countChallengesByProfileAndStatus(int $profileId, array $statuses): int
+    {
+        return $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->innerJoin('c.challengeProfiles', 'cp')
+            ->andWhere('cp.profile = :profile')
+            ->andWhere('c.status IN (:statuses)')
+            ->setParameter('profile', $profileId)
+            ->setParameter('statuses', $statuses)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

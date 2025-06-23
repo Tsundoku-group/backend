@@ -2,9 +2,6 @@
 
 namespace App\Entity;
 
-use App\Enum\ChallengeActionTypeEnum;
-use App\Enum\ChallengeContentTypeEnum;
-use App\Enum\ChallengeFrequencyEnum;
 use App\Enum\ChallengeStatusEnum;
 use App\Enum\ChallengeTypeEnum;
 use App\ValueObject\ChallengeConstraint;
@@ -18,16 +15,16 @@ class Challenge
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    protected ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(type: 'string', enumType: ChallengeTypeEnum::class)]
     private ChallengeTypeEnum $type;
 
     #[ORM\Column(length: 255)]
-    protected string $name;
+    private string $name;
 
     #[ORM\Column(type: 'string', enumType: ChallengeStatusEnum::class)]
-    protected ChallengeStatusEnum $status;
+    private ChallengeStatusEnum $status;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $startAt;
@@ -41,16 +38,14 @@ class Challenge
     #[ORM\Embedded(class: ChallengeConstraint::class)]
     private ChallengeConstraint $constraint;
 
-    #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeRequest::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection $challengeRequests;
-
     #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeProfile::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    protected Collection $challengeProfiles;
+    private Collection $challengeProfiles;
 
-    public function __construct()
+    public function __construct(Profile $creator, ChallengeConstraint $constraint)
     {
-        $this->challengeRequests = new ArrayCollection();
         $this->challengeProfiles = new ArrayCollection();
+        $this->creator = $creator;
+        $this->constraint = $constraint;
     }
 
     public function getId(): ?int
@@ -141,56 +136,23 @@ class Challenge
         return $this;
     }
 
-    public function getChallengeRequests(): Collection
-    {
-        return $this->challengeRequests;
-    }
-
-    public function addChallengeRequest(ChallengeRequest $challengeRequest): self
-    {
-        if (!$this->challengeRequests->contains($challengeRequest)) {
-            $this->challengeRequests[] = $challengeRequest;
-            $challengeRequest->setChallenge($this);
-        }
-
-        return $this;
-    }
-
-    public function removeChallengeRequest(ChallengeRequest $challengeRequest): self
-    {
-        if ($this->challengeRequests->removeElement($challengeRequest)) {
-            // set the owning side to null (unless already changed)
-            if ($challengeRequest->getChallenge() === $this) {
-                $challengeRequest->setChallenge(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getChallengeProfiles(): Collection
     {
         return $this->challengeProfiles;
     }
 
-    public function addChallengeProfile(ChallengeProfile $challengeProfile): self
+    public function addChallengeProfile(ChallengeProfile $challengeProfile): static
     {
         if (!$this->challengeProfiles->contains($challengeProfile)) {
             $this->challengeProfiles[] = $challengeProfile;
-            $challengeProfile->setChallenge($this);
         }
 
         return $this;
     }
 
-    public function removeChallengeProfile(ChallengeProfile $challengeProfile): self
+    public function removeChallengeProfile(ChallengeProfile $challengeProfile): static
     {
-        if ($this->challengeProfiles->removeElement($challengeProfile)) {
-            // set the owning side to null (unless already changed)
-            if ($challengeProfile->getChallenge() === $this) {
-                $challengeProfile->setChallenge(null);
-            }
-        }
+        $this->challengeProfiles->removeElement($challengeProfile);
 
         return $this;
     }

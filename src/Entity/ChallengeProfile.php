@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Enum\ChallengeStatusEnum;
-use App\Repository\ChallengeProfileRepository;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ChallengeProfileRepository::class)]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class ChallengeProfile
 {
@@ -16,29 +16,44 @@ class ChallengeProfile
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Challenge::class, inversedBy: 'challengeProfiles')]
-    private ?Challenge $challenge;
+    #[ORM\JoinColumn(nullable: false)]
+    private Challenge $challenge;
 
     #[ORM\ManyToOne(targetEntity: Profile::class, inversedBy: 'challengeProfiles')]
     #[ORM\JoinColumn(nullable: false)]
     private Profile $profile;
 
-    #[ORM\Column(type: 'json')]
-    private array $progress = [];
+    #[ORM\Column(type: 'string', nullable: false)]
+    private string $role;
 
-    #[ORM\Column(type: 'string', enumType: ChallengeStatusEnum::class)]
-    private ChallengeStatusEnum $status = ChallengeStatusEnum::PENDING;
+    #[ORM\Column(type: 'integer')]
+    private int $progress;
+
+    #[ORM\Column(type: 'datetime_immutable')]
+    private DateTimeImmutable $joinAt;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTime $updatedAt = null;
+
+    public function __construct(Challenge $challenge, Profile $profile, string $role)
+    {
+        $this->challenge = $challenge;
+        $this->profile = $profile;
+        $this->role = "participant";
+        $this->progress = 0;
+        $this->joinAt = new DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getChallenge(): ?Challenge
+    public function getChallenge(): Challenge
     {
         return $this->challenge;
     }
-
-    public function setChallenge(?Challenge $challenge): static
+    public function setChallenge(Challenge $challenge): static
     {
         $this->challenge = $challenge;
 
@@ -57,27 +72,62 @@ class ChallengeProfile
         return $this;
     }
 
-    public function getProgress(): array
+    public function getRole(): string
+    {
+        return $this->role;
+    }
+
+    public function setRole(string $role): void
+    {
+        $this->role = $role;
+        $this->markAsUpdated();
+    }
+
+    public function getProgress(): int
     {
         return $this->progress;
     }
 
-    public function setProgress(array $progress): static
+    public function setProgress(int $progress): static
     {
         $this->progress = $progress;
 
         return $this;
     }
 
-    public function getStatus(): ChallengeStatusEnum
+    public function getJoinAt(): DateTimeImmutable
     {
-        return $this->status;
+        return $this->joinAt;
     }
 
-    public function setStatus(ChallengeStatusEnum $status): static
+    public function setJoinAt(DateTimeImmutable $joinAt): self
     {
-        $this->status = $status;
+        $this->joinAt = $joinAt;
+        $this->markAsUpdated();
 
         return $this;
+    }
+
+    public function getUpdatedAt(): ?DateTime
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?DateTime $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function isAdmin(): bool
+    {
+        return 'admin' === $this->role;
+    }
+
+    #[ORM\PreUpdate]
+    public function markAsUpdated(): void
+    {
+        $this->updatedAt = new DateTime();
     }
 }

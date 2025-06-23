@@ -28,7 +28,7 @@ use RuntimeException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
-readonly class PostService
+class PostService
 {
     public function __construct(
         private ProfileValidator $profileValidator,
@@ -40,14 +40,13 @@ readonly class PostService
         private SluggerInterface $slugger,
         private AuthorizationCheckerInterface $authorizationChecker,
         private ReactRepository $reactRepository,
-    ) {
-    }
+    ) {}
 
     public function getRecentPosts(PostTypeEnum $type, int $limit, int $profileId, ?int $groupId = null): array
     {
         $posts = $this->postRepository->findRecentPosts($type, $limit, $groupId);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => $post->getContent(),
@@ -70,7 +69,7 @@ readonly class PostService
     {
         $posts = $this->postRepository->findOlderPosts($page, $limit, $groupId, $type);
 
-        return array_map(fn ($post) => [
+        return array_map(fn($post) => [
             'id' => $post->getId(),
             'title' => $post->getTitle(),
             'content' => substr($post->getContent(), 0, 300),
