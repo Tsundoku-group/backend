@@ -63,7 +63,7 @@ class ChallengeFixtures extends Fixture implements DependentFixtureInterface
             );
 
             // Création du challenge avec le constructeur requis
-            $challenge = new Challenge($creator);
+            $challenge = new Challenge($creator, $constraint);
             $challenge
                 ->setName(ucfirst($action->value) . ' ' . $faker->word())
                 ->setType($type)

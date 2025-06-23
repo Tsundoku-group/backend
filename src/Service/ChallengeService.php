@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Dto\CreateChallengeDto;
+use App\Dto\UpdateChallengeDto;
 use App\Entity\Challenge;
 use App\Entity\ChallengeProfile;
 use App\Entity\Profile;
@@ -56,7 +57,7 @@ class ChallengeService
             $dto->targetCount
         );
 
-        $challenge = new Challenge($creator);
+        $challenge = new Challenge($creator, $constraint);
         $challenge
             ->setName($dto->name)
             ->setType($typeEnum)
@@ -70,6 +71,18 @@ class ChallengeService
 
         $this->em->persist($challenge);
         $this->em->persist($creatorChallengeProfile);
+        $this->em->flush();
+
+        return $challenge;
+    }
+
+    public function updateChallenge(Challenge $challenge, UpdateChallengeDto $dto): Challenge
+    {
+        $challenge
+            ->setName($dto->name)
+            ->setStartAt($this->parseDateTime($dto->startAt))
+            ->setEndAt($this->parseDateTime($dto->endAt));
+
         $this->em->flush();
 
         return $challenge;

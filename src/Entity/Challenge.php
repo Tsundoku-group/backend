@@ -41,10 +41,11 @@ class Challenge
     #[ORM\OneToMany(mappedBy: 'challenge', targetEntity: ChallengeProfile::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $challengeProfiles;
 
-    public function __construct(Profile $creator)
+    public function __construct(Profile $creator, ChallengeConstraint $constraint)
     {
         $this->challengeProfiles = new ArrayCollection();
         $this->creator = $creator;
+        $this->constraint = $constraint;
     }
 
     public function getId(): ?int

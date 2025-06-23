@@ -6,6 +6,7 @@ use App\Constant\GenericErrorMessagesConstant;
 use App\Constant\ProfileErrorMessagesConstant;
 use App\Constant\SecurityErrorMessagesConstant;
 use App\Dto\CreateChallengeDto;
+use App\Enum\ChallengeStatusEnum;
 use App\Repository\ChallengeRepository;
 use App\Repository\ProfileRepository;
 use App\Service\ChallengeService;
@@ -162,6 +163,53 @@ class ChallengeController extends AbstractController
             return $this->json(['error' => $e->getMessage()], 400);
         }
     }
+
+    #[Route('/{challengeId}', methods: ['PATCH'])]
+    public function updateChallenge(int $challengeId, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => SecurityErrorMessagesConstant::INSUFFICIENT_PERMISSIONS], 403);
+        }
+
+        $challenge = $this->challengeRepository->find($challengeId);
+
+        if (!$challenge) {
+            return $this->json(GenericErrorMessagesConstant::NOT_FOUND, 404);
+        }
+
+        if ($challenge->getCreator()->getUser() !== $user) {
+            return $this->json(SecurityErrorMessagesConstant::UNAUTHORIZED_ACCESS, 401);
+        }
+
+        if (!in_array($challenge->getStatus()->value, [ChallengeStatusEnum::PENDING->value, ChallengeStatusEnum::ONGOING->value])) {
+            return $this->json(['error' => SecurityErrorMessagesConstant::ACCESS_DENIED], 403);
+        }
+
+        try {
+            $dto = $this->serializer->deserialize(
+                $request->getContent(),
+                \App\Dto\UpdateChallengeDto::class,
+                'json'
+            );
+
+            $errors = $this->validator->validate($dto);
+            if (count($errors) > 0) {
+                $messages = [];
+                foreach ($errors as $violation) {
+                    $messages[$violation->getPropertyPath()][] = $violation->getMessage();
+                }
+                return $this->json(['errors' => $messages], 400);
+            }
+
+            $updatedChallenge = $this->challengeService->updateChallenge($challenge, $dto);
+
+            return $this->json(['id' => $updatedChallenge->getId()], 200);
+        } catch (Exception $e) {
+            return new JsonResponse(['error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR], 500);
+        }
+    }
+
 
     #[Route('/{challengeId}', methods: ['DELETE'])]
     public function deleteChallenge(int $challengeId): JsonResponse
