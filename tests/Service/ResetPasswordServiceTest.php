@@ -60,7 +60,8 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->requestPasswordReset($email);
@@ -84,13 +85,14 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->requestPasswordReset($email);
 
         $this->assertArrayHasKey('error', $result);
-        $this->assertEquals('You can only request a password reset once every 15 minutes.', $result['error']);
+        $this->assertEquals("Vous ne pouvez demander la réinitialisation de votre mot de passe qu'une fois toutes les 15 minutes", $result['error']);
         $this->assertEquals(Response::HTTP_TOO_MANY_REQUESTS, $result['status']);
     }
 
@@ -104,7 +106,8 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->requestPasswordReset($email);
@@ -134,13 +137,14 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->resetPassword($token, $newPassword);
 
         $this->assertArrayHasKey('success', $result);
-        $this->assertEquals('Password has been reset successfully', $result['success']);
+        $this->assertEquals("Le mot de passe a été réinitialisé avec succès", $result['success']);
     }
 
     public function testResetPasswordInvalidToken(): void
@@ -153,7 +157,8 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->resetPassword($token, 'new-password');
@@ -176,7 +181,8 @@ class ResetPasswordServiceTest extends TestCase
             $this->tokenGenerator,
             $this->userRepository,
             $this->passwordHasher,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
 
         $result = $service->resetPassword($token, 'new-password');

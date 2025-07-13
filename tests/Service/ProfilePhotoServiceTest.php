@@ -126,7 +126,7 @@ class ProfilePhotoServiceTest extends TestCase
         $result = $this->profilePhotoService->setActivateProfilePhoto($profile, 'http://example.com/photo1.jpg', 'profile');
 
         $this->assertEquals('success', $result['status']);
-        $this->assertEquals('Photo activated successfully', $result['message']);
+        $this->assertEquals('Photo activée avec succès', $result['message']);
     }
 
     public function testSetActivateProfilePhotoFail(): void
@@ -138,6 +138,6 @@ class ProfilePhotoServiceTest extends TestCase
         $result = $this->profilePhotoService->setActivateProfilePhoto($profile, 'http://example.com/photo1.jpg', 'profile');
 
         $this->assertEquals('error', $result['status']);
-        $this->assertEquals('No profile photo found', $result['message']);
+        $this->assertEquals("Aucune photo de profil n'a été trouvée", $result['message']);
     }
 }

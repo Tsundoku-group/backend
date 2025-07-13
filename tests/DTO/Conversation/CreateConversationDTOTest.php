@@ -14,13 +14,13 @@ class CreateConversationDTOTest extends TestCase
         $validator = Validation::createValidator();
 
         $data = [
-            'email' => 'test@example.com',
+            'username' => 'test@example.com',
             'participants' => [1, 2, 3],
         ];
         $dto = new CreateConversationDTO($data);
 
         $constraints = new Assert\Collection([
-            'email' => [
+            'username' => [
                 new Assert\NotBlank(message: 'User email is required.'),
                 new Assert\Email(message: 'The email must be valid.'),
             ],
@@ -34,7 +34,7 @@ class CreateConversationDTOTest extends TestCase
         ]);
 
         $violations = $validator->validate([
-            'email' => $dto->email,
+            'username' => $dto->username,
             'participants' => $dto->participants,
         ], $constraints);
 
@@ -46,13 +46,13 @@ class CreateConversationDTOTest extends TestCase
         $validator = Validation::createValidator();
 
         $data = [
-            'email' => 'invalid-email',
+            'username' => 'invalid-email',
             'participants' => [1, -2, 'three'],
         ];
         $dto = new CreateConversationDTO($data);
 
         $constraints = new Assert\Collection([
-            'email' => [
+            'username' => [
                 new Assert\NotBlank(message: 'User email is required.'),
                 new Assert\Email(message: 'The email must be valid.'),
             ],
@@ -66,7 +66,7 @@ class CreateConversationDTOTest extends TestCase
         ]);
 
         $violations = $validator->validate([
-            'email' => $dto->email,
+            'username' => $dto->username,
             'participants' => $dto->participants,
         ], $constraints);
 
@@ -78,8 +78,10 @@ class CreateConversationDTOTest extends TestCase
             'Participant IDs must be integers.',
         ];
 
-        foreach ($violations as $index => $violation) {
-            $this->assertSame($expectedErrors[$index], $violation->getMessage());
+        $actualErrors = array_map(fn($violation) => $violation->getMessage(), iterator_to_array($violations));
+
+        foreach ($expectedErrors as $expectedError) {
+            $this->assertContains($expectedError, $actualErrors);
         }
     }
 }

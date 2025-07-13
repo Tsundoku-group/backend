@@ -5,6 +5,7 @@ namespace App\Tests\Entity;
 use App\Entity\Group;
 use App\Entity\Post;
 use App\Entity\Profile;
+use App\Enum\PostTypeEnum;
 use DateTime;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +41,7 @@ class PostTest extends TestCase
 
     public function testSetAndGetType(): void
     {
-        $type = 'article';
+        $type = PostTypeEnum::ARTICLE;
         $this->post->setType($type);
         $this->assertEquals($type, $this->post->getType());
     }

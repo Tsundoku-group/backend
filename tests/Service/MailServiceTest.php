@@ -53,7 +53,7 @@ class MailServiceTest extends TestCase
             ->willThrowException($this->createMock(TransportExceptionInterface::class));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to send email');
+        $this->expectExceptionMessage("Échec de l'envoi du courrier électronique:");
 
         $this->mailService->sendMail($recipientEmail, $subject, $body, $context);
     }

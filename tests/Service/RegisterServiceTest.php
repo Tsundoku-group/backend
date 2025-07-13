@@ -34,7 +34,8 @@ class RegisterServiceTest extends TestCase
             $this->userRepository,
             $this->passwordHasher,
             $this->tokenGenerator,
-            $this->mailService
+            $this->mailService,
+            'http://localhost'
         );
     }
 
@@ -71,7 +72,7 @@ class RegisterServiceTest extends TestCase
         $response = $this->service->registerUser($email, $password);
 
         $this->assertArrayHasKey('error', $response);
-        $this->assertEquals('Email already in use', $response['error']);
+        $this->assertEquals('Email déjà utilisé', $response['error']);
         $this->assertEquals(409, $response['status']);
     }
 
@@ -133,7 +134,7 @@ class RegisterServiceTest extends TestCase
         $this->userRepository->method('findOneUserByEmailAndIsVerified')->willReturn(null);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('User not found');
+        $this->expectExceptionMessage('Utilisateur non trouvé');
         $this->expectExceptionCode(404);
 
         $this->service->resendConfirmationEmail($email);

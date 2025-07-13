@@ -57,7 +57,7 @@ class RegisterControllerTest extends TestCase
         $this->assertEquals(400, $response->getStatusCode());
 
         $responseData = json_decode($response->getContent(), true);
-        $this->assertEquals('Invalid data', $responseData['error']);
+        $this->assertEquals('Données invalides', $responseData['error']);
     }
 
 
@@ -73,7 +73,7 @@ class RegisterControllerTest extends TestCase
         $this->assertEquals(400, $response->getStatusCode());
 
         $responseData = json_decode($response->getContent(), true);
-        $this->assertEquals('Invalid token', $responseData['error']);
+        $this->assertEquals('Jeton invalide', $responseData['error']);
     }
 
     public function testResendConfirmationEmailSuccess(): void
@@ -92,7 +92,7 @@ class RegisterControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         $responseData = json_decode($response->getContent(), true);
-        $this->assertEquals('Confirmation email resent successfully', $responseData['success']);
+        $this->assertEquals('Courriel de confirmation envoyé avec succès', $responseData['success']);
     }
 
     public function testResendConfirmationEmailInvalidData(): void
@@ -107,6 +107,6 @@ class RegisterControllerTest extends TestCase
         $this->assertEquals(400, $response->getStatusCode());
 
         $responseData = json_decode($response->getContent(), true);
-        $this->assertEquals('Invalid data', $responseData['error']);
+        $this->assertEquals('Données invalides', $responseData['error']);
     }
 }

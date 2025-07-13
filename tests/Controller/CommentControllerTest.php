@@ -76,7 +76,7 @@ class CommentControllerTest extends TestCase
         $commentId = 'comment123';
 
         $commentMock = $this->createMock(Comment::class);
-        $commentMock->method('getAuthorId')->willReturn('user123');
+        $commentMock->method('getAuthorId')->willReturn(123);
 
         $this->commentRepository
             ->method('find')

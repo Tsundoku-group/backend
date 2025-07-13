@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Controller\ProfileController;
+use App\DTO\Profile\ProfileDTO;
 use App\Service\ProfileService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,7 +29,7 @@ class ProfileControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'Profile not found']),
+            json_encode(['error' => 'Profil non trouvé']),
             $response->getContent()
         );
     }
@@ -91,7 +92,7 @@ class ProfileControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'Profile not found']),
+            json_encode(['error' => 'Profil non trouvé']),
             $response->getContent()
         );
     }
@@ -129,7 +130,7 @@ class ProfileControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'Profile not found']),
+            json_encode(['error' => 'Profil non trouvé']),
             $response->getContent()
         );
     }
@@ -183,15 +184,15 @@ class ProfileControllerTest extends TestCase
 
     public function testUpdateProfileSuccess(): void
     {
-        $request = new Request([], [], [], [], [], [], json_encode([
+        $dto = new ProfileDTO([
             'firstName' => 'Updated John',
             'lastName' => 'Updated Doe',
             'username' => 'updateduser',
             'phoneNumber' => '0612233435',
             'birthday' => '1990-01-01',
             'bio' => 'Updated bio',
-            'type' => 'auteur',  // Ajout du champ type pour éviter l'erreur
-        ]));
+            'type' => 'auteur',
+        ]);
 
         $this->profileService->method('updateProfile')->willReturn([
             'message' => 'Profile updated successfully'
@@ -199,7 +200,11 @@ class ProfileControllerTest extends TestCase
 
         $controller = new ProfileController($this->profileService);
 
-        $response = $controller->update($request, 1);
+        // 👉 Corrige l'accès au container pour AbstractController
+        $container = $this->createMock(\Symfony\Component\DependencyInjection\ContainerInterface::class);
+        $controller->setContainer($container);
+
+        $response = $controller->update($dto, 1);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());

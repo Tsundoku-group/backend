@@ -37,7 +37,7 @@ class ProfilePhotoDataValidatorTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(400, $result->getStatusCode());
-        $this->assertEquals(['error' => 'Invalid data'], json_decode($result->getContent(), true));
+        $this->assertEquals(['error' => 'Données invalides'], json_decode($result->getContent(), true));
     }
 
     public function testValidateInvalidUrl(): void
@@ -55,7 +55,7 @@ class ProfilePhotoDataValidatorTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(400, $result->getStatusCode());
-        $this->assertEquals(['error' => 'L\'URL is not valid.'], json_decode($result->getContent(), true));
+        $this->assertEquals(['error' => 'L\'URL n\'est pas valide'], json_decode($result->getContent(), true));
     }
 
     public function testValidateInvalidType(): void
@@ -73,6 +73,6 @@ class ProfilePhotoDataValidatorTest extends TestCase
 
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(400, $result->getStatusCode());
-        $this->assertEquals(['error' => 'Type is not valid.'], json_decode($result->getContent(), true));
+        $this->assertEquals(['error' => "Le type n'est pas valide"], json_decode($result->getContent(), true));
     }
 }

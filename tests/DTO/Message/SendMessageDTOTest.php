@@ -14,37 +14,36 @@ class SendMessageDTOTest extends TestCase
         $validator = Validation::createValidator();
 
         $data = [
-            'userEmail' => 'test@example.com',
-            'message' => 'This is a test message.',
-            'id' => '123e4567-e89b-12d3-a456-426614174000',
+            'content' => 'This is a test message.',
+            'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+            'sender_id' => '1',
         ];
         $dto = new SendMessageDTO($data);
 
         $constraints = new Assert\Collection([
-            'userEmail' => [
-                new Assert\NotBlank(message: 'User email is required.'),
-                new Assert\Email(message: 'Invalid email format.'),
-            ],
-            'message' => [
+            'content' => [
                 new Assert\NotBlank(message: 'Message content is required.'),
                 new Assert\Length(
                     max: 1000,
                     maxMessage: 'The message cannot exceed 1000 characters.'
                 ),
             ],
-            'id' => [
+            'uuid' => [
                 new Assert\NotBlank(message: 'Message ID is required.'),
                 new Assert\Uuid(message: 'The message ID must be a valid UUID.'),
+            ],
+            'sender_id' => [
+                new Assert\NotBlank(message: 'Profile ID is required.'),
             ],
         ]);
 
         $violations = $validator->validate([
-            'userEmail' => $dto->userEmail,
-            'message' => $dto->message,
-            'id' => $dto->id,
+            'content' => $dto->content,
+            'uuid' => $dto->uuid,
+            'sender_id' => $dto->sender_id,
         ], $constraints);
 
-        $this->assertCount(0, $violations, 'There should be no validation errors for valid input.');
+        $this->assertCount(0, $violations);
     }
 
     public function testInvalidSendMessageDTO(): void
@@ -52,46 +51,45 @@ class SendMessageDTOTest extends TestCase
         $validator = Validation::createValidator();
 
         $data = [
-            'userEmail' => 'invalid-email',
-            'message' => str_repeat('a', 1001),
-            'id' => 'invalid-uuid',
+            'content' => str_repeat('a', 1001),
+            'uuid' => 'invalid-uuid',
+            'sender_id' => '',
         ];
         $dto = new SendMessageDTO($data);
 
         $constraints = new Assert\Collection([
-            'userEmail' => [
-                new Assert\NotBlank(message: 'User email is required.'),
-                new Assert\Email(message: 'Invalid email format.'),
-            ],
-            'message' => [
+            'content' => [
                 new Assert\NotBlank(message: 'Message content is required.'),
                 new Assert\Length(
                     max: 1000,
                     maxMessage: 'The message cannot exceed 1000 characters.'
                 ),
             ],
-            'id' => [
+            'uuid' => [
                 new Assert\NotBlank(message: 'Message ID is required.'),
                 new Assert\Uuid(message: 'The message ID must be a valid UUID.'),
+            ],
+            'sender_id' => [
+                new Assert\NotBlank(message: 'Profile ID is required.'),
             ],
         ]);
 
         $violations = $validator->validate([
-            'userEmail' => $dto->userEmail,
-            'message' => $dto->message,
-            'id' => $dto->id,
+            'content' => $dto->content,
+            'uuid' => $dto->uuid,
+            'sender_id' => $dto->sender_id,
         ], $constraints);
 
-        $this->assertCount(3, $violations, 'There should be 3 validation errors for invalid input.');
+        $this->assertCount(3, $violations);
 
         $expectedErrors = [
-            'Invalid email format.',
             'The message cannot exceed 1000 characters.',
             'The message ID must be a valid UUID.',
+            'Profile ID is required.',
         ];
 
-        foreach ($violations as $index => $violation) {
-            $this->assertSame($expectedErrors[$index], $violation->getMessage());
-        }
+        $actualErrors = array_map(fn($v) => $v->getMessage(), iterator_to_array($violations));
+
+        $this->assertEqualsCanonicalizing($expectedErrors, $actualErrors);
     }
 }
