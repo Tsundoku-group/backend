@@ -26,9 +26,6 @@ class ChallengeFixtures extends Fixture implements DependentFixtureInterface
             /** @var Profile $creator */
             $creator = $this->getReference('admin_active_profile', Profile::class);
 
-            if (!$creator instanceof Profile) {
-                throw new \Exception('La référence ne correspond pas à un objet Profile.');
-            }
         } catch (\Exception $e) {
             throw new \Exception('Impossible de récupérer le profil admin : ' . $e->getMessage());
         }

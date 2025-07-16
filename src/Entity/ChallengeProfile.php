@@ -35,11 +35,11 @@ class ChallengeProfile
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $updatedAt = null;
 
-    public function __construct(Challenge $challenge, Profile $profile, string $role)
+    public function __construct(Challenge $challenge, Profile $profile, ?string $role = "participant")
     {
         $this->challenge = $challenge;
         $this->profile = $profile;
-        $this->role = "participant";
+        $this->role = $role;
         $this->progress = 0;
         $this->joinAt = new DateTimeImmutable();
     }

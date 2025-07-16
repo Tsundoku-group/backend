@@ -17,7 +17,6 @@ use Symfony\Component\Routing\Annotation\Route;
 class BadgeController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
         private BadgeRepository $badgeRepository,
         private readonly ProfileRepository $profileRepository
     ) {}

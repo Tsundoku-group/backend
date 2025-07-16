@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[Route('/api/v1/users')]
 class UserController extends AbstractController
@@ -139,7 +140,7 @@ class UserController extends AbstractController
 
         $user = $this->getUser();
 
-        if (!$user) {
+        if (!$user instanceof PasswordAuthenticatedUserInterface) {
             return new JsonResponse(['error' => UserErrorMessagesConstant::USER_NOT_FOUND], 404);
         }
 

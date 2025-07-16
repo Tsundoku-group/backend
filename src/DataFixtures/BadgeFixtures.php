@@ -13,7 +13,6 @@ use Faker\Factory;
 
 class BadgeFixtures extends Fixture implements DependentFixtureInterface
 {
-    private const BADGE_COUNT = 20;
 
     public function load(ObjectManager $manager): void
     {
@@ -44,40 +43,5 @@ class BadgeFixtures extends Fixture implements DependentFixtureInterface
         return [
             ChallengeProfileFixtures::class,
         ];
-    }
-
-    /**
-     * Crée un tableau d'entités Badge.
-     *
-     * @param ChallengeProfile $challengeProfile
-     * @return Badge[]
-     */
-    private function createBadges(ChallengeProfile $challengeProfile): array
-    {
-        $faker = Factory::create();
-        $badges = [];
-
-        for ($i = 0; $i < self::BADGE_COUNT; $i++) {
-            $badges[] = $this->buildBadge($challengeProfile, $faker);
-        }
-
-        return $badges;
-    }
-
-    /**
-     * Construit une entité Badge.
-     *
-     * @param ChallengeProfile $challengeProfile
-     * @param \Faker\Generator $faker
-     * @return Badge
-     */
-    private function buildBadge(ChallengeProfile $challengeProfile, \Faker\Generator $faker): Badge
-    {
-        $badge = new Badge();
-        $badge->setChallengeProfile($challengeProfile)
-            ->setAwardedAt(\DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-1 year', 'now')))
-            ->setStyle(null);
-
-        return $badge;
     }
 }

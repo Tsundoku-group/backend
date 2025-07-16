@@ -173,22 +173,4 @@ final class BooksListController extends AbstractController
             return $this->json(['error' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    #[Route('/{booksListId}/add', name: 'add_books_to_booksList', methods: ['POST'])]
-    public function addBook(Request $request): JsonResponse
-    {
-
-    }
-
-    #[Route('/{booksListId}/remove', name: 'remove_books_from_booksList', methods: ['DELETE'])]
-    public function removeBook(Request $request): JsonResponse
-    {
-
-    }
-
-    #[Route('/search', name: 'search_public_booksList', methods: ['GET'])]
-    public function searchBooksList(Request $request): JsonResponse
-    {
-
-    }
 }

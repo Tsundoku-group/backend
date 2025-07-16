@@ -39,8 +39,8 @@ class ChallengeController extends AbstractController
         }
 
         try {
-            $offset = (int) $request->query->get('offset', 0);
-            $limit = (int) $request->query->get('limit', 5);
+            $offset = (int) $request->query->getInt('offset', 0);
+            $limit = (int) $request->query->getInt('limit', 5);
 
             $activeChallenges = $this->challengeRepository->findActiveChallengesByProfilePaginated(
                 $profileId,
@@ -79,8 +79,8 @@ class ChallengeController extends AbstractController
         }
 
         try {
-            $offset = (int) $request->query->get('offset', 0);
-            $limit = (int) $request->query->get('limit', 5);
+            $offset = (int) $request->query->getInt('offset', 0);
+            $limit = (int) $request->query->getInt('limit', 5);
 
             $inactiveChallenges = $this->challengeRepository->findInactiveChallengesByProfilePaginated(
                 $profileId,

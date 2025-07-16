@@ -18,7 +18,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\HttpFoundation\Response;
 
-readonly class ProfileService
+class ProfileService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -46,7 +46,10 @@ readonly class ProfileService
                 ]
             );
         } catch (Exception $e) {
-            return null;
+            return [
+                'error' => GenericErrorMessagesConstant::INTERNAL_SERVER_ERROR,
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
         }
     }
 
@@ -253,10 +256,6 @@ readonly class ProfileService
         $offset = ($page - 1) * $limit;
         $profiles = $this->profileRepository->findProfiles($search,  $limit, $offset);
 
-        try {
-            return $profiles;
-        } catch (Exception $e) {
-            return null;
-        }
+        return $profiles;
     }
 }

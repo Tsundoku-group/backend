@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\ValueObject;
 
@@ -81,31 +81,34 @@ class ChallengeConstraint
     public function validateContentForAction(ExecutionContextInterface $context): void
     {
         $allowed = [
-            ChallengeActionTypeEnum::WRITE => [
+            ChallengeActionTypeEnum::WRITE->value => [
                 ChallengeContentTypeEnum::ARTICLE,
                 ChallengeContentTypeEnum::BOOK_REVIEW,
                 ChallengeContentTypeEnum::BOOK_DESCRIPTION,
             ],
-            ChallengeActionTypeEnum::READ => [
+            ChallengeActionTypeEnum::READ->value => [
                 ChallengeContentTypeEnum::BOOK,
                 ChallengeContentTypeEnum::PAGE,
                 ChallengeContentTypeEnum::CHAPTER,
             ],
-            ChallengeActionTypeEnum::HAVE => [
+            ChallengeActionTypeEnum::HAVE->value => [
                 ChallengeContentTypeEnum::BOOK,
             ],
         ];
 
-        $action = $this->getAction();
-        $content = $this->getContentType();
+        $actionValue = $this->action->value;
+        $content     = $this->contentType;
 
-        if (isset($allowed[$action]) && !in_array($content, $allowed[$action], true)) {
-            $context
-                ->buildViolation('For the « ' . $action->value . ' » action, you can only choose « '
-                    . implode(' », « ', array_map(fn($c) => $c->value, $allowed[$action]))
-                    . ' ».')
-                ->atPath('contentType')
-                ->addViolation();
-        }
+        $validValues = array_map(
+            fn(ChallengeContentTypeEnum $c): string => $c->value,
+            $allowed[$actionValue]
+        );
+
+        $context
+            ->buildViolation('For the « ' . $actionValue . ' » action, you can only choose « '
+                . implode(' », « ', $validValues)
+                . ' ».')
+            ->atPath('contentType')
+            ->addViolation();
     }
 }
